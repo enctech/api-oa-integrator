@@ -1,0 +1,187 @@
+definitions:
+  oa.CancelJobWrapper:
+    properties:
+      cancel:
+        properties:
+          reason:
+            properties:
+              cancelCode:
+                type: string
+              reasonText:
+                type: string
+            type: object
+        type: object
+    type: object
+  oa.Configuration:
+    properties:
+      supportedFunctions:
+        items:
+          type: string
+        type: array
+    type: object
+  oa.FinalMessageSB:
+    properties:
+      finalState:
+        type: string
+      paymentMedia:
+        type: string
+    type: object
+  oa.FinalMessageSBWrapper:
+    properties:
+      finalMessageSB:
+        $ref: '#/definitions/oa.FinalMessageSB'
+    type: object
+  oa.MediaDataWrapper:
+    properties:
+      mediaData:
+        properties:
+          hashValue:
+            properties:
+              value:
+                type: string
+            type: object
+          mediaType:
+            type: string
+        type: object
+    type: object
+  oa.VersionRequestWrapper:
+    properties:
+      version:
+        properties:
+          configuration:
+            $ref: '#/definitions/oa.Configuration'
+          entervoVersion:
+            type: string
+          sbAuthorizationVersion:
+            type: string
+        type: object
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a server OA integrator.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Swagger OA Integrator API
+  version: "1.0"
+paths:
+  /oa/{facility}/{device}/{jobId}/cancel:
+    put:
+      consumes:
+      - application/xml
+      description: This request cancels a running job on the 3rd party side. The job
+        is identified by its resource /facility/device/jobid
+      parameters:
+      - description: Facility
+        in: path
+        name: facility
+        required: true
+        type: string
+      - description: Device
+        in: path
+        name: device
+        required: true
+        type: string
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/oa.CancelJobWrapper'
+      produces:
+      - application/xml
+      responses: {}
+      summary: Cancels a running job
+      tags:
+      - oa
+  /oa/{facility}/{device}/{jobId}/finalmessage:
+    put:
+      consumes:
+      - application/xml
+      description: This request sends the last message for a job. The job is identified
+        by its resources /facility/device/jobid
+      parameters:
+      - description: Facility
+        in: path
+        name: facility
+        required: true
+        type: string
+      - description: Device
+        in: path
+        name: device
+        required: true
+        type: string
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/oa.FinalMessageSBWrapper'
+      produces:
+      - application/xml
+      responses: {}
+      summary: Receive Final Message from S&B
+      tags:
+      - oa
+  /oa/{facility}/{device}/{jobId}/medialist:
+    put:
+      consumes:
+      - application/xml
+      description: Creates new media data for an existing job and sends the required
+        information as a <mediaData> element to the 3rd party system.
+      parameters:
+      - description: Facility
+        in: path
+        name: facility
+        required: true
+        type: string
+      - description: Device
+        in: path
+        name: device
+        required: true
+        type: string
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/oa.MediaDataWrapper'
+      produces:
+      - application/xml
+      responses: {}
+      summary: Creates new media data
+      tags:
+      - oa
+  /oa/version:
+    put:
+      consumes:
+      - application/xml
+      description: get the version and configuration available
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/oa.VersionRequestWrapper'
+      produces:
+      - application/xml
+      responses: {}
+      summary: check version
+      tags:
+      - oa
+swagger: "2.0"

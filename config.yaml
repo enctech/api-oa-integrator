@@ -1,0 +1,5 @@
+app:
+  version: 0.0.1
+
+database:
+  url: postgres://postgres:postgres123@localhost:5432/postgres?sslmode=disable
