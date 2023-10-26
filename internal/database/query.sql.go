@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -31,6 +32,30 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 		&i.Module,
 		&i.Info,
 		&i.Extra,
+	)
+	return i, err
+}
+
+const getConfig = `-- name: GetConfig :one
+select id, endpoint, facility, device
+from snb_config
+where facility = $1
+  and device = $2
+`
+
+type GetConfigParams struct {
+	Facility sql.NullString
+	Device   sql.NullString
+}
+
+func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, getConfig, arg.Facility, arg.Device)
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		&i.Facility,
+		&i.Device,
 	)
 	return i, err
 }

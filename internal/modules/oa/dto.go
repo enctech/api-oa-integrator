@@ -56,3 +56,100 @@ type ConfirmationResponse struct {
 type Configuration struct {
 	SupportedFunctions []string `xml:"supportedFunctions"`
 }
+
+type RequestMetadata struct {
+	device   string `param:"device"`
+	facility string `param:"facility"`
+	jobId    string `param:"jobId"`
+}
+
+type JobWrapper struct {
+	Job Job `xml:"job"`
+}
+
+type Job struct {
+	XMLName xml.Name `xml:"job" json:"-"`
+	JobType string   `xml:"jobType"`
+	JobId   struct {
+		ID string `xml:"id"`
+	} `xml:"jobId"`
+	MediaDataList struct {
+		MediaType  string `xml:"mediaType"`
+		Identifier struct {
+			Name string `xml:"name"`
+		} `xml:"identifier"`
+	} `xml:"mediaDataList"`
+	TimeAndPlace struct {
+		Operator struct {
+			OperatorNumber string `xml:"operatorNumber"`
+		} `xml:"operator"`
+		Computer struct {
+			ComputerNumber string `xml:"computerNumber"`
+		} `xml:"computer"`
+		Device struct {
+			DeviceNumber string `xml:"deviceNumber"`
+			DeviceType   string `xml:"deviceType"`
+		} `xml:"device"`
+		TransactionTimeStamp struct {
+			TimeStamp string `xml:"timeStamp"`
+		} `xml:"transactionTimeStamp"`
+		Facility struct {
+			FacilityNumber string `xml:"facilityNumber"`
+		} `xml:"facility"`
+	} `xml:"timeAndPlace"`
+	ProviderInformation struct {
+		Provider struct {
+			ProviderId string `xml:"providerId"`
+		} `xml:"provider"`
+	} `xml:"providerInformation"`
+}
+
+type (
+	PaymentInformation struct {
+		PaymentLocation string `xml:"paymentLocation"`
+	}
+
+	ProviderInformation struct {
+		Provider struct {
+			ProviderId   string `xml:"providerId"`
+			ProviderName string `xml:"providerName"`
+		} `xml:"provider"`
+	}
+
+	CustomerInformation struct {
+		Customer struct {
+			CustomerId    string `xml:"customerId"`
+			CustomerName  string `xml:"customerName"`
+			CustomerGroup string `xml:"customerGroup"`
+		} `xml:"customer"`
+	}
+
+	Reservation struct {
+		ReservationTariff struct {
+			TariffName   string `xml:"tariffName"`
+			TariffNumber string `xml:"tariffNumber"`
+		} `xml:"reservationTariff"`
+	}
+
+	MediaDataList []struct {
+		MediaType  string `xml:"mediaType"`
+		Identifier struct {
+			Name string `xml:"name"`
+		} `xml:"identifier"`
+	}
+
+	BusinessTransaction struct {
+		ID string `xml:"id"`
+	}
+
+	FinalMessageCustomer struct {
+		XMLName             xml.Name             `xml:"finalMessageCustomer"`
+		PaymentInformation  *PaymentInformation  `xml:"paymentInformation"`
+		ProviderInformation *ProviderInformation `xml:"providerInformation"`
+		CustomerInformation *CustomerInformation `xml:"customerInformation"`
+		Reservation         *Reservation         `xml:"reservation"`
+		MediaDataList       *[]MediaDataList     `xml:"mediaDataList"`
+		Counting            *string              `xml:"counting"`
+		BusinessTransaction *BusinessTransaction `xml:"businessTransaction"`
+	}
+)

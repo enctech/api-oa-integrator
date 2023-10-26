@@ -31,6 +31,69 @@ definitions:
       finalMessageSB:
         $ref: '#/definitions/oa.FinalMessageSB'
     type: object
+  oa.Job:
+    properties:
+      jobId:
+        properties:
+          id:
+            type: string
+        type: object
+      jobType:
+        type: string
+      mediaDataList:
+        properties:
+          identifier:
+            properties:
+              name:
+                type: string
+            type: object
+          mediaType:
+            type: string
+        type: object
+      providerInformation:
+        properties:
+          provider:
+            properties:
+              providerId:
+                type: string
+            type: object
+        type: object
+      timeAndPlace:
+        properties:
+          computer:
+            properties:
+              computerNumber:
+                type: string
+            type: object
+          device:
+            properties:
+              deviceNumber:
+                type: string
+              deviceType:
+                type: string
+            type: object
+          facility:
+            properties:
+              facilityNumber:
+                type: string
+            type: object
+          operator:
+            properties:
+              operatorNumber:
+                type: string
+            type: object
+          transactionTimeStamp:
+            properties:
+              timeStamp:
+                type: string
+            type: object
+        type: object
+    type: object
+  oa.JobWrapper:
+    properties:
+      job:
+        $ref: '#/definitions/oa.Job'
+    type: object
   oa.MediaDataWrapper:
     properties:
       mediaData:
@@ -68,6 +131,39 @@ info:
   title: Swagger OA Integrator API
   version: "1.0"
 paths:
+  /oa/{facility}/{device}/{jobId}:
+    post:
+      consumes:
+      - application/xml
+      description: Creates new job and sends the required information as URI and <job>
+        element to 3rd party system.
+      parameters:
+      - description: Facility
+        in: path
+        name: facility
+        required: true
+        type: string
+      - description: Device
+        in: path
+        name: device
+        required: true
+        type: string
+      - description: Job ID
+        in: path
+        name: jobId
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/oa.JobWrapper'
+      produces:
+      - application/xml
+      responses: {}
+      summary: S&B creates new job
+      tags:
+      - oa
   /oa/{facility}/{device}/{jobId}/cancel:
     put:
       consumes:
@@ -135,7 +231,7 @@ paths:
       tags:
       - oa
   /oa/{facility}/{device}/{jobId}/medialist:
-    put:
+    post:
       consumes:
       - application/xml
       description: Creates new media data for an existing job and sends the required

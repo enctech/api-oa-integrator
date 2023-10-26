@@ -3,6 +3,7 @@ package oa
 import (
 	"api-oa-integrator/internal/utils"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
@@ -22,7 +23,8 @@ func InitController(e *echo.Echo) {
 	g.PUT("/version", c.version)
 	g.PUT("/:facility/:device/:jobId/cancel", c.cancel)
 	g.PUT("/:facility/:device/:jobId/finalmessage", c.finalMessage)
-	g.PUT("/:facility/:device/:jobId/medialist", c.mediaList)
+	g.POST("/:facility/:device/:jobId/medialist", c.mediaList)
+	g.POST("/:facility/:device/:jobId", c.createJob)
 }
 
 // version godoc
@@ -46,7 +48,7 @@ func (con controller) version(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		err = utils.LogToDb("OA", "Version", data)
+		err = utils.LogToDb("OA", "version", data)
 		if err != nil {
 			return
 		}
@@ -84,7 +86,7 @@ func (con controller) cancel(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		err = utils.LogToDb("OA", "Cancel Job", data)
+		err = utils.LogToDb("OA", "cancel", data)
 		if err != nil {
 			return
 		}
@@ -122,7 +124,7 @@ func (con controller) finalMessage(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		err = utils.LogToDb("OA", "Final Message", data)
+		err = utils.LogToDb("OA", "finalMessage", data)
 		if err != nil {
 			return
 		}
@@ -145,7 +147,7 @@ func (con controller) finalMessage(c echo.Context) error {
 //	@Param			device		path	string				true	"Device"
 //	@Param			jobId		path	string				true	"Job ID"
 //	@Param			request		body	MediaDataWrapper	false	"Request Body"
-//	@Router			/oa/{facility}/{device}/{jobId}/medialist [put]
+//	@Router			/oa/{facility}/{device}/{jobId}/medialist [post]
 func (con controller) mediaList(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -161,13 +163,76 @@ func (con controller) mediaList(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		err = utils.LogToDb("OA", "Media List", data)
+		err = utils.LogToDb("OA", "mediaList", data)
 		if err != nil {
 			return
 		}
 	}()
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "MEDIA_DATA_RECEIVED",
+		ConfirmationStatus:       "OK",
+	})
+}
+
+// createJob godoc
+//
+//	@Summary		S&B creates new job
+//	@Description	Creates new job and sends the required information as URI and <job> element to 3rd party system.
+//	@Tags			oa
+//	@Accept			application/xml
+//	@Produce		application/xml
+//	@Param			facility	path	string		true	"Facility"
+//	@Param			device		path	string		true	"Device"
+//	@Param			jobId		path	string		true	"Job ID"
+//	@Param			request		body	JobWrapper	false	"Request Body"
+//	@Router			/oa/{facility}/{device}/{jobId} [post]
+func (con controller) createJob(c echo.Context) error {
+	rm := &RequestMetadata{
+		facility: c.Param("facility"),
+		device:   c.Param("device"),
+		jobId:    c.Param("jobId"),
+	}
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		go sendEmptyFinalMessage(rm)
+		return nil
+	}
+	go func() {
+		data, err := json.Marshal(map[string]any{
+			"facility":    c.Param("facility"),
+			"device":      c.Param("device"),
+			"jobId":       c.Param("jobId"),
+			"requestBody": fmt.Sprintf("%v", string(body)),
+		})
+		if err != nil {
+			return
+		}
+		err = utils.LogToDb("OA", "createJob", data)
+		if err != nil {
+			return
+		}
+	}()
+
+	req := new(Job)
+	err = xml.Unmarshal(body, &req)
+
+	if err != nil {
+		go sendEmptyFinalMessage(rm)
+		return c.XML(http.StatusCreated, ConfirmationResponse{
+			ConfirmationDetailStatus: "JOB_CREATED",
+			ConfirmationStatus:       "OK",
+		})
+	}
+	handleIdentificationEntry(req, rm)
+	handleLeaveLoopEntry(req, rm)
+	handleIdentificationExit(req, rm)
+	handlePaymentExit(req, rm)
+	handleLeaveLoopExit(req, rm)
+	if c.Response().Committed {
+		return nil
+	}
+	return c.XML(http.StatusCreated, ConfirmationResponse{
+		ConfirmationDetailStatus: "JOB_CREATED",
 		ConfirmationStatus:       "OK",
 	})
 }

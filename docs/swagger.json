@@ -41,6 +41,53 @@
                 "responses": {}
             }
         },
+        "/oa/{facility}/{device}/{jobId}": {
+            "post": {
+                "description": "Creates new job and sends the required information as URI and \u003cjob\u003e element to 3rd party system.",
+                "consumes": [
+                    "application/xml"
+                ],
+                "produces": [
+                    "application/xml"
+                ],
+                "tags": [
+                    "oa"
+                ],
+                "summary": "S\u0026B creates new job",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Facility",
+                        "name": "facility",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Device",
+                        "name": "device",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/oa.JobWrapper"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/oa/{facility}/{device}/{jobId}/cancel": {
             "put": {
                 "description": "This request cancels a running job on the 3rd party side. The job is identified by its resource /facility/device/jobid",
@@ -136,7 +183,7 @@
             }
         },
         "/oa/{facility}/{device}/{jobId}/medialist": {
-            "put": {
+            "post": {
                 "description": "Creates new media data for an existing job and sends the required information as a \u003cmediaData\u003e element to the 3rd party system.",
                 "consumes": [
                     "application/xml"
@@ -232,6 +279,107 @@
             "properties": {
                 "finalMessageSB": {
                     "$ref": "#/definitions/oa.FinalMessageSB"
+                }
+            }
+        },
+        "oa.Job": {
+            "type": "object",
+            "properties": {
+                "jobId": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "jobType": {
+                    "type": "string"
+                },
+                "mediaDataList": {
+                    "type": "object",
+                    "properties": {
+                        "identifier": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "mediaType": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "providerInformation": {
+                    "type": "object",
+                    "properties": {
+                        "provider": {
+                            "type": "object",
+                            "properties": {
+                                "providerId": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "timeAndPlace": {
+                    "type": "object",
+                    "properties": {
+                        "computer": {
+                            "type": "object",
+                            "properties": {
+                                "computerNumber": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "device": {
+                            "type": "object",
+                            "properties": {
+                                "deviceNumber": {
+                                    "type": "string"
+                                },
+                                "deviceType": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "facility": {
+                            "type": "object",
+                            "properties": {
+                                "facilityNumber": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "operator": {
+                            "type": "object",
+                            "properties": {
+                                "operatorNumber": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "transactionTimeStamp": {
+                            "type": "object",
+                            "properties": {
+                                "timeStamp": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "oa.JobWrapper": {
+            "type": "object",
+            "properties": {
+                "job": {
+                    "$ref": "#/definitions/oa.Job"
                 }
             }
         },

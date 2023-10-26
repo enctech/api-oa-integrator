@@ -5,3 +5,11 @@ create table logs
     info   varchar not null,
     extra  jsonb
 );
+
+create table snb_config
+(
+    id       uuid primary key,
+    endpoint varchar,
+    facility varchar,
+    device   varchar
+);
