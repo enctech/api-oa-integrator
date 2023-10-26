@@ -18,9 +18,33 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := tng.VerifyVehicle(job.MediaDataList.Identifier.Name)
+	err := utils.LogToDb("TnG", "Verify Vehicle Entry", []byte("{}"))
 	if err != nil {
+		return
+	}
+	lpn := job.MediaDataList.Identifier.Name
+	err = tng.VerifyVehicle(lpn)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"status":      "fail",
+			"error":       err.Error(),
+			"plateNumber": lpn,
+		})
+		err = utils.LogToDb("TnG", "Verify Vehicle Entry Error", data)
+		if err != nil {
+			return
+		}
 		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	data, err := json.Marshal(map[string]any{
+		"status":      "success",
+		"error":       err.Error(),
+		"plateNumber": lpn,
+	})
+	err = utils.LogToDb("TnG", "Verify Vehicle Entry Error", data)
+	if err != nil {
+		return
 	}
 }
 
@@ -29,9 +53,33 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := tng.CreateSession(job.MediaDataList.Identifier.Name)
+	err := utils.LogToDb("TnG", "Leave Loop Entry", []byte("{}"))
 	if err != nil {
+		return
+	}
+	lpn := job.MediaDataList.Identifier.Name
+	err = tng.CreateSession(lpn)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"status":      "fail",
+			"error":       err.Error(),
+			"plateNumber": lpn,
+		})
+		err = utils.LogToDb("TnG", "Leave Loop Entry Error", data)
+		if err != nil {
+			return
+		}
 		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	data, err := json.Marshal(map[string]any{
+		"status":      "success",
+		"error":       err.Error(),
+		"plateNumber": lpn,
+	})
+	err = utils.LogToDb("TnG", "Leave Loop Entry Success", data)
+	if err != nil {
+		return
 	}
 }
 
@@ -40,9 +88,33 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := tng.VerifyVehicle(job.MediaDataList.Identifier.Name)
+	err := utils.LogToDb("TnG", "Verify Vehicle Exit", []byte("{}"))
 	if err != nil {
+		return
+	}
+	lpn := job.MediaDataList.Identifier.Name
+	err = tng.VerifyVehicle(lpn)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"status":      "fail",
+			"error":       err.Error(),
+			"plateNumber": lpn,
+		})
+		err = utils.LogToDb("TnG", "Verify Vehicle Exit Error", data)
+		if err != nil {
+			return
+		}
 		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	data, err := json.Marshal(map[string]any{
+		"status":      "success",
+		"error":       err.Error(),
+		"plateNumber": lpn,
+	})
+	err = utils.LogToDb("TnG", "Verify Vehicle Exit Success", data)
+	if err != nil {
+		return
 	}
 }
 
@@ -51,9 +123,33 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := tng.EndSession(job.MediaDataList.Identifier.Name)
+	err := utils.LogToDb("TnG", "PAYMENT", []byte("{}"))
 	if err != nil {
+		return
+	}
+	lpn := job.MediaDataList.Identifier.Name
+	err = tng.EndSession(lpn)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"status":      "fail",
+			"error":       err.Error(),
+			"plateNumber": lpn,
+		})
+		err = utils.LogToDb("TnG", "PAYMENT Error", data)
+		if err != nil {
+			return
+		}
 		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	data, err := json.Marshal(map[string]any{
+		"status":      "success",
+		"error":       err.Error(),
+		"plateNumber": lpn,
+	})
+	err = utils.LogToDb("TnG", "PAYMENT Success", data)
+	if err != nil {
+		return
 	}
 }
 
@@ -62,9 +158,33 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := tng.AcknowledgeUserExit(job.MediaDataList.Identifier.Name)
+	err := utils.LogToDb("TnG", "Leave Loop Exit", []byte("{}"))
 	if err != nil {
+		return
+	}
+	lpn := job.MediaDataList.Identifier.Name
+	err = tng.EndSession(lpn)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"status":      "fail",
+			"error":       err.Error(),
+			"plateNumber": lpn,
+		})
+		err = utils.LogToDb("TnG", "Leave Loop Exit Error", data)
+		if err != nil {
+			return
+		}
 		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	data, err := json.Marshal(map[string]any{
+		"status":      "success",
+		"error":       err.Error(),
+		"plateNumber": lpn,
+	})
+	err = utils.LogToDb("TnG", "Leave Loop Exit Success", data)
+	if err != nil {
+		return
 	}
 }
 
