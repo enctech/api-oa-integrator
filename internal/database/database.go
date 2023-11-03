@@ -16,28 +16,28 @@ var (
 	_globalDb = &sql.DB{}
 )
 
-func InitDatabase() *sql.DB {
+func InitDatabase() error {
 	db, err := sql.Open("postgres", viper.GetString("database.url"))
 	if err != nil {
 		zap.L().Sugar().Errorf("failed open db %v", err)
-		return nil
+		return err
 	}
 	err = db.Ping()
 	if err != nil {
 		zap.L().Sugar().Errorf("failed ping db %v", err)
-		return nil
+		return err
 	}
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		zap.L().Sugar().Errorf("failed postgres.WithInstance %v", err)
-		return nil
+		return err
 	}
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://./internal/database/migrations",
 		"postgres", driver)
 	if err != nil {
 		zap.L().Sugar().Errorf("failed NewWithDatabaseInstance up %v", err)
-		return nil
+		return err
 	}
 	err = m.Up()
 	if err != nil {
@@ -46,7 +46,7 @@ func InitDatabase() *sql.DB {
 	_globalMu.Lock()
 	_globalDb = db
 	_globalMu.Unlock()
-	return db
+	return nil
 }
 
 func D() *sql.DB {

@@ -24,3 +24,10 @@ type SnbConfig struct {
 	Facility sql.NullString
 	Device   sql.NullString
 }
+
+type User struct {
+	ID         uuid.UUID
+	Username   sql.NullString
+	Password   sql.NullString
+	Permission sql.NullString
+}

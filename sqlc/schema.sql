@@ -13,3 +13,11 @@ create table snb_config
     facility varchar,
     device   varchar
 );
+
+create table users
+(
+    id         uuid primary key,
+    username   varchar,
+    password   varchar,
+    permission varchar
+);

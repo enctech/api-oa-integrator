@@ -28,8 +28,13 @@ func init() {
 //	@contact.url	http://www.swagger.io/support
 //	@contact.email	support@swagger.io
 
-// @license.name	Apache 2.0
-// @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name				Apache 2.0
+// @license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//
+// @securityDefinitions.apikey	Bearer
+// @in							header
+// @name						Authorization
+// @description				Type "Bearer" followed by a space and JWT token.
 func main() {
 	log := logger.CreateLogger()
 
@@ -38,7 +43,11 @@ func main() {
 	}(log)
 
 	zap.ReplaceGlobals(log)
-	database.InitDatabase()
+	err := database.InitDatabase()
+	if err != nil {
+		panic(fmt.Sprintf("init database error %v", err))
+		return
+	}
 
 	sugar := zap.L().Sugar()
 

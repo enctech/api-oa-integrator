@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -36,6 +37,38 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 	return i, err
 }
 
+const createUser = `-- name: CreateUser :one
+insert into users (username, password, permission)
+values ($1, $2, $3)
+returning id, username, password, permission
+`
+
+type CreateUserParams struct {
+	Username   sql.NullString
+	Password   sql.NullString
+	Permission sql.NullString
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Password, arg.Permission)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Permission,
+	)
+	return i, err
+}
+
+const deleteUser = `-- name: DeleteUser :execresult
+delete from users where id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteUser, id)
+}
+
 const getConfig = `-- name: GetConfig :one
 select id, endpoint, facility, device
 from snb_config
@@ -56,6 +89,22 @@ func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig
 		&i.Endpoint,
 		&i.Facility,
 		&i.Device,
+	)
+	return i, err
+}
+
+const getUser = `-- name: GetUser :one
+select id, username, password, permission from users where username = $1
+`
+
+func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Password,
+		&i.Permission,
 	)
 	return i, err
 }

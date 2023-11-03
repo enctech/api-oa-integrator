@@ -1,4 +1,20 @@
 definitions:
+  auth.CreateUserRequest:
+    properties:
+      password:
+        type: string
+      permission:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   oa.CancelJobWrapper:
     properties:
       cancel:
@@ -131,6 +147,59 @@ info:
   title: Swagger OA Integrator API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: For user to login into admin
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: user login
+      tags:
+      - auth
+  /auth/user:
+    post:
+      consumes:
+      - application/json
+      description: For admin to create new user
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/auth.CreateUserRequest'
+      produces:
+      - application/json
+      responses: {}
+      summary: create new user
+      tags:
+      - auth
+  /auth/user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: For admin to delete user
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: delete user
+      tags:
+      - auth
   /oa/{facility}/{device}/{jobId}:
     post:
       consumes:
@@ -280,4 +349,10 @@ paths:
       summary: check version
       tags:
       - oa
+securityDefinitions:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -1,15 +1,15 @@
-create table if not exists snb_config
+create table if not exists users
 (
     id         uuid               default uuid_generate_v4() primary key,
-    endpoint   varchar,
-    facility   varchar,
-    device     varchar,
+    username   varchar   not null unique,
+    password   varchar,
+    permission varchar,
     created_at timestamp not null default NOW(),
     updated_at timestamp not null default NOW()
 );
 
-create trigger set_snb_config_updated_timestamp
+create trigger set_users_updated_timestamp
     before update
-    on snb_config
+    on users
     for each row
 execute procedure trigger_set_timestamp();

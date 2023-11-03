@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"api-oa-integrator/internal/modules/auth"
 	"api-oa-integrator/internal/modules/oa"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -14,5 +15,6 @@ func InitServer() {
 	e.Use(middleware.CORS())
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	oa.InitController(e)
+	auth.InitController(e)
 	e.Logger.Fatal(e.Start(":1323"))
 }
