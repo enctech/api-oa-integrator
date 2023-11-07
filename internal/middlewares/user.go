@@ -2,11 +2,32 @@ package middlewares
 
 import (
 	"github.com/golang-jwt/jwt"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"net/http"
 	"strings"
 )
+
+func GuardWithJWT() echo.MiddlewareFunc {
+	return echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte(viper.GetString("app.secret")),
+	})
+}
+
+func GuardSomePathJWT(paths []string) echo.MiddlewareFunc {
+	return echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte(viper.GetString("app.secret")),
+		Skipper: func(c echo.Context) bool {
+			for _, path := range paths {
+				if strings.HasSuffix(c.Path(), path) {
+					return true
+				}
+			}
+			return false
+		},
+	})
+}
 
 func AdminOnlyMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

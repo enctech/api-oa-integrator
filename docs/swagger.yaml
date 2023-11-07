@@ -15,6 +15,15 @@ definitions:
       username:
         type: string
     type: object
+  config.SnbConfig:
+    properties:
+      device:
+        type: string
+      endpoint:
+        type: string
+      facility:
+        type: string
+    type: object
   oa.CancelJobWrapper:
     properties:
       cancel:
@@ -200,6 +209,48 @@ paths:
       summary: delete user
       tags:
       - auth
+  /config/snb-config:
+    get:
+      consumes:
+      - application/json
+      description: Get configuration required for OA to works.
+      parameters:
+      - description: Facility
+        in: query
+        name: facility
+        required: true
+        type: string
+      - description: Device
+        in: query
+        name: device
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Get config for snb
+      tags:
+      - config
+    post:
+      consumes:
+      - application/json
+      description: Create configuration required for OA to works.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/config.SnbConfig'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Create config for snb
+      tags:
+      - config
   /oa/{facility}/{device}/{jobId}:
     post:
       consumes:

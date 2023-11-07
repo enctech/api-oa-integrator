@@ -105,6 +105,72 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/config/snb-config": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get configuration required for OA to works.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get config for snb",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Facility",
+                        "name": "facility",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Device",
+                        "name": "device",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to works.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Create config for snb",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/config.SnbConfig"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/oa/version": {
             "put": {
                 "description": "get the version and configuration available",
@@ -342,6 +408,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "config.SnbConfig": {
+            "type": "object",
+            "properties": {
+                "device": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "facility": {
                     "type": "string"
                 }
             }

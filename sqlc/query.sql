@@ -10,13 +10,22 @@ from snb_config
 where facility = $1
   and device = $2;
 
+-- name: CreateConfig :one
+insert into snb_config (endpoint, facility, device)
+values ($1, $2, $3)
+returning *;
+
 -- name: CreateUser :one
 insert into users (username, password, permission)
 values ($1, $2, $3)
 returning *;
 
 -- name: GetUser :one
-select * from users where username = $1;
+select *
+from users
+where username = $1;
 
 -- name: DeleteUser :execresult
-delete from users where id = $1;
+delete
+from users
+where id = $1;

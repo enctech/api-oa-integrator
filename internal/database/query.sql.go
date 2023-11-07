@@ -13,6 +13,30 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const createConfig = `-- name: CreateConfig :one
+insert into snb_config (endpoint, facility, device)
+values ($1, $2, $3)
+returning id, endpoint, facility, device
+`
+
+type CreateConfigParams struct {
+	Endpoint sql.NullString
+	Facility sql.NullString
+	Device   sql.NullString
+}
+
+func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, createConfig, arg.Endpoint, arg.Facility, arg.Device)
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		&i.Facility,
+		&i.Device,
+	)
+	return i, err
+}
+
 const createLog = `-- name: CreateLog :one
 INSERT INTO logs (module, info, extra)
 VALUES ($1, $2, $3)
@@ -62,7 +86,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deleteUser = `-- name: DeleteUser :execresult
-delete from users where id = $1
+delete
+from users
+where id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, error) {
@@ -94,7 +120,9 @@ func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, password, permission from users where username = $1
+select id, username, password, permission
+from users
+where username = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, error) {

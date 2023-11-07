@@ -4,11 +4,8 @@ import (
 	"api-oa-integrator/internal/middlewares"
 	"fmt"
 	"github.com/google/uuid"
-	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/spf13/viper"
 	"net/http"
-	"strings"
 )
 
 type controller struct {
@@ -20,12 +17,7 @@ func InitController(e *echo.Echo) {
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	g.Use(echojwt.WithConfig(echojwt.Config{
-		SigningKey: []byte(viper.GetString("app.secret")),
-		Skipper: func(c echo.Context) bool {
-			return strings.HasSuffix(c.Path(), "/login") || strings.HasSuffix(c.Path(), "/user")
-		},
-	}))
+	g.Use(middlewares.GuardSomePathJWT([]string{"/login", "/user"}))
 	g.POST("/login", c.login)
 	g.POST("/user", c.register)
 	g.DELETE("/user/:id", c.deleteUser, middlewares.AdminOnlyMiddleware())
