@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func encrypt(in string) string {
+func encryptLpn(in string) string {
 	encoded := fmt.Sprintf("%08x", in)
 
 	// Ensure it's exactly 8 digits by truncating or padding

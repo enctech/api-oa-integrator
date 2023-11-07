@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 	"net/http"
 )
 
@@ -37,6 +39,20 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
+
+	go sendFinalMessageCustomer(metadata, FMCReq{
+		Identifier: Identifier{Name: lpn},
+		BusinessTransaction: &BusinessTransaction{
+			ID: uuid.New().String(),
+		},
+		CustomerInformation: &CustomerInformation{
+			Customer: Customer{
+				CustomerId:    encryptLpn(lpn),
+				CustomerGroup: viper.GetString("vendor.name"),
+			},
+		},
+	})
+
 	data, err := json.Marshal(map[string]any{
 		"status":      "success",
 		"error":       err.Error(),
@@ -186,6 +202,101 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	if err != nil {
 		return
 	}
+}
+
+type FMCReq struct {
+	BusinessTransaction *BusinessTransaction
+	CustomerInformation *CustomerInformation
+	Identifier          Identifier
+}
+
+func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
+	config, err := database.New(database.D()).GetConfig(context.Background(), database.GetConfigParams{
+		Device:   sql.NullString{String: metadata.device, Valid: true},
+		Facility: sql.NullString{String: metadata.facility, Valid: true},
+	})
+
+	if err != nil {
+		fmt.Println("Error get config", err)
+		return
+	}
+
+	counting := "RESERVED"
+	xmlData, err := xml.Marshal(&FinalMessageCustomer{
+		PaymentInformation: &PaymentInformation{
+			PaymentLocation: "PAY_LOCAL",
+		},
+		ProviderInformation: &ProviderInformation{
+			Provider: Provider{
+				ProviderId:   viper.GetString("vendor.id"),
+				ProviderName: viper.GetString("vendor.name"),
+			},
+		},
+		Reservation: &Reservation{
+			ReservationTariff: ReservationTariff{
+				TariffName:   "Tariff OnlineManipulation",
+				TariffNumber: 34,
+			},
+		},
+		Counting: &counting,
+		MediaDataList: &[]MediaDataList{
+			{
+				MediaType:  "LICENSE_PLATE",
+				Identifier: in.Identifier,
+			},
+		},
+		CustomerInformation: in.CustomerInformation,
+		BusinessTransaction: in.BusinessTransaction,
+	})
+	if err != nil {
+		fmt.Println("Error marshaling XML data:", err)
+		return
+	}
+
+	req, err := http.NewRequest("PUT", config.Endpoint.String, bytes.NewBuffer(xmlData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/xml")
+
+	client := &http.Client{}
+	client.Transport = &utils.LoggingRoundTripper{
+		Transport: http.DefaultTransport,
+	}
+
+	data, err := json.Marshal(map[string]any{
+		"message":  "sending empty final message",
+		"device":   metadata.device,
+		"jobId":    metadata.jobId,
+		"facility": metadata.facility,
+	})
+	if err != nil {
+		return
+	}
+	err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
+	if err != nil {
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		data, err := json.Marshal(map[string]any{
+			"message":  "sending empty final message error",
+			"device":   metadata.device,
+			"jobId":    metadata.jobId,
+			"facility": metadata.facility,
+			"error":    err.Error(),
+		})
+		if err != nil {
+			return
+		}
+		err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
+		fmt.Println("Error sending request:", err)
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func sendEmptyFinalMessage(metadata *RequestMetadata) {

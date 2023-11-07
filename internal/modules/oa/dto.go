@@ -109,33 +109,41 @@ type (
 		PaymentLocation string `xml:"paymentLocation"`
 	}
 
+	Provider struct {
+		ProviderId   string `xml:"providerId"`
+		ProviderName string `xml:"providerName"`
+	}
+
 	ProviderInformation struct {
-		Provider struct {
-			ProviderId   string `xml:"providerId"`
-			ProviderName string `xml:"providerName"`
-		} `xml:"provider"`
+		Provider Provider `xml:"provider"`
+	}
+
+	Customer struct {
+		CustomerId    string `xml:"customerId"`
+		CustomerName  string `xml:"customerName"`
+		CustomerGroup string `xml:"customerGroup"`
 	}
 
 	CustomerInformation struct {
-		Customer struct {
-			CustomerId    string `xml:"customerId"`
-			CustomerName  string `xml:"customerName"`
-			CustomerGroup string `xml:"customerGroup"`
-		} `xml:"customer"`
+		Customer Customer `xml:"customer"`
+	}
+
+	ReservationTariff struct {
+		TariffName   string `xml:"tariffName"`
+		TariffNumber int    `xml:"tariffNumber"`
 	}
 
 	Reservation struct {
-		ReservationTariff struct {
-			TariffName   string `xml:"tariffName"`
-			TariffNumber string `xml:"tariffNumber"`
-		} `xml:"reservationTariff"`
+		ReservationTariff ReservationTariff `xml:"reservationTariff"`
 	}
 
-	MediaDataList []struct {
-		MediaType  string `xml:"mediaType"`
-		Identifier struct {
-			Name string `xml:"name"`
-		} `xml:"identifier"`
+	Identifier struct {
+		Name string `xml:"name"`
+	}
+
+	MediaDataList struct {
+		MediaType  string     `xml:"mediaType"`
+		Identifier Identifier `xml:"identifier"`
 	}
 
 	BusinessTransaction struct {
