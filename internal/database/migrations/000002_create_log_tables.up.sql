@@ -1,9 +1,9 @@
 create table if not exists logs
 (
     id         uuid               default uuid_generate_v4() primary key,
-    module     varchar,
-    info       varchar,
-    extra      jsonb,
+    level      varchar,
+    message    varchar,
+    fields     jsonb,
     created_at timestamp not null default NOW(),
     updated_at timestamp not null default NOW()
 );

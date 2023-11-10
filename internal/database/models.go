@@ -6,16 +6,29 @@ package database
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
 
+type IntegratorConfig struct {
+	ID                 uuid.UUID
+	ClientID           sql.NullString
+	SpID               sql.NullString
+	PlazaID            sql.NullString
+	Url                sql.NullString
+	InsecureSkipVerify sql.NullBool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
 type Log struct {
-	ID     uuid.UUID
-	Module string
-	Info   string
-	Extra  pqtype.NullRawMessage
+	ID        uuid.UUID
+	Level     sql.NullString
+	Message   sql.NullString
+	Fields    pqtype.NullRawMessage
+	CreatedAt time.Time
 }
 
 type SnbConfig struct {

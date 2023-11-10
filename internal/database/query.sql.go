@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
@@ -25,6 +26,7 @@ type CreateConfigParams struct {
 	Device   sql.NullString
 }
 
+// -----------Region S&B Config start-------------
 func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (SnbConfig, error) {
 	row := q.db.QueryRowContext(ctx, createConfig, arg.Endpoint, arg.Facility, arg.Device)
 	var i SnbConfig
@@ -38,30 +40,38 @@ func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Snb
 }
 
 const createLog = `-- name: CreateLog :one
-INSERT INTO logs (module, info, extra)
-VALUES ($1, $2, $3)
-RETURNING id, module, info, extra
+INSERT INTO logs (level, message, fields, created_at)
+VALUES ($1, $2, $3, $4)
+RETURNING id, level, message, fields, created_at
 `
 
 type CreateLogParams struct {
-	Module string
-	Info   string
-	Extra  pqtype.NullRawMessage
+	Level     sql.NullString
+	Message   sql.NullString
+	Fields    pqtype.NullRawMessage
+	CreatedAt time.Time
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
-	row := q.db.QueryRowContext(ctx, createLog, arg.Module, arg.Info, arg.Extra)
+	row := q.db.QueryRowContext(ctx, createLog,
+		arg.Level,
+		arg.Message,
+		arg.Fields,
+		arg.CreatedAt,
+	)
 	var i Log
 	err := row.Scan(
 		&i.ID,
-		&i.Module,
-		&i.Info,
-		&i.Extra,
+		&i.Level,
+		&i.Message,
+		&i.Fields,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const createUser = `-- name: CreateUser :one
+
 insert into users (username, password, permission)
 values ($1, $2, $3)
 returning id, username, password, permission
@@ -73,6 +83,8 @@ type CreateUserParams struct {
 	Permission sql.NullString
 }
 
+// -----------Region Integrator Config end---------------
+// -----------Region Authentication start-------------
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Password, arg.Permission)
 	var i User
@@ -115,6 +127,31 @@ func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig
 		&i.Endpoint,
 		&i.Facility,
 		&i.Device,
+	)
+	return i, err
+}
+
+const getIntegratorConfig = `-- name: GetIntegratorConfig :one
+
+select id, client_id, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
+from integrator_config
+where client_id = $1
+`
+
+// -----------Region S&B Config end---------------
+// -----------Region Integrator Config start-------------
+func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullString) (IntegratorConfig, error) {
+	row := q.db.QueryRowContext(ctx, getIntegratorConfig, clientID)
+	var i IntegratorConfig
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.SpID,
+		&i.PlazaID,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

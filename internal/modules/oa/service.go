@@ -2,12 +2,11 @@ package oa
 
 import (
 	"api-oa-integrator/internal/database"
-	"api-oa-integrator/internal/modules/tng"
-	"api-oa-integrator/internal/utils"
+	"api-oa-integrator/internal/modules/integrator"
+	"api-oa-integrator/utils"
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"github.com/google/uuid"
@@ -19,49 +18,29 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 	if job.JobType != "IDENTIFICATION" || job.TimeAndPlace.Device.DeviceType != "ENTRY" {
 		return
 	}
-
-	err := utils.LogToDb("TnG", "Verify Vehicle Entry", []byte("{}"))
-	if err != nil {
-		return
-	}
 	lpn := job.MediaDataList.Identifier.Name
-	err = tng.VerifyVehicle(lpn)
+	lane := job.TimeAndPlace.Device.DeviceNumber
+	btid := uuid.New().String()
+	err := integrator.VerifyVehicle(btid, lpn, lane)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"status":      "fail",
-			"error":       err.Error(),
-			"plateNumber": lpn,
-		})
-		err = utils.LogToDb("TnG", "Verify Vehicle Entry Error", data)
-		if err != nil {
-			return
-		}
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
-	go sendFinalMessageCustomer(metadata, FMCReq{
-		Identifier: Identifier{Name: lpn},
-		BusinessTransaction: &BusinessTransaction{
-			ID: uuid.New().String(),
-		},
-		CustomerInformation: &CustomerInformation{
-			Customer: Customer{
-				CustomerId:    encryptLpn(lpn),
-				CustomerGroup: viper.GetString("vendor.name"),
+	go func() {
+		sendFinalMessageCustomer(metadata, FMCReq{
+			Identifier: Identifier{Name: lpn},
+			BusinessTransaction: &BusinessTransaction{
+				ID: btid,
 			},
-		},
-	})
-
-	data, err := json.Marshal(map[string]any{
-		"status":      "success",
-		"error":       err.Error(),
-		"plateNumber": lpn,
-	})
-	err = utils.LogToDb("TnG", "Verify Vehicle Entry Error", data)
-	if err != nil {
-		return
-	}
+			CustomerInformation: &CustomerInformation{
+				Customer: Customer{
+					CustomerId:    encryptLpn(lpn),
+					CustomerGroup: viper.GetString("vendor.name"),
+				},
+			},
+		})
+	}()
 }
 
 func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
@@ -69,34 +48,9 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := utils.LogToDb("TnG", "Leave Loop Entry", []byte("{}"))
-	if err != nil {
-		return
-	}
 	lpn := job.MediaDataList.Identifier.Name
-	err = tng.CreateSession(lpn)
-	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"status":      "fail",
-			"error":       err.Error(),
-			"plateNumber": lpn,
-		})
-		err = utils.LogToDb("TnG", "Leave Loop Entry Error", data)
-		if err != nil {
-			return
-		}
-		go sendEmptyFinalMessage(metadata)
-		return
-	}
-	data, err := json.Marshal(map[string]any{
-		"status":      "success",
-		"error":       err.Error(),
-		"plateNumber": lpn,
-	})
-	err = utils.LogToDb("TnG", "Leave Loop Entry Success", data)
-	if err != nil {
-		return
-	}
+	_ = integrator.CreateSession(lpn)
+	go sendEmptyFinalMessage(metadata)
 }
 
 func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
@@ -104,32 +58,11 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := utils.LogToDb("TnG", "Verify Vehicle Exit", []byte("{}"))
-	if err != nil {
-		return
-	}
 	lpn := job.MediaDataList.Identifier.Name
-	err = tng.VerifyVehicle(lpn)
+	lane := job.TimeAndPlace.Device.DeviceNumber
+	err := integrator.VerifyVehicle("", lpn, lane)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"status":      "fail",
-			"error":       err.Error(),
-			"plateNumber": lpn,
-		})
-		err = utils.LogToDb("TnG", "Verify Vehicle Exit Error", data)
-		if err != nil {
-			return
-		}
 		go sendEmptyFinalMessage(metadata)
-		return
-	}
-	data, err := json.Marshal(map[string]any{
-		"status":      "success",
-		"error":       err.Error(),
-		"plateNumber": lpn,
-	})
-	err = utils.LogToDb("TnG", "Verify Vehicle Exit Success", data)
-	if err != nil {
 		return
 	}
 }
@@ -139,32 +72,10 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := utils.LogToDb("TnG", "PAYMENT", []byte("{}"))
-	if err != nil {
-		return
-	}
 	lpn := job.MediaDataList.Identifier.Name
-	err = tng.EndSession(lpn)
+	err := integrator.EndSession(lpn)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"status":      "fail",
-			"error":       err.Error(),
-			"plateNumber": lpn,
-		})
-		err = utils.LogToDb("TnG", "PAYMENT Error", data)
-		if err != nil {
-			return
-		}
 		go sendEmptyFinalMessage(metadata)
-		return
-	}
-	data, err := json.Marshal(map[string]any{
-		"status":      "success",
-		"error":       err.Error(),
-		"plateNumber": lpn,
-	})
-	err = utils.LogToDb("TnG", "PAYMENT Success", data)
-	if err != nil {
 		return
 	}
 }
@@ -174,32 +85,10 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	err := utils.LogToDb("TnG", "Leave Loop Exit", []byte("{}"))
-	if err != nil {
-		return
-	}
 	lpn := job.MediaDataList.Identifier.Name
-	err = tng.EndSession(lpn)
+	err := integrator.EndSession(lpn)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"status":      "fail",
-			"error":       err.Error(),
-			"plateNumber": lpn,
-		})
-		err = utils.LogToDb("TnG", "Leave Loop Exit Error", data)
-		if err != nil {
-			return
-		}
 		go sendEmptyFinalMessage(metadata)
-		return
-	}
-	data, err := json.Marshal(map[string]any{
-		"status":      "success",
-		"error":       err.Error(),
-		"plateNumber": lpn,
-	})
-	err = utils.LogToDb("TnG", "Leave Loop Exit Success", data)
-	if err != nil {
 		return
 	}
 }
@@ -266,37 +155,13 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		Transport: http.DefaultTransport,
 	}
 
-	data, err := json.Marshal(map[string]any{
-		"message":  "sending empty final message",
-		"device":   metadata.device,
-		"jobId":    metadata.jobId,
-		"facility": metadata.facility,
-	})
-	if err != nil {
-		return
-	}
-	err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
-	if err != nil {
-		return
-	}
-
 	resp, err := client.Do(req)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"message":  "sending empty final message error",
-			"device":   metadata.device,
-			"jobId":    metadata.jobId,
-			"facility": metadata.facility,
-			"error":    err.Error(),
-		})
-		if err != nil {
-			return
-		}
-		err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
 		fmt.Println("Error sending request:", err)
 		return
 	}
 	defer resp.Body.Close()
+	return
 }
 
 func sendEmptyFinalMessage(metadata *RequestMetadata) {
@@ -328,34 +193,12 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	client.Transport = &utils.LoggingRoundTripper{
 		Transport: http.DefaultTransport,
 	}
-
-	data, err := json.Marshal(map[string]any{
-		"message":  "sending empty final message",
-		"device":   metadata.device,
-		"jobId":    metadata.jobId,
-		"facility": metadata.facility,
-	})
-	if err != nil {
-		return
-	}
-	err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
 	if err != nil {
 		return
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		data, err := json.Marshal(map[string]any{
-			"message":  "sending empty final message error",
-			"device":   metadata.device,
-			"jobId":    metadata.jobId,
-			"facility": metadata.facility,
-			"error":    err.Error(),
-		})
-		if err != nil {
-			return
-		}
-		err = utils.LogToDb("OA", "sendEmptyFinalMessage", data)
 		fmt.Println("Error sending request:", err)
 		return
 	}
