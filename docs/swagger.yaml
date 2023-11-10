@@ -17,12 +17,16 @@ definitions:
     type: object
   config.SnbConfig:
     properties:
-      device:
-        type: string
+      devices:
+        items:
+          type: string
+        type: array
       endpoint:
         type: string
-      facility:
-        type: string
+      facilities:
+        items:
+          type: string
+        type: array
     type: object
   oa.CancelJobWrapper:
     properties:

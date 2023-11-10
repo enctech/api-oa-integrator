@@ -12,9 +12,22 @@ returning *;
 -- name: GetConfig :one
 select *
 from snb_config
-where facility = $1
-  and device = $2;
+where facility in ($1)
+  and device in ($2);
 -------------Region S&B Config end---------------
+
+-------------Region OA Transaction start-------------
+-- name: CreateOATransaction :one
+insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra)
+values ($1, $2, $3, $4, $5, $6, $7)
+returning *;
+
+-- name: GetOATransaction :one
+select *
+from oa_transactions
+where businesstransactionid = $1;
+
+-------------Region OA Transaction end-------------
 
 -------------Region Integrator Config start-------------
 -- name: GetIntegratorConfig :one

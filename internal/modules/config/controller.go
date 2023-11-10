@@ -53,8 +53,8 @@ func (con controller) createSnbConfig(c echo.Context) error {
 //	@Router			/config/snb-config [get]
 func (con controller) getSnBConfig(c echo.Context) error {
 	user, err := getSnbConfig(c.Request().Context(), SnbConfig{
-		Facility: c.QueryParam("facility"),
-		Device:   c.QueryParam("device"),
+		Facilities: []string{c.QueryParam("facility")},
+		Devices:    []string{c.QueryParam("device")},
 	})
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")

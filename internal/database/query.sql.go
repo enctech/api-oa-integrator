@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -22,19 +23,19 @@ returning id, endpoint, facility, device
 
 type CreateConfigParams struct {
 	Endpoint sql.NullString
-	Facility sql.NullString
-	Device   sql.NullString
+	Facility []string
+	Device   []string
 }
 
 // -----------Region S&B Config start-------------
 func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, createConfig, arg.Endpoint, arg.Facility, arg.Device)
+	row := q.db.QueryRowContext(ctx, createConfig, arg.Endpoint, pq.Array(arg.Facility), pq.Array(arg.Device))
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
 		&i.Endpoint,
-		&i.Facility,
-		&i.Device,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
 	)
 	return i, err
 }
@@ -66,6 +67,51 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 		&i.Message,
 		&i.Fields,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createOATransaction = `-- name: CreateOATransaction :one
+
+insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra)
+values ($1, $2, $3, $4, $5, $6, $7)
+returning id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, created_at, updated_at
+`
+
+type CreateOATransactionParams struct {
+	Businesstransactionid string
+	Lpn                   sql.NullString
+	Customerid            sql.NullString
+	Jobid                 sql.NullString
+	Facility              sql.NullString
+	Device                sql.NullString
+	Extra                 pqtype.NullRawMessage
+}
+
+// -----------Region S&B Config end---------------
+// -----------Region OA Transaction start-------------
+func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransactionParams) (OaTransaction, error) {
+	row := q.db.QueryRowContext(ctx, createOATransaction,
+		arg.Businesstransactionid,
+		arg.Lpn,
+		arg.Customerid,
+		arg.Jobid,
+		arg.Facility,
+		arg.Device,
+		arg.Extra,
+	)
+	var i OaTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.Businesstransactionid,
+		&i.Lpn,
+		&i.Customerid,
+		&i.Jobid,
+		&i.Facility,
+		&i.Device,
+		&i.Extra,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -110,23 +156,23 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, err
 const getConfig = `-- name: GetConfig :one
 select id, endpoint, facility, device
 from snb_config
-where facility = $1
-  and device = $2
+where facility in ($1)
+  and device in ($2)
 `
 
 type GetConfigParams struct {
-	Facility sql.NullString
-	Device   sql.NullString
+	Facility []string
+	Device   []string
 }
 
 func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, getConfig, arg.Facility, arg.Device)
+	row := q.db.QueryRowContext(ctx, getConfig, pq.Array(arg.Facility), pq.Array(arg.Device))
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
 		&i.Endpoint,
-		&i.Facility,
-		&i.Device,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
 	)
 	return i, err
 }
@@ -138,7 +184,7 @@ from integrator_config
 where client_id = $1
 `
 
-// -----------Region S&B Config end---------------
+// -----------Region OA Transaction end-------------
 // -----------Region Integrator Config start-------------
 func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullString) (IntegratorConfig, error) {
 	row := q.db.QueryRowContext(ctx, getIntegratorConfig, clientID)
@@ -150,6 +196,30 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullStri
 		&i.PlazaID,
 		&i.Url,
 		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getOATransaction = `-- name: GetOATransaction :one
+select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, created_at, updated_at
+from oa_transactions
+where businesstransactionid = $1
+`
+
+func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid string) (OaTransaction, error) {
+	row := q.db.QueryRowContext(ctx, getOATransaction, businesstransactionid)
+	var i OaTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.Businesstransactionid,
+		&i.Lpn,
+		&i.Customerid,
+		&i.Jobid,
+		&i.Facility,
+		&i.Device,
+		&i.Extra,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

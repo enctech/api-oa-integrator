@@ -7,10 +7,13 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+	"github.com/sqlc-dev/pqtype"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -21,18 +24,43 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 	lpn := job.MediaDataList.Identifier.Name
 	lane := job.TimeAndPlace.Device.DeviceNumber
 	btid := uuid.New().String()
-	err := integrator.VerifyVehicle(btid, lpn, lane)
+	customerId := encryptLpn(lpn)
+
+	jsonStr, err := json.Marshal(map[string]any{
+		"steps": "identification",
+	})
 	if err != nil {
+		zap.L().Sugar().Info("Error Marshal ", err)
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	_, err = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: lpn, Valid: true},
+		Customerid:            sql.NullString{String: customerId, Valid: true},
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
+
+	if err != nil {
+		zap.L().Sugar().Info("Error create oa transaction ", err)
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	err = integrator.VerifyVehicle(btid, lpn, lane)
+	if err != nil {
+		zap.L().Sugar().Info("Error integrator.VerifyVehicle ", err)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
 	go func() {
 		sendFinalMessageCustomer(metadata, FMCReq{
-			Identifier: Identifier{Name: lpn},
-			BusinessTransaction: &BusinessTransaction{
-				ID: btid,
-			},
+			Identifier:          Identifier{Name: lpn},
+			BusinessTransaction: &BusinessTransaction{ID: btid},
 			CustomerInformation: &CustomerInformation{
 				Customer: Customer{
 					CustomerId:    encryptLpn(lpn),
@@ -101,8 +129,8 @@ type FMCReq struct {
 
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 	config, err := database.New(database.D()).GetConfig(context.Background(), database.GetConfigParams{
-		Device:   sql.NullString{String: metadata.device, Valid: true},
-		Facility: sql.NullString{String: metadata.facility, Valid: true},
+		Device:   []string{metadata.device},
+		Facility: []string{metadata.facility},
 	})
 
 	if err != nil {
@@ -166,8 +194,8 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 
 func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	config, err := database.New(database.D()).GetConfig(context.Background(), database.GetConfigParams{
-		Device:   sql.NullString{String: metadata.device, Valid: true},
-		Facility: sql.NullString{String: metadata.facility, Valid: true},
+		Device:   []string{metadata.device},
+		Facility: []string{metadata.facility},
 	})
 
 	if err != nil {

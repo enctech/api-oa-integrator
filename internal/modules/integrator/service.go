@@ -11,7 +11,6 @@ import (
 )
 
 func VerifyVehicle(txnId, plateNumber, lane string) error {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
 	if plateNumber == "" {
 		return errors.New("empty plate number")
 	}

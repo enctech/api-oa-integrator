@@ -1,7 +1,7 @@
 package config
 
 type SnbConfig struct {
-	Endpoint string `json:"endpoint"`
-	Facility string `json:"facility"`
-	Device   string `json:"device"`
+	Endpoint   string   `json:"endpoint"`
+	Facilities []string `json:"facilities"`
+	Devices    []string `json:"devices"`
 }

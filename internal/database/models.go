@@ -31,11 +31,24 @@ type Log struct {
 	CreatedAt time.Time
 }
 
+type OaTransaction struct {
+	ID                    uuid.UUID
+	Businesstransactionid string
+	Lpn                   sql.NullString
+	Customerid            sql.NullString
+	Jobid                 sql.NullString
+	Facility              sql.NullString
+	Device                sql.NullString
+	Extra                 pqtype.NullRawMessage
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
 type SnbConfig struct {
 	ID       uuid.UUID
 	Endpoint sql.NullString
-	Facility sql.NullString
-	Device   sql.NullString
+	Facility []string
+	Device   []string
 }
 
 type User struct {

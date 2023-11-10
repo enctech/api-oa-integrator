@@ -415,14 +415,20 @@ const docTemplate = `{
         "config.SnbConfig": {
             "type": "object",
             "properties": {
-                "device": {
-                    "type": "string"
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "endpoint": {
                     "type": "string"
                 },
-                "facility": {
-                    "type": "string"
+                "facilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
