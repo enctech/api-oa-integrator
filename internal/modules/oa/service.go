@@ -276,12 +276,6 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 				ProviderName: vendor.Name.String,
 			},
 		},
-		Reservation: &Reservation{
-			ReservationTariff: ReservationTariff{
-				TariffName:   "Tariff OnlineManipulation",
-				TariffNumber: 34,
-			},
-		},
 		Counting: &counting,
 		MediaDataList: &[]MediaDataList{
 			{

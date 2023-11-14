@@ -165,7 +165,6 @@ type (
 		PaymentInformation  *PaymentInformation  `xml:"paymentInformation"`
 		ProviderInformation *ProviderInformation `xml:"providerInformation"`
 		CustomerInformation *CustomerInformation `xml:"customerInformation"`
-		Reservation         *Reservation         `xml:"reservation"`
 		MediaDataList       *[]MediaDataList     `xml:"mediaDataList"`
 		Counting            *string              `xml:"counting"`
 		BusinessTransaction *BusinessTransaction `xml:"businessTransaction"`
