@@ -25,18 +25,18 @@ func VerifyVehicle(txnId, plateNumber, lane string) error {
 	return nil
 }
 
-func CreateSession(plateNumber string) error {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("CreateSession")
+func PerformTransaction(plateNumber, lane string, amount float64) error {
+	zap.L().Sugar().With("plateNumber", plateNumber).Info("PerformTransaction")
 	if plateNumber == "" {
 		return errors.New("empty plate number")
 	}
-	return nil
-}
-
-func EndSession(plateNumber string) error {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("EndSession")
-	if plateNumber == "" {
-		return errors.New("empty plate number")
+	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+	if err != nil {
+		return err
+	}
+	err = tng.Config{IntegratorConfig: cfg}.PerformTransaction(plateNumber, lane, amount)
+	if err != nil {
+		return err
 	}
 	return nil
 }

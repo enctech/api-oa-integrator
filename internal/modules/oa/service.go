@@ -15,6 +15,7 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 )
 
 func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
@@ -27,14 +28,14 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 	customerId := encryptLpn(lpn)
 
 	jsonStr, err := json.Marshal(map[string]any{
-		"steps": "identification",
+		"steps": "identification_entry_start",
 	})
 	if err != nil {
 		zap.L().Sugar().Info("Error Marshal ", err)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
-	_, err = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+	data, err := database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
 		Facility:              sql.NullString{String: metadata.facility, Valid: true},
@@ -58,13 +59,30 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 	}
 
 	go func() {
+		cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+		if err != nil {
+			go sendEmptyFinalMessage(metadata)
+			return
+		}
+		jsonStr, err := json.Marshal(map[string]any{
+			"steps": "identification_entry_done",
+		})
+		if err != nil {
+			zap.L().Sugar().Info("Error Marshal ", err)
+			go sendEmptyFinalMessage(metadata)
+			return
+		}
+		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+			Businesstransactionid: data.Businesstransactionid,
+			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		})
 		sendFinalMessageCustomer(metadata, FMCReq{
 			Identifier:          Identifier{Name: lpn},
 			BusinessTransaction: &BusinessTransaction{ID: btid},
 			CustomerInformation: &CustomerInformation{
 				Customer: Customer{
-					CustomerId:    encryptLpn(lpn),
-					CustomerGroup: viper.GetString("vendor.name"),
+					CustomerId:    data.Customerid.String,
+					CustomerGroup: cfg.Name.String,
 				},
 			},
 		})
@@ -75,9 +93,29 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 	if job.JobType != "LEAVE_LOOP" || job.TimeAndPlace.Device.DeviceType != "ENTRY" {
 		return
 	}
+	if job.BusinessTransaction == nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
 
-	lpn := job.MediaDataList.Identifier.Name
-	_ = integrator.CreateSession(lpn)
+	if job.BusinessTransaction.ID == "" {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	jsonStr, err := json.Marshal(map[string]any{
+		"steps": "leave_loop_entry_done",
+	})
+
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	_, _ = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		Businesstransactionid: job.BusinessTransaction.ID,
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
 	go sendEmptyFinalMessage(metadata)
 }
 
@@ -86,13 +124,41 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	lpn := job.MediaDataList.Identifier.Name
-	lane := job.TimeAndPlace.Device.DeviceNumber
-	err := integrator.VerifyVehicle("", lpn, lane)
+	if job.BusinessTransaction == nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	if job.BusinessTransaction.ID == "" {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	jsonStr, err := json.Marshal(map[string]any{
+		"steps": "identification_exit_done",
+	})
+
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
+
+	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		Businesstransactionid: job.BusinessTransaction.ID,
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
+
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	sendFinalMessageCustomer(metadata, FMCReq{
+		Identifier:          Identifier{Name: oaTxn.Lpn.String},
+		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
+		CustomerInformation: &CustomerInformation{Customer: job.CustomerInformation.Customer},
+		PaymentInformation:  BuildPaymentInformation(nil),
+	})
 }
 
 func handlePaymentExit(job *Job, metadata *RequestMetadata) {
@@ -100,12 +166,57 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	lpn := job.MediaDataList.Identifier.Name
-	err := integrator.EndSession(lpn)
+	jsonStr, err := json.Marshal(map[string]any{
+		"steps": "payment_exit_start",
+	})
+
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
+
+	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		Businesstransactionid: job.BusinessTransaction.ID,
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
+
+	lpn := job.MediaDataList.Identifier.Name
+	lane := job.TimeAndPlace.Device.DeviceNumber
+	amount, err := strconv.ParseFloat(job.PaymentInformation.PayedAmount.Amount, 64)
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	err = integrator.PerformTransaction(lpn, lane, amount)
+	if err != nil {
+		jsonStr, err = json.Marshal(map[string]any{
+			"steps": "payment_exit_error",
+			"error": err.Error(),
+		})
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+	jsonStr, err = json.Marshal(map[string]any{
+		"steps": "payment_exit_done",
+	})
+
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		Businesstransactionid: job.BusinessTransaction.ID,
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
+
+	sendFinalMessageCustomer(metadata, FMCReq{
+		Identifier:          Identifier{Name: oaTxn.Lpn.String},
+		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
+		CustomerInformation: &CustomerInformation{Customer: job.CustomerInformation.Customer},
+		PaymentInformation:  BuildPaymentInformation(&PayedAmount{VatRate: job.PaymentInformation.PayedAmount.VatRate, Amount: job.PaymentInformation.PayedAmount.Amount}),
+	})
 }
 
 func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
@@ -114,7 +225,22 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	lpn := job.MediaDataList.Identifier.Name
-	err := integrator.EndSession(lpn)
+	lane := job.TimeAndPlace.Device.DeviceNumber
+
+	oaTxn, err := database.New(database.D()).GetOATransaction(context.Background(), job.BusinessTransaction.ID)
+
+	var extra map[string]any
+
+	err = json.Unmarshal(oaTxn.Extra.RawMessage, &extra)
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	if extra["steps"] != "payment_exit_done" {
+		err = integrator.PerformTransaction(lpn, lane, 0.00)
+	}
+
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
@@ -122,6 +248,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 }
 
 type FMCReq struct {
+	PaymentInformation  *PaymentInformation
 	BusinessTransaction *BusinessTransaction
 	CustomerInformation *CustomerInformation
 	Identifier          Identifier
@@ -138,15 +265,15 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
+	vendor, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+
 	counting := "RESERVED"
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{
-		PaymentInformation: &PaymentInformation{
-			PaymentLocation: "PAY_LOCAL",
-		},
+		PaymentInformation: in.PaymentInformation,
 		ProviderInformation: &ProviderInformation{
 			Provider: Provider{
 				ProviderId:   viper.GetString("vendor.id"),
-				ProviderName: viper.GetString("vendor.name"),
+				ProviderName: vendor.Name.String,
 			},
 		},
 		Reservation: &Reservation{

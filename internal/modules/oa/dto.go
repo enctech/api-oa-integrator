@@ -73,7 +73,8 @@ type Job struct {
 	JobId   struct {
 		ID string `xml:"id"`
 	} `xml:"jobId"`
-	MediaDataList struct {
+	BusinessTransaction *BusinessTransaction `xml:"businessTransaction"`
+	MediaDataList       struct {
 		MediaType  string `xml:"mediaType"`
 		Identifier struct {
 			Name string `xml:"name"`
@@ -99,14 +100,23 @@ type Job struct {
 	} `xml:"timeAndPlace"`
 	ProviderInformation struct {
 		Provider struct {
-			ProviderId string `xml:"providerId"`
+			ProviderId   string `xml:"providerId"`
+			ProviderName string `xml:"providerName"`
 		} `xml:"provider"`
 	} `xml:"providerInformation"`
+	CustomerInformation *CustomerInformation `xml:"customerInformation"`
+	PaymentInformation  *PaymentInformation  `xml:"paymentInformation"`
 }
 
 type (
 	PaymentInformation struct {
-		PaymentLocation string `xml:"paymentLocation"`
+		PaymentLocation string       `xml:"paymentLocation"`
+		PayedAmount     *PayedAmount `xml:"payedAmount"`
+	}
+
+	PayedAmount struct {
+		Amount  string `xml:"amount"`
+		VatRate string `xml:"vatRate"`
 	}
 
 	Provider struct {

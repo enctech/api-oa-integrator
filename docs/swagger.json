@@ -424,6 +424,14 @@
                 }
             }
         },
+        "oa.BusinessTransaction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "oa.CancelJobWrapper": {
             "type": "object",
             "properties": {
@@ -456,6 +464,28 @@
                 }
             }
         },
+        "oa.Customer": {
+            "type": "object",
+            "properties": {
+                "customerGroup": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                }
+            }
+        },
+        "oa.CustomerInformation": {
+            "type": "object",
+            "properties": {
+                "customer": {
+                    "$ref": "#/definitions/oa.Customer"
+                }
+            }
+        },
         "oa.FinalMessageSB": {
             "type": "object",
             "properties": {
@@ -478,6 +508,12 @@
         "oa.Job": {
             "type": "object",
             "properties": {
+                "businessTransaction": {
+                    "$ref": "#/definitions/oa.BusinessTransaction"
+                },
+                "customerInformation": {
+                    "$ref": "#/definitions/oa.CustomerInformation"
+                },
                 "jobId": {
                     "type": "object",
                     "properties": {
@@ -505,6 +541,9 @@
                         }
                     }
                 },
+                "paymentInformation": {
+                    "$ref": "#/definitions/oa.PaymentInformation"
+                },
                 "providerInformation": {
                     "type": "object",
                     "properties": {
@@ -512,6 +551,9 @@
                             "type": "object",
                             "properties": {
                                 "providerId": {
+                                    "type": "string"
+                                },
+                                "providerName": {
                                     "type": "string"
                                 }
                             }
@@ -594,6 +636,28 @@
                             "type": "string"
                         }
                     }
+                }
+            }
+        },
+        "oa.PayedAmount": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "vatRate": {
+                    "type": "string"
+                }
+            }
+        },
+        "oa.PaymentInformation": {
+            "type": "object",
+            "properties": {
+                "payedAmount": {
+                    "$ref": "#/definitions/oa.PayedAmount"
+                },
+                "paymentLocation": {
+                    "type": "string"
                 }
             }
         },

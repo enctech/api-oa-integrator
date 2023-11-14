@@ -28,6 +28,11 @@ definitions:
           type: string
         type: array
     type: object
+  oa.BusinessTransaction:
+    properties:
+      id:
+        type: string
+    type: object
   oa.CancelJobWrapper:
     properties:
       cancel:
@@ -48,6 +53,20 @@ definitions:
           type: string
         type: array
     type: object
+  oa.Customer:
+    properties:
+      customerGroup:
+        type: string
+      customerId:
+        type: string
+      customerName:
+        type: string
+    type: object
+  oa.CustomerInformation:
+    properties:
+      customer:
+        $ref: '#/definitions/oa.Customer'
+    type: object
   oa.FinalMessageSB:
     properties:
       finalState:
@@ -62,6 +81,10 @@ definitions:
     type: object
   oa.Job:
     properties:
+      businessTransaction:
+        $ref: '#/definitions/oa.BusinessTransaction'
+      customerInformation:
+        $ref: '#/definitions/oa.CustomerInformation'
       jobId:
         properties:
           id:
@@ -79,11 +102,15 @@ definitions:
           mediaType:
             type: string
         type: object
+      paymentInformation:
+        $ref: '#/definitions/oa.PaymentInformation'
       providerInformation:
         properties:
           provider:
             properties:
               providerId:
+                type: string
+              providerName:
                 type: string
             type: object
         type: object
@@ -135,6 +162,20 @@ definitions:
           mediaType:
             type: string
         type: object
+    type: object
+  oa.PayedAmount:
+    properties:
+      amount:
+        type: string
+      vatRate:
+        type: string
+    type: object
+  oa.PaymentInformation:
+    properties:
+      payedAmount:
+        $ref: '#/definitions/oa.PayedAmount'
+      paymentLocation:
+        type: string
     type: object
   oa.VersionRequestWrapper:
     properties:

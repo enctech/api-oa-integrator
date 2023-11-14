@@ -179,7 +179,7 @@ func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
 
-select id, client_id, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
+select id, client_id, name, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
 from integrator_config
 where client_id = $1
 `
@@ -192,6 +192,7 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullStri
 	err := row.Scan(
 		&i.ID,
 		&i.ClientID,
+		&i.Name,
 		&i.SpID,
 		&i.PlazaID,
 		&i.Url,
@@ -240,6 +241,54 @@ func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, e
 		&i.Username,
 		&i.Password,
 		&i.Permission,
+	)
+	return i, err
+}
+
+const updateOATransaction = `-- name: UpdateOATransaction :one
+update oa_transactions
+set lpn        = coalesce($2, lpn),
+    customerid = coalesce($3, customerid),
+    jobid      = coalesce($4, jobid),
+    facility   = coalesce($5, facility),
+    device     = coalesce($6, device),
+    extra      = coalesce($7, extra)
+where businesstransactionid = $1
+returning id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, created_at, updated_at
+`
+
+type UpdateOATransactionParams struct {
+	Businesstransactionid string
+	Lpn                   sql.NullString
+	Customerid            sql.NullString
+	Jobid                 sql.NullString
+	Facility              sql.NullString
+	Device                sql.NullString
+	Extra                 pqtype.NullRawMessage
+}
+
+func (q *Queries) UpdateOATransaction(ctx context.Context, arg UpdateOATransactionParams) (OaTransaction, error) {
+	row := q.db.QueryRowContext(ctx, updateOATransaction,
+		arg.Businesstransactionid,
+		arg.Lpn,
+		arg.Customerid,
+		arg.Jobid,
+		arg.Facility,
+		arg.Device,
+		arg.Extra,
+	)
+	var i OaTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.Businesstransactionid,
+		&i.Lpn,
+		&i.Customerid,
+		&i.Jobid,
+		&i.Facility,
+		&i.Device,
+		&i.Extra,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

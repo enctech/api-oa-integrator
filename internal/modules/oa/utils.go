@@ -2,14 +2,23 @@ package oa
 
 import (
 	"fmt"
-	"strings"
+	"hash/crc32"
 )
 
 func encryptLpn(in string) string {
-	encoded := fmt.Sprintf("%08x", in)
+	// Use CRC32 for simplicity
+	crc := crc32.ChecksumIEEE([]byte(in))
 
-	// Ensure it's exactly 8 digits by truncating or padding
-	encoded = encoded[:8]
+	// Take the modulus to get an 8-digit number
+	encrypted := crc % 100000000
 
-	return strings.ToUpper(encoded)
+	// Format as an 8-digit number
+	return fmt.Sprintf("%08d", encrypted)
+}
+
+func BuildPaymentInformation(in *PayedAmount) *PaymentInformation {
+	return &PaymentInformation{
+		PayedAmount:     in,
+		PaymentLocation: "PAY_LOCAL",
+	}
 }

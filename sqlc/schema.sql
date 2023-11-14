@@ -27,6 +27,7 @@ create table integrator_config
 (
     id                   uuid primary key,
     client_id            varchar,
+    name            varchar,
     sp_id                varchar,
     plaza_id             varchar,
     url                  varchar,

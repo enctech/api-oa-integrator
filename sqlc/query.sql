@@ -27,6 +27,17 @@ select *
 from oa_transactions
 where businesstransactionid = $1;
 
+-- name: UpdateOATransaction :one
+update oa_transactions
+set lpn        = coalesce($2, lpn),
+    customerid = coalesce($3, customerid),
+    jobid      = coalesce($4, jobid),
+    facility   = coalesce($5, facility),
+    device     = coalesce($6, device),
+    extra      = coalesce($7, extra)
+where businesstransactionid = $1
+returning *;
+
 -------------Region OA Transaction end-------------
 
 -------------Region Integrator Config start-------------

@@ -432,6 +432,14 @@ const docTemplate = `{
                 }
             }
         },
+        "oa.BusinessTransaction": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "oa.CancelJobWrapper": {
             "type": "object",
             "properties": {
@@ -464,6 +472,28 @@ const docTemplate = `{
                 }
             }
         },
+        "oa.Customer": {
+            "type": "object",
+            "properties": {
+                "customerGroup": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                }
+            }
+        },
+        "oa.CustomerInformation": {
+            "type": "object",
+            "properties": {
+                "customer": {
+                    "$ref": "#/definitions/oa.Customer"
+                }
+            }
+        },
         "oa.FinalMessageSB": {
             "type": "object",
             "properties": {
@@ -486,6 +516,12 @@ const docTemplate = `{
         "oa.Job": {
             "type": "object",
             "properties": {
+                "businessTransaction": {
+                    "$ref": "#/definitions/oa.BusinessTransaction"
+                },
+                "customerInformation": {
+                    "$ref": "#/definitions/oa.CustomerInformation"
+                },
                 "jobId": {
                     "type": "object",
                     "properties": {
@@ -513,6 +549,9 @@ const docTemplate = `{
                         }
                     }
                 },
+                "paymentInformation": {
+                    "$ref": "#/definitions/oa.PaymentInformation"
+                },
                 "providerInformation": {
                     "type": "object",
                     "properties": {
@@ -520,6 +559,9 @@ const docTemplate = `{
                             "type": "object",
                             "properties": {
                                 "providerId": {
+                                    "type": "string"
+                                },
+                                "providerName": {
                                     "type": "string"
                                 }
                             }
@@ -602,6 +644,28 @@ const docTemplate = `{
                             "type": "string"
                         }
                     }
+                }
+            }
+        },
+        "oa.PayedAmount": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string"
+                },
+                "vatRate": {
+                    "type": "string"
+                }
+            }
+        },
+        "oa.PaymentInformation": {
+            "type": "object",
+            "properties": {
+                "payedAmount": {
+                    "$ref": "#/definitions/oa.PayedAmount"
+                },
+                "paymentLocation": {
+                    "type": "string"
                 }
             }
         },
