@@ -12,7 +12,6 @@ func createSignature(filePath string) string {
 	if err != nil {
 		return ""
 	}
-	fmt.Println(getwd)
 	fileData, err := os.ReadFile(fmt.Sprintf("%s/%s", getwd, filePath))
 	if err != nil {
 		fmt.Println("Error reading file:", err)

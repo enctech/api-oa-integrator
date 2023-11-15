@@ -41,6 +41,8 @@ type OaTransaction struct {
 	Facility              sql.NullString
 	Device                sql.NullString
 	Extra                 pqtype.NullRawMessage
+	EntryLane             sql.NullString
+	ExitLane              sql.NullString
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 }

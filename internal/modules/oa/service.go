@@ -11,6 +11,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"github.com/sqlc-dev/pqtype"
 	"go.uber.org/zap"
@@ -18,7 +19,7 @@ import (
 	"strconv"
 )
 
-func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
+func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetadata) {
 	if job.JobType != "IDENTIFICATION" || job.TimeAndPlace.Device.DeviceType != "ENTRY" {
 		return
 	}
@@ -43,6 +44,7 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 		Lpn:                   sql.NullString{String: lpn, Valid: true},
 		Customerid:            sql.NullString{String: customerId, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: lane, Valid: true},
 	})
 
 	if err != nil {
@@ -87,6 +89,11 @@ func handleIdentificationEntry(job *Job, metadata *RequestMetadata) {
 			},
 		})
 	}()
+
+	if c.Request().Header.Get("istest") != "" {
+		c.Response().Header().Set("btid", btid)
+		c.Response().Header().Set("customerId", data.Customerid.String)
+	}
 }
 
 func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
@@ -143,9 +150,11 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	lane := job.TimeAndPlace.Device.DeviceNumber
 	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
 		Businesstransactionid: job.BusinessTransaction.ID,
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		ExitLane:              sql.NullString{String: lane, Valid: true},
 	})
 
 	if err != nil {
@@ -175,20 +184,20 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	lpn := job.MediaDataList.Identifier.Name
+
 	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
 		Businesstransactionid: job.BusinessTransaction.ID,
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
-	lpn := job.MediaDataList.Identifier.Name
-	lane := job.TimeAndPlace.Device.DeviceNumber
 	amount, err := strconv.ParseFloat(job.PaymentInformation.PayedAmount.Amount, 64)
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
-	err = integrator.PerformTransaction(lpn, lane, amount)
+	err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amount)
 	if err != nil {
 		jsonStr, err = json.Marshal(map[string]any{
 			"steps": "payment_exit_error",
@@ -220,12 +229,11 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 }
 
 func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
-	if job.JobType != "LEAVE_LOOP" && job.TimeAndPlace.Device.DeviceType != "EXIT" {
+	if job.JobType != "LEAVE_LOOP" || job.TimeAndPlace.Device.DeviceType != "EXIT" {
 		return
 	}
 
 	lpn := job.MediaDataList.Identifier.Name
-	lane := job.TimeAndPlace.Device.DeviceNumber
 
 	oaTxn, err := database.New(database.D()).GetOATransaction(context.Background(), job.BusinessTransaction.ID)
 
@@ -238,7 +246,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	if extra["steps"] != "payment_exit_done" {
-		err = integrator.PerformTransaction(lpn, lane, 0.00)
+		err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
 	}
 
 	if err != nil {

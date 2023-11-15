@@ -191,7 +191,7 @@ func (con controller) createJob(c echo.Context) error {
 			ConfirmationStatus:       "OK",
 		})
 	}
-	handleIdentificationEntry(req, rm)
+	handleIdentificationEntry(c, req, rm)
 	handleLeaveLoopEntry(req, rm)
 	handleIdentificationExit(req, rm)
 	handlePaymentExit(req, rm)

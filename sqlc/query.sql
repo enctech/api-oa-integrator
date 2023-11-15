@@ -18,8 +18,9 @@ where facility in ($1)
 
 -------------Region OA Transaction start-------------
 -- name: CreateOATransaction :one
-insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra)
-values ($1, $2, $3, $4, $5, $6, $7)
+insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane,
+                             exit_lane)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 returning *;
 
 -- name: GetOATransaction :one
@@ -34,7 +35,8 @@ set lpn        = coalesce($2, lpn),
     jobid      = coalesce($4, jobid),
     facility   = coalesce($5, facility),
     device     = coalesce($6, device),
-    extra      = coalesce($7, extra)
+    extra      = coalesce($7, extra),
+    exit_lane  = coalesce($8, extra)
 where businesstransactionid = $1
 returning *;
 

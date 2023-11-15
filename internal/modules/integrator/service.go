@@ -8,6 +8,7 @@ import (
 	"errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"time"
 )
 
 func VerifyVehicle(txnId, plateNumber, lane string) error {
@@ -25,7 +26,7 @@ func VerifyVehicle(txnId, plateNumber, lane string) error {
 	return nil
 }
 
-func PerformTransaction(plateNumber, lane string, amount float64) error {
+func PerformTransaction(plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) error {
 	zap.L().Sugar().With("plateNumber", plateNumber).Info("PerformTransaction")
 	if plateNumber == "" {
 		return errors.New("empty plate number")
@@ -34,7 +35,13 @@ func PerformTransaction(plateNumber, lane string, amount float64) error {
 	if err != nil {
 		return err
 	}
-	err = tng.Config{IntegratorConfig: cfg}.PerformTransaction(plateNumber, lane, amount)
+	err = tng.Config{IntegratorConfig: cfg}.PerformTransaction(tng.TransactionArg{
+		Amount:    amount,
+		ExitLane:  exitLane,
+		LPN:       plateNumber,
+		EntryLane: entryLane,
+		EntryTime: entryAt,
+	})
 	if err != nil {
 		return err
 	}

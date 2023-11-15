@@ -4,8 +4,10 @@ import (
 	"api-oa-integrator/internal/modules/auth"
 	"api-oa-integrator/internal/modules/config"
 	"api-oa-integrator/internal/modules/oa"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"net/http"
 )
@@ -22,5 +24,5 @@ func InitServer() {
 	oa.InitController(e)
 	auth.InitController(e)
 	config.InitController(e)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
 }

@@ -27,13 +27,19 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 
 	// Perform the actual HTTP request
 	resp, err := lrt.Transport.RoundTrip(req)
+	responseLogger := zap.L().Sugar().
+		With("method", req.Method).
+		With("url", req.URL.String())
+	if req.Body != nil {
+		responseLogger = responseLogger.With("body", requestBody.String())
+	}
 	if err != nil {
+		responseLogger.With("error", err).
+			Info("HTTP Response")
 		return nil, err
 	}
 
-	responseLogger := zap.L().Sugar().
-		With("method", req.Method).
-		With("url", req.URL.String()).
+	responseLogger = responseLogger.
 		With("status", resp.Status)
 
 	// Capture the response body
