@@ -87,6 +87,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 					CustomerGroup: cfg.Name.String,
 				},
 			},
+			PaymentInformation: BuildPaymentInformation(nil),
 		})
 	}()
 
@@ -162,12 +163,22 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	sendFinalMessageCustomer(metadata, FMCReq{
-		Identifier:          Identifier{Name: oaTxn.Lpn.String},
-		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
-		CustomerInformation: &CustomerInformation{Customer: job.CustomerInformation.Customer},
-		PaymentInformation:  BuildPaymentInformation(nil),
-	})
+	go func() {
+		cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+		if err != nil {
+			go sendEmptyFinalMessage(metadata)
+			return
+		}
+		sendFinalMessageCustomer(metadata, FMCReq{
+			Identifier:          Identifier{Name: oaTxn.Lpn.String},
+			BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
+			CustomerInformation: &CustomerInformation{Customer: Customer{
+				CustomerId:    oaTxn.Customerid.String,
+				CustomerGroup: cfg.Name.String,
+			}},
+			PaymentInformation: BuildPaymentInformation(nil),
+		})
+	}()
 }
 
 func handlePaymentExit(job *Job, metadata *RequestMetadata) {
