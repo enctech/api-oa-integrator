@@ -47,11 +47,3 @@ func PerformTransaction(plateNumber, entryLane, exitLane string, entryAt time.Ti
 	}
 	return nil
 }
-
-func AcknowledgeUserExit(plateNumber string) error {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("AcknowledgeUserExit")
-	if plateNumber == "" {
-		return errors.New("empty plate number")
-	}
-	return nil
-}

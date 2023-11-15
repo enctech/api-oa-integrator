@@ -27,6 +27,8 @@ definitions:
         items:
           type: string
         type: array
+      id:
+        type: string
     type: object
   oa.BusinessTransaction:
     properties:
@@ -266,23 +268,12 @@ paths:
       consumes:
       - application/json
       description: Get configuration required for OA to works.
-      parameters:
-      - description: Facility
-        in: query
-        name: facility
-        required: true
-        type: string
-      - description: Device
-        in: query
-        name: device
-        required: true
-        type: string
       produces:
       - application/json
       responses: {}
       security:
       - Bearer: []
-      summary: Get config for snb
+      summary: Get all config for snb
       tags:
       - config
     post:
@@ -295,6 +286,66 @@ paths:
         name: request
         schema:
           $ref: '#/definitions/config.SnbConfig'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Create config for snb
+      tags:
+      - config
+  /config/snb-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Get configuration required for OA to works.
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Get config for snb
+      tags:
+      - config
+    get:
+      consumes:
+      - application/json
+      description: Get configuration required for OA to works.
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Get config for snb
+      tags:
+      - config
+    put:
+      consumes:
+      - application/json
+      description: Create configuration required for OA to works.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/config.SnbConfig'
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses: {}

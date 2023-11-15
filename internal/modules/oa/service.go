@@ -285,7 +285,7 @@ type FMCReq struct {
 }
 
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
-	config, err := database.New(database.D()).GetConfig(context.Background(), database.GetConfigParams{
+	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   []string{metadata.device},
 		Facility: []string{metadata.facility},
 	})
@@ -344,7 +344,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 }
 
 func sendEmptyFinalMessage(metadata *RequestMetadata) {
-	config, err := database.New(database.D()).GetConfig(context.Background(), database.GetConfigParams{
+	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   []string{metadata.device},
 		Facility: []string{metadata.facility},
 	})

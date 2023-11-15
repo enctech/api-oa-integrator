@@ -122,23 +122,7 @@ const docTemplate = `{
                 "tags": [
                     "config"
                 ],
-                "summary": "Get config for snb",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Facility",
-                        "name": "facility",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Device",
-                        "name": "device",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
+                "summary": "Get all config for snb",
                 "responses": {}
             },
             "post": {
@@ -166,6 +150,100 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/config.SnbConfig"
                         }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/config/snb-config/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get configuration required for OA to works.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get config for snb",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to works.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Create config for snb",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/config.SnbConfig"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get configuration required for OA to works.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get config for snb",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {}
@@ -429,6 +507,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "id": {
+                    "type": "string"
                 }
             }
         },

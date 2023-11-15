@@ -15,31 +15,6 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
-const createConfig = `-- name: CreateConfig :one
-insert into snb_config (endpoint, facility, device)
-values ($1, $2, $3)
-returning id, endpoint, facility, device
-`
-
-type CreateConfigParams struct {
-	Endpoint sql.NullString
-	Facility []string
-	Device   []string
-}
-
-// -----------Region S&B Config start-------------
-func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, createConfig, arg.Endpoint, pq.Array(arg.Facility), pq.Array(arg.Device))
-	var i SnbConfig
-	err := row.Scan(
-		&i.ID,
-		&i.Endpoint,
-		pq.Array(&i.Facility),
-		pq.Array(&i.Device),
-	)
-	return i, err
-}
-
 const createLog = `-- name: CreateLog :one
 INSERT INTO logs (level, message, fields, created_at)
 VALUES ($1, $2, $3, $4)
@@ -123,6 +98,31 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 	return i, err
 }
 
+const createSnbConfig = `-- name: CreateSnbConfig :one
+insert into snb_config (endpoint, facility, device)
+values ($1, $2, $3)
+returning id, endpoint, facility, device
+`
+
+type CreateSnbConfigParams struct {
+	Endpoint sql.NullString
+	Facility []string
+	Device   []string
+}
+
+// -----------Region S&B Config start-------------
+func (q *Queries) CreateSnbConfig(ctx context.Context, arg CreateSnbConfigParams) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, createSnbConfig, arg.Endpoint, pq.Array(arg.Facility), pq.Array(arg.Device))
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 
 insert into users (username, password, permission)
@@ -150,6 +150,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteSnbConfig = `-- name: DeleteSnbConfig :execresult
+delete
+from snb_config
+where id = $1
+`
+
+func (q *Queries) DeleteSnbConfig(ctx context.Context, id uuid.UUID) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteSnbConfig, id)
+}
+
 const deleteUser = `-- name: DeleteUser :execresult
 delete
 from users
@@ -160,28 +170,37 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteUser, id)
 }
 
-const getConfig = `-- name: GetConfig :one
+const getAllSnbConfig = `-- name: GetAllSnbConfig :many
 select id, endpoint, facility, device
 from snb_config
-where facility in ($1)
-  and device in ($2)
 `
 
-type GetConfigParams struct {
-	Facility []string
-	Device   []string
-}
-
-func (q *Queries) GetConfig(ctx context.Context, arg GetConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, getConfig, pq.Array(arg.Facility), pq.Array(arg.Device))
-	var i SnbConfig
-	err := row.Scan(
-		&i.ID,
-		&i.Endpoint,
-		pq.Array(&i.Facility),
-		pq.Array(&i.Device),
-	)
-	return i, err
+func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
+	rows, err := q.db.QueryContext(ctx, getAllSnbConfig)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SnbConfig
+	for rows.Next() {
+		var i SnbConfig
+		if err := rows.Scan(
+			&i.ID,
+			&i.Endpoint,
+			pq.Array(&i.Facility),
+			pq.Array(&i.Device),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
@@ -232,6 +251,48 @@ func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid st
 		&i.ExitLane,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSnbConfig = `-- name: GetSnbConfig :one
+select id, endpoint, facility, device
+from snb_config
+where id = $1
+`
+
+func (q *Queries) GetSnbConfig(ctx context.Context, id uuid.UUID) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, getSnbConfig, id)
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
+	)
+	return i, err
+}
+
+const getSnbConfigByFacilityAndDevice = `-- name: GetSnbConfigByFacilityAndDevice :one
+select id, endpoint, facility, device
+from snb_config
+where facility in ($1)
+  and device in ($2)
+`
+
+type GetSnbConfigByFacilityAndDeviceParams struct {
+	Facility []string
+	Device   []string
+}
+
+func (q *Queries) GetSnbConfigByFacilityAndDevice(ctx context.Context, arg GetSnbConfigByFacilityAndDeviceParams) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, getSnbConfigByFacilityAndDevice, pq.Array(arg.Facility), pq.Array(arg.Device))
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
 	)
 	return i, err
 }
@@ -303,6 +364,39 @@ func (q *Queries) UpdateOATransaction(ctx context.Context, arg UpdateOATransacti
 		&i.ExitLane,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateSnbConfig = `-- name: UpdateSnbConfig :one
+update snb_config
+set endpoint = coalesce($2, endpoint),
+    facility = coalesce($3, facility),
+    device   = coalesce($4, device)
+where id = $1
+returning id, endpoint, facility, device
+`
+
+type UpdateSnbConfigParams struct {
+	ID       uuid.UUID
+	Endpoint sql.NullString
+	Facility []string
+	Device   []string
+}
+
+func (q *Queries) UpdateSnbConfig(ctx context.Context, arg UpdateSnbConfigParams) (SnbConfig, error) {
+	row := q.db.QueryRowContext(ctx, updateSnbConfig,
+		arg.ID,
+		arg.Endpoint,
+		pq.Array(arg.Facility),
+		pq.Array(arg.Device),
+	)
+	var i SnbConfig
+	err := row.Scan(
+		&i.ID,
+		&i.Endpoint,
+		pq.Array(&i.Facility),
+		pq.Array(&i.Device),
 	)
 	return i, err
 }

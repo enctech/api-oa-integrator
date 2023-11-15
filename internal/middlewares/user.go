@@ -34,7 +34,7 @@ func AdminOnlyMiddleware() echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			tokenString := c.Request().Header.Get("Authorization")
 
-			token, err := jwt.Parse(strings.Replace(tokenString, "bearer ", "", 1), func(token *jwt.Token) (interface{}, error) {
+			token, err := jwt.Parse(strings.Replace(tokenString, "Bearer ", "", 1), func(token *jwt.Token) (interface{}, error) {
 				return []byte(viper.GetString("app.secret")), nil
 			})
 

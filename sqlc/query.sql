@@ -4,16 +4,38 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -------------Region S&B Config start-------------
--- name: CreateConfig :one
+-- name: CreateSnbConfig :one
 insert into snb_config (endpoint, facility, device)
 values ($1, $2, $3)
 returning *;
 
--- name: GetConfig :one
+-- name: UpdateSnbConfig :one
+update snb_config
+set endpoint = coalesce($2, endpoint),
+    facility = coalesce($3, facility),
+    device   = coalesce($4, device)
+where id = $1
+returning *;
+
+-- name: GetAllSnbConfig :many
+select *
+from snb_config;
+
+-- name: GetSnbConfig :one
+select *
+from snb_config
+where id = $1;
+
+-- name: GetSnbConfigByFacilityAndDevice :one
 select *
 from snb_config
 where facility in ($1)
   and device in ($2);
+
+-- name: DeleteSnbConfig :execresult
+delete
+from snb_config
+where id = $1;
 -------------Region S&B Config end---------------
 
 -------------Region OA Transaction start-------------
