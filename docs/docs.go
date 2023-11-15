@@ -549,8 +549,8 @@ const docTemplate = `{
                         }
                     }
                 },
-                "paymentInformation": {
-                    "$ref": "#/definitions/oa.PaymentInformation"
+                "paymentData": {
+                    "$ref": "#/definitions/oa.PaymentData"
                 },
                 "providerInformation": {
                     "type": "object",
@@ -647,7 +647,7 @@ const docTemplate = `{
                 }
             }
         },
-        "oa.PayedAmount": {
+        "oa.OriginalAmount": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -658,14 +658,25 @@ const docTemplate = `{
                 }
             }
         },
-        "oa.PaymentInformation": {
+        "oa.PaymentData": {
             "type": "object",
             "properties": {
-                "payedAmount": {
-                    "$ref": "#/definitions/oa.PayedAmount"
+                "originalAmount": {
+                    "$ref": "#/definitions/oa.OriginalAmount"
                 },
-                "paymentLocation": {
-                    "type": "string"
+                "remainingAmount": {
+                    "type": "object",
+                    "properties": {
+                        "amount": {
+                            "type": "string"
+                        },
+                        "text": {
+                            "type": "string"
+                        },
+                        "vatRate": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         },

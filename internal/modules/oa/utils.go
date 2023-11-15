@@ -16,9 +16,17 @@ func encryptLpn(in string) string {
 	return fmt.Sprintf("%08d", encrypted)
 }
 
-func BuildPaymentInformation(in *PayedAmount) *PaymentInformation {
+func BuildPaymentInformation(in *PaymentData) *PaymentInformation {
+	if in == nil {
+		return &PaymentInformation{
+			PaymentLocation: "PAY_LOCAL",
+		}
+	}
 	return &PaymentInformation{
-		PayedAmount:     in,
+		PayedAmount: &PayedAmount{
+			Amount:  in.OriginalAmount.Amount,
+			VatRate: in.OriginalAmount.VatRate,
+		},
 		PaymentLocation: "PAY_LOCAL",
 	}
 }

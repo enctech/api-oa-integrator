@@ -36,7 +36,7 @@ set lpn        = coalesce($2, lpn),
     facility   = coalesce($5, facility),
     device     = coalesce($6, device),
     extra      = coalesce($7, extra),
-    exit_lane  = coalesce($8, extra)
+    exit_lane  = coalesce($8, exit_lane)
 where businesstransactionid = $1
 returning *;
 

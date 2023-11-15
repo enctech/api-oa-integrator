@@ -102,8 +102,8 @@ definitions:
           mediaType:
             type: string
         type: object
-      paymentInformation:
-        $ref: '#/definitions/oa.PaymentInformation'
+      paymentData:
+        $ref: '#/definitions/oa.PaymentData'
       providerInformation:
         properties:
           provider:
@@ -163,19 +163,26 @@ definitions:
             type: string
         type: object
     type: object
-  oa.PayedAmount:
+  oa.OriginalAmount:
     properties:
       amount:
         type: string
       vatRate:
         type: string
     type: object
-  oa.PaymentInformation:
+  oa.PaymentData:
     properties:
-      payedAmount:
-        $ref: '#/definitions/oa.PayedAmount'
-      paymentLocation:
-        type: string
+      originalAmount:
+        $ref: '#/definitions/oa.OriginalAmount'
+      remainingAmount:
+        properties:
+          amount:
+            type: string
+          text:
+            type: string
+          vatRate:
+            type: string
+        type: object
     type: object
   oa.VersionRequestWrapper:
     properties:

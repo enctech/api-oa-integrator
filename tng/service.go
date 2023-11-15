@@ -143,8 +143,8 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 				"tranAmt":         in.Amount,
 				"surchargeAmt":    0.00,
 				"surchargeTaxAmt": 0.00,
-				"parkingAmt":      0.00, // not sure what is this.
-				"parkingTaxAmt":   0.00, // not sure what is this.
+				"parkingAmt":      in.Amount, // not sure what is this.
+				"parkingTaxAmt":   0.00,      // not sure what is this.
 				"extendInfo":      extendInfo,
 			},
 		},

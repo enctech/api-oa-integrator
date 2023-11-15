@@ -202,13 +202,14 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
-	amount, err := strconv.ParseFloat(job.PaymentInformation.PayedAmount.Amount, 64)
+	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
+	amountConv := amount / 100
 
-	err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amount)
+	err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amountConv)
 	if err != nil {
 		jsonStr, err = json.Marshal(map[string]any{
 			"steps": "payment_exit_error",
@@ -231,11 +232,21 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
+	var customerInformation *CustomerInformation
+	if job.CustomerInformation != nil && job.CustomerInformation.Customer != (Customer{}) {
+		customerInformation = &CustomerInformation{Customer: job.CustomerInformation.Customer}
+	}
+
 	sendFinalMessageCustomer(metadata, FMCReq{
 		Identifier:          Identifier{Name: oaTxn.Lpn.String},
 		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
-		CustomerInformation: &CustomerInformation{Customer: job.CustomerInformation.Customer},
-		PaymentInformation:  BuildPaymentInformation(&PayedAmount{VatRate: job.PaymentInformation.PayedAmount.VatRate, Amount: job.PaymentInformation.PayedAmount.Amount}),
+		CustomerInformation: customerInformation,
+		PaymentInformation: BuildPaymentInformation(&PaymentData{
+			OriginalAmount: OriginalAmount{
+				VatRate: job.PaymentData.OriginalAmount.VatRate,
+				Amount:  job.PaymentData.OriginalAmount.Amount,
+			},
+		}),
 	})
 }
 

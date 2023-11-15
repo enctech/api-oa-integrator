@@ -105,10 +105,22 @@ type Job struct {
 		} `xml:"provider"`
 	} `xml:"providerInformation"`
 	CustomerInformation *CustomerInformation `xml:"customerInformation"`
-	PaymentInformation  *PaymentInformation  `xml:"paymentInformation"`
+	PaymentData         *PaymentData         `xml:"paymentData"`
 }
 
 type (
+	OriginalAmount struct {
+		Amount  string `xml:"amount"`
+		VatRate string `xml:"vatRate"`
+	}
+	PaymentData struct {
+		OriginalAmount  OriginalAmount `xml:"originalAmount"`
+		RemainingAmount struct {
+			Text    string `xml:",chardata"`
+			Amount  string `xml:"amount"`
+			VatRate string `xml:"vatRate"`
+		} `xml:"remainingAmount"`
+	}
 	PaymentInformation struct {
 		PaymentLocation string       `xml:"paymentLocation"`
 		PayedAmount     *PayedAmount `xml:"payedAmount"`
