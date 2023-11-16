@@ -19,3 +19,20 @@ create trigger set_oa_transaction_updated_timestamp
     on users
     for each row
 execute procedure trigger_set_timestamp();
+
+CREATE OR REPLACE FUNCTION delete_old_oa_transaction_data() RETURNS TRIGGER AS
+$$
+BEGIN
+    DELETE
+    FROM oa_transactions
+    WHERE created_at < NOW() - interval '90 days';
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER oa_old_data_cleanup_trigger
+    AFTER INSERT
+    ON oa_transactions
+    FOR EACH ROW
+EXECUTE FUNCTION delete_old_oa_transaction_data();
