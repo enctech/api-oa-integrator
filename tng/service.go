@@ -120,7 +120,7 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 				"requestId": uuid.New().String(),
 				"timestamp": time.Now().Format(time.RFC3339),
 				"clientId":  c.ClientID.String,
-				"function":  "falcon.device.status",
+				"function":  "falcon.parking.transaction",
 				"version":   viper.GetString("app.version"),
 			},
 			"body": map[string]any{
@@ -134,7 +134,7 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 				"entrySPId":       c.SpID.String,
 				"entryPlazaId":    c.PlazaID.String,
 				"entryLaneId":     in.EntryLane,
-				"appSector":       appSectorParking, //Defaults to 09 (Parking)
+				"appSector":       appSectorParking,
 				"exitTimestamp":   now.Format(time.RFC3339),
 				"exitSPId":        c.SpID.String,
 				"exitPlazaId":     c.PlazaID.String,
@@ -145,7 +145,7 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 				"surchargeTaxAmt": 0.00,
 				"parkingAmt":      in.Amount, // not sure what is this.
 				"parkingTaxAmt":   0.00,      // not sure what is this.
-				"extendInfo":      extendInfo,
+				"extendInfo":      fmt.Sprintf("%v", string(extendInfo)),
 			},
 		},
 		"signature": signature,

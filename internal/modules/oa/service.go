@@ -271,10 +271,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
 	}
 
-	if err != nil {
-		go sendEmptyFinalMessage(metadata)
-		return
-	}
+	go sendEmptyFinalMessage(metadata)
 }
 
 type FMCReq struct {
