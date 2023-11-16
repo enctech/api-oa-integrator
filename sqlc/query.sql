@@ -29,8 +29,8 @@ where id = $1;
 -- name: GetSnbConfigByFacilityAndDevice :one
 select *
 from snb_config
-where facility in ($1)
-  and device in ($2);
+where sqlc.arg(facility)::text = any(facility)
+  and sqlc.arg(device)::text = any(device);
 
 -- name: DeleteSnbConfig :execresult
 delete

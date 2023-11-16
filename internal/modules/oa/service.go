@@ -286,8 +286,8 @@ type FMCReq struct {
 
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
-		Device:   []string{metadata.device},
-		Facility: []string{metadata.facility},
+		Device:   metadata.device,
+		Facility: metadata.facility,
 	})
 
 	if err != nil {
@@ -321,7 +321,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", config.Endpoint.String, bytes.NewBuffer(xmlData))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
@@ -345,8 +345,8 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 
 func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
-		Device:   []string{metadata.device},
-		Facility: []string{metadata.facility},
+		Device:   metadata.device,
+		Facility: metadata.facility,
 	})
 
 	if err != nil {
@@ -360,7 +360,7 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", config.Endpoint.String, bytes.NewBuffer(xmlData))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return

@@ -276,17 +276,17 @@ func (q *Queries) GetSnbConfig(ctx context.Context, id uuid.UUID) (SnbConfig, er
 const getSnbConfigByFacilityAndDevice = `-- name: GetSnbConfigByFacilityAndDevice :one
 select id, endpoint, facility, device
 from snb_config
-where facility in ($1)
-  and device in ($2)
+where $1::text = any(facility)
+  and $2::text = any(device)
 `
 
 type GetSnbConfigByFacilityAndDeviceParams struct {
-	Facility []string
-	Device   []string
+	Facility string
+	Device   string
 }
 
 func (q *Queries) GetSnbConfigByFacilityAndDevice(ctx context.Context, arg GetSnbConfigByFacilityAndDeviceParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, getSnbConfigByFacilityAndDevice, pq.Array(arg.Facility), pq.Array(arg.Device))
+	row := q.db.QueryRowContext(ctx, getSnbConfigByFacilityAndDevice, arg.Facility, arg.Device)
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
