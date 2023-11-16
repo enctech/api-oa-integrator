@@ -128,18 +128,18 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 					"deviceType": deviceTypeLPR,
 					"deviceNo":   in.LPN,
 				},
-				"serialNum":       fmt.Sprintf("3%v%v%v%v0", c.SpID.String, c.PlazaID.String, in.ExitLane, now.Format("20060102150405")),
+				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaID.String, in.ExitLane, now.Format("20060102150405")),
 				"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
 				"entryTimestamp":  in.EntryTime,
 				"entrySPId":       c.SpID.String,
 				"entryPlazaId":    c.PlazaID.String,
 				"entryLaneId":     in.EntryLane,
-				"appSector":       "09", //Defaults to 09 (Parking)
+				"appSector":       appSectorParking, //Defaults to 09 (Parking)
 				"exitTimestamp":   now.Format(time.RFC3339),
 				"exitSPId":        c.SpID.String,
 				"exitPlazaId":     c.PlazaID.String,
 				"exitLaneId":      in.ExitLane,
-				"vehicleClass":    "01", //Private Cars (Vehicles with two axles and three or four wheels (excluding taxi and bus))
+				"vehicleClass":    vehicleClassPrivate,
 				"tranAmt":         in.Amount,
 				"surchargeAmt":    0.00,
 				"surchargeTaxAmt": 0.00,
