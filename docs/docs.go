@@ -526,6 +526,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

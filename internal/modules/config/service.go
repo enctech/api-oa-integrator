@@ -14,6 +14,7 @@ func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
 		Endpoint: sql.NullString{String: in.Endpoint, Valid: true},
 		Facility: in.Facilities,
 		Device:   in.Devices,
+		Name:     sql.NullString{String: in.Name, Valid: true},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
@@ -34,6 +35,7 @@ func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig
 		Endpoint: sql.NullString{String: in.Endpoint, Valid: true},
 		Facility: in.Facilities,
 		Device:   in.Devices,
+		Name:     sql.NullString{String: in.Name, Valid: in.Name != ""},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
@@ -58,6 +60,7 @@ func getAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 	for _, config := range configs {
 		out = append(out, SnbConfig{
 			Id:         config.ID.String(),
+			Name:       config.Name.String,
 			Endpoint:   config.Endpoint.String,
 			Facilities: config.Facility,
 			Devices:    config.Device,

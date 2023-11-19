@@ -5,15 +5,16 @@ RETURNING *;
 
 -------------Region S&B Config start-------------
 -- name: CreateSnbConfig :one
-insert into snb_config (endpoint, facility, device)
-values ($1, $2, $3)
+insert into snb_config (endpoint, facility, device, name)
+values ($1, $2, $3, $4)
 returning *;
 
 -- name: UpdateSnbConfig :one
 update snb_config
 set endpoint = coalesce($2, endpoint),
     facility = coalesce($3, facility),
-    device   = coalesce($4, device)
+    device   = coalesce($4, device),
+    name   = coalesce($5, name)
 where id = $1
 returning *;
 
