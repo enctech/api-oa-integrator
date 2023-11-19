@@ -354,6 +354,17 @@ paths:
       summary: Create config for snb
       tags:
       - config
+  /health/:
+    get:
+      consumes:
+      - application/json
+      description: To check overall system health
+      produces:
+      - application/json
+      responses: {}
+      summary: check system health
+      tags:
+      - health
   /oa/{facility}/{device}/{jobId}:
     post:
       consumes:

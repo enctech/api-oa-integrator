@@ -249,6 +249,22 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/health/": {
+            "get": {
+                "description": "To check overall system health",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "check system health",
+                "responses": {}
+            }
+        },
         "/oa/version": {
             "put": {
                 "description": "get the version and configuration available",
