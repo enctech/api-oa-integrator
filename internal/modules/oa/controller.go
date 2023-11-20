@@ -19,7 +19,7 @@ func InitController(e *echo.Echo) {
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	g.PUT("/version", c.version)
+	g.PUT("/AuthorizationService3rdParty/version", c.version)
 	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
 	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
 	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
