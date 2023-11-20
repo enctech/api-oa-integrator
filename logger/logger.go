@@ -61,7 +61,7 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 				Level:     sql.NullString{String: output["level"].(string), Valid: true},
 				Message:   sql.NullString{String: output["msg"].(string), Valid: true},
 				Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
-				CreatedAt: createdAt,
+				CreatedAt: createdAt.UTC().Round(time.Microsecond),
 			})
 			_ = txn.Commit()
 		}
