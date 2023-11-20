@@ -49,9 +49,5 @@ func main() {
 		return
 	}
 
-	sugar := zap.L().Sugar()
-
-	sugar.Info(viper.GetString("database.url"))
-
 	internal.InitServer()
 }
