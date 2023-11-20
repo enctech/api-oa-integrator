@@ -5,6 +5,7 @@ import (
 	"api-oa-integrator/internal/modules/config"
 	"api-oa-integrator/internal/modules/health"
 	"api-oa-integrator/internal/modules/oa"
+	"api-oa-integrator/internal/modules/transactions"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -26,5 +27,6 @@ func InitServer() {
 	oa.InitController(e)
 	auth.InitController(e)
 	config.InitController(e)
+	transactions.InitController(e)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
 }

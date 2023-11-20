@@ -245,6 +245,56 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullStri
 	return i, err
 }
 
+const getLog = `-- name: GetLog :many
+SELECT id, level, message, fields, created_at
+FROM logs
+WHERE message LIKE $1::text
+  AND fields::text LIKE $2::text
+  AND created_at >= $3
+  AND created_at <= $4
+`
+
+type GetLogParams struct {
+	Message string
+	Fields  string
+	After   time.Time
+	Before  time.Time
+}
+
+func (q *Queries) GetLog(ctx context.Context, arg GetLogParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLog,
+		arg.Message,
+		arg.Fields,
+		arg.After,
+		arg.Before,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Log
+	for rows.Next() {
+		var i Log
+		if err := rows.Scan(
+			&i.ID,
+			&i.Level,
+			&i.Message,
+			&i.Fields,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOATransaction = `-- name: GetOATransaction :one
 select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions

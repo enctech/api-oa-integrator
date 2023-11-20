@@ -3,6 +3,14 @@ INSERT INTO logs (level, message, fields, created_at)
 VALUES ($1, $2, $3, $4)
 RETURNING *;
 
+-- name: GetLog :many
+SELECT *
+FROM logs
+WHERE message LIKE sqlc.arg(message)::text
+  AND fields::text LIKE sqlc.arg(fields)::text
+  AND created_at >= sqlc.arg(after)
+  AND created_at <= sqlc.arg(before);
+
 -------------Region S&B Config start-------------
 -- name: CreateSnbConfig :one
 insert into snb_config (endpoint, facility, device, name, username, password)

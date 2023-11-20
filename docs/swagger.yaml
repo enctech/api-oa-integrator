@@ -520,6 +520,37 @@ paths:
       summary: check version
       tags:
       - oa
+  /transactions:
+    get:
+      consumes:
+      - application/json
+      description: To check overall system health
+      parameters:
+      - description: Before
+        format: dateTime
+        in: query
+        name: before
+        required: true
+        type: string
+      - description: After
+        format: dateTime
+        in: query
+        name: after
+        type: string
+      - description: Message
+        in: query
+        name: message
+        type: string
+      - description: Fields
+        in: query
+        name: fields
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: get all logs
+      tags:
+      - transactions
 securityDefinitions:
   Bearer:
     description: Type "Bearer" followed by a space and JWT token.

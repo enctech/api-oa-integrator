@@ -478,6 +478,51 @@ const docTemplate = `{
                 ],
                 "responses": {}
             }
+        },
+        "/transactions": {
+            "get": {
+                "description": "To check overall system health",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "get all logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "Before",
+                        "name": "before",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "After",
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message",
+                        "name": "message",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Fields",
+                        "name": "fields",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {
