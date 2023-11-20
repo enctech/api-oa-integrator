@@ -99,9 +99,9 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 }
 
 const createSnbConfig = `-- name: CreateSnbConfig :one
-insert into snb_config (endpoint, facility, device, name)
-values ($1, $2, $3, $4)
-returning id, name, endpoint, facility, device
+insert into snb_config (endpoint, facility, device, name, username, password)
+values ($1, $2, $3, $4, $5, $6)
+returning id, name, username, password, endpoint, facility, device
 `
 
 type CreateSnbConfigParams struct {
@@ -109,6 +109,8 @@ type CreateSnbConfigParams struct {
 	Facility []string
 	Device   []string
 	Name     sql.NullString
+	Username sql.NullString
+	Password sql.NullString
 }
 
 // -----------Region S&B Config start-------------
@@ -118,11 +120,15 @@ func (q *Queries) CreateSnbConfig(ctx context.Context, arg CreateSnbConfigParams
 		pq.Array(arg.Facility),
 		pq.Array(arg.Device),
 		arg.Name,
+		arg.Username,
+		arg.Password,
 	)
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Username,
+		&i.Password,
 		&i.Endpoint,
 		pq.Array(&i.Facility),
 		pq.Array(&i.Device),
@@ -178,7 +184,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, err
 }
 
 const getAllSnbConfig = `-- name: GetAllSnbConfig :many
-select id, name, endpoint, facility, device
+select id, name, username, password, endpoint, facility, device
 from snb_config
 `
 
@@ -194,6 +200,8 @@ func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Username,
+			&i.Password,
 			&i.Endpoint,
 			pq.Array(&i.Facility),
 			pq.Array(&i.Device),
@@ -264,7 +272,7 @@ func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid st
 }
 
 const getSnbConfig = `-- name: GetSnbConfig :one
-select id, name, endpoint, facility, device
+select id, name, username, password, endpoint, facility, device
 from snb_config
 where id = $1
 `
@@ -275,6 +283,8 @@ func (q *Queries) GetSnbConfig(ctx context.Context, id uuid.UUID) (SnbConfig, er
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Username,
+		&i.Password,
 		&i.Endpoint,
 		pq.Array(&i.Facility),
 		pq.Array(&i.Device),
@@ -283,10 +293,10 @@ func (q *Queries) GetSnbConfig(ctx context.Context, id uuid.UUID) (SnbConfig, er
 }
 
 const getSnbConfigByFacilityAndDevice = `-- name: GetSnbConfigByFacilityAndDevice :one
-select id, name, endpoint, facility, device
+select id, name, username, password, endpoint, facility, device
 from snb_config
-where $1::text = any(facility)
-  and $2::text = any(device)
+where $1::text = any (facility)
+  and $2::text = any (device)
 `
 
 type GetSnbConfigByFacilityAndDeviceParams struct {
@@ -300,6 +310,8 @@ func (q *Queries) GetSnbConfigByFacilityAndDevice(ctx context.Context, arg GetSn
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Username,
+		&i.Password,
 		&i.Endpoint,
 		pq.Array(&i.Facility),
 		pq.Array(&i.Device),
@@ -383,9 +395,11 @@ update snb_config
 set endpoint = coalesce($2, endpoint),
     facility = coalesce($3, facility),
     device   = coalesce($4, device),
-    name   = coalesce($5, name)
+    name     = coalesce($5, name),
+    username = coalesce($6, username),
+    password = coalesce($7, password)
 where id = $1
-returning id, name, endpoint, facility, device
+returning id, name, username, password, endpoint, facility, device
 `
 
 type UpdateSnbConfigParams struct {
@@ -394,6 +408,8 @@ type UpdateSnbConfigParams struct {
 	Facility []string
 	Device   []string
 	Name     sql.NullString
+	Username sql.NullString
+	Password sql.NullString
 }
 
 func (q *Queries) UpdateSnbConfig(ctx context.Context, arg UpdateSnbConfigParams) (SnbConfig, error) {
@@ -403,11 +419,15 @@ func (q *Queries) UpdateSnbConfig(ctx context.Context, arg UpdateSnbConfigParams
 		pq.Array(arg.Facility),
 		pq.Array(arg.Device),
 		arg.Name,
+		arg.Username,
+		arg.Password,
 	)
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Username,
+		&i.Password,
 		&i.Endpoint,
 		pq.Array(&i.Facility),
 		pq.Array(&i.Device),

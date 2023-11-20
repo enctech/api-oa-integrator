@@ -6,6 +6,7 @@ import (
 	"api-oa-integrator/utils"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"encoding/xml"
@@ -318,17 +319,20 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
 	}
 
 	req.Header.Set("Content-Type", "application/xml")
+	req.SetBasicAuth(config.Username.String, config.Password.String)
 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{
-		Transport: http.DefaultTransport,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 
 	resp, err := client.Do(req)
@@ -357,17 +361,19 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
 	}
-
 	req.Header.Set("Content-Type", "application/xml")
+	req.SetBasicAuth(config.Username.String, config.Password.String)
 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{
-		Transport: http.DefaultTransport,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 	if err != nil {
 		return

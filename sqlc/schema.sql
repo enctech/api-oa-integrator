@@ -11,6 +11,8 @@ create table snb_config
 (
     id       uuid primary key,
     name     varchar,
+    username   varchar,
+    password   varchar,
     endpoint varchar,
     facility varchar[],
     device   varchar[]

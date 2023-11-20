@@ -2,6 +2,8 @@ create table if not exists snb_config
 (
     id         uuid               default uuid_generate_v4() primary key,
     name       varchar,
+    username   varchar,
+    password   varchar,
     endpoint   varchar,
     facility   varchar[],
     device     varchar[],

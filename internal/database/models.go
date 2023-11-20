@@ -50,6 +50,8 @@ type OaTransaction struct {
 type SnbConfig struct {
 	ID       uuid.UUID
 	Name     sql.NullString
+	Username sql.NullString
+	Password sql.NullString
 	Endpoint sql.NullString
 	Facility []string
 	Device   []string
