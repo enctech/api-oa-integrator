@@ -15,7 +15,7 @@ type controller struct {
 func InitController(e *echo.Echo) {
 	g := e.Group("transactions")
 	c := controller{}
-	g.GET("", c.getLogs)
+	g.GET("/logs", c.getLogs)
 }
 
 type Response struct {
@@ -33,7 +33,7 @@ type Response struct {
 //	@Tags			transactions
 //	@Accept			application/json
 //	@Produce		application/json
-//	@Router			/transactions [get]
+//	@Router			/transactions/logs [get]
 func (con controller) getLogs(c echo.Context) error {
 	after, err := time.Parse(time.RFC3339, c.QueryParam("after"))
 	if err != nil {

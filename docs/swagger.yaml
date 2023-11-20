@@ -520,7 +520,7 @@ paths:
       summary: check version
       tags:
       - oa
-  /transactions:
+  /transactions/logs:
     get:
       consumes:
       - application/json

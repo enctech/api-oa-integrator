@@ -6,12 +6,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
-	sqldblogger "github.com/simukti/sqldb-logger"
-	"github.com/simukti/sqldb-logger/logadapter/zerologadapter"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"os"
 	"sync"
 )
 
@@ -27,8 +23,6 @@ func InitDatabase() error {
 		return err
 	}
 
-	loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
-	db = sqldblogger.OpenDriver(viper.GetString("database.url"), db.Driver(), loggerAdapter /*, using_default_options*/) // db is STILL *sql.DB
 	err = db.Ping()
 	if err != nil {
 		zap.L().Sugar().Errorf("failed ping db %v", err)

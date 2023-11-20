@@ -479,7 +479,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/transactions": {
+        "/transactions/logs": {
             "get": {
                 "description": "To check overall system health",
                 "consumes": [
