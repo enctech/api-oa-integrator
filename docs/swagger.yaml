@@ -31,6 +31,10 @@ definitions:
         type: string
       name:
         type: string
+      password:
+        type: string
+      username:
+        type: string
     type: object
   oa.BusinessTransaction:
     properties:
@@ -367,7 +371,7 @@ paths:
       summary: check system health
       tags:
       - health
-  /oa/{facility}/{device}/{jobId}:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}:
     post:
       consumes:
       - application/xml
@@ -400,7 +404,7 @@ paths:
       summary: S&B creates new job
       tags:
       - oa
-  /oa/{facility}/{device}/{jobId}/cancel:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel:
     put:
       consumes:
       - application/xml
@@ -433,7 +437,7 @@ paths:
       summary: Cancels a running job
       tags:
       - oa
-  /oa/{facility}/{device}/{jobId}/finalmessage:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage:
     put:
       consumes:
       - application/xml
@@ -466,7 +470,7 @@ paths:
       summary: Receive Final Message from S&B
       tags:
       - oa
-  /oa/{facility}/{device}/{jobId}/medialist:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist:
     post:
       consumes:
       - application/xml
@@ -499,7 +503,7 @@ paths:
       summary: Creates new media data
       tags:
       - oa
-  /oa/version:
+  /oa/AuthorizationService3rdParty/version:
     put:
       consumes:
       - application/xml
