@@ -187,6 +187,11 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	if job.BusinessTransaction == nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	jsonStr, err := json.Marshal(map[string]any{
 		"steps": "payment_exit_start",
 	})
@@ -210,13 +215,32 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	}
 	amountConv := amount / 100
 
+	var customerInformation *CustomerInformation
+	if job.CustomerInformation != nil && job.CustomerInformation.Customer != (Customer{}) {
+		customerInformation = &CustomerInformation{Customer: job.CustomerInformation.Customer}
+	}
+
+	sendZeroAmount := func() {
+		sendFinalMessageCustomer(metadata, FMCReq{
+			Identifier:          Identifier{Name: oaTxn.Lpn.String},
+			BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
+			CustomerInformation: customerInformation,
+			PaymentInformation: BuildPaymentInformation(&PaymentData{
+				OriginalAmount: OriginalAmount{
+					VatRate: job.PaymentData.OriginalAmount.VatRate,
+					Amount:  "0.00",
+				},
+			}),
+		})
+	}
+
 	err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amountConv)
 	if err != nil {
 		jsonStr, err = json.Marshal(map[string]any{
 			"steps": "payment_exit_error",
 			"error": err.Error(),
 		})
-		go sendEmptyFinalMessage(metadata)
+		go sendZeroAmount()
 		return
 	}
 	jsonStr, err = json.Marshal(map[string]any{
@@ -224,7 +248,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	})
 
 	if err != nil {
-		go sendEmptyFinalMessage(metadata)
+		go sendZeroAmount()
 		return
 	}
 
@@ -233,12 +257,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
-	var customerInformation *CustomerInformation
-	if job.CustomerInformation != nil && job.CustomerInformation.Customer != (Customer{}) {
-		customerInformation = &CustomerInformation{Customer: job.CustomerInformation.Customer}
-	}
-
-	sendFinalMessageCustomer(metadata, FMCReq{
+	go sendFinalMessageCustomer(metadata, FMCReq{
 		Identifier:          Identifier{Name: oaTxn.Lpn.String},
 		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
 		CustomerInformation: customerInformation,
