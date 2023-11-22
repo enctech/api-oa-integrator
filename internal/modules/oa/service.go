@@ -405,3 +405,50 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	}
 	defer resp.Body.Close()
 }
+
+func CheckSystemAvailability(facility, device string) error {
+	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
+		Device:   device,
+		Facility: facility,
+	})
+
+	if err != nil {
+		fmt.Println("Error get config", err)
+		return err
+	}
+
+	// Fake request body. Request body is required for this endpoint.
+	// We don't really care about the response. We're good if there is response.
+	xmlOut := []byte(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?><version>
+	<customerVersion>%v</customerVersion>
+	<sbAuthorizationServiceVersion>2.5.6</sbAuthorizationServiceVersion>
+	<configuration>
+	</configuration>
+	</version>`, viper.GetString("app.version")))
+
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return err
+	}
+	req.Header.Set("Content-Type", "application/xml")
+	req.SetBasicAuth(config.Username.String, config.Password.String)
+
+	client := &http.Client{}
+	client.Transport = &utils.LoggingRoundTripper{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return err
+	}
+	defer resp.Body.Close()
+	return nil
+}
