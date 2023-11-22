@@ -15,10 +15,29 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const countLogs = `-- name: CountLogs :one
+select count(*)
+from logs
+where created_at >= $1
+  and created_at <= $2
+`
+
+type CountLogsParams struct {
+	After  time.Time
+	Before time.Time
+}
+
+func (q *Queries) CountLogs(ctx context.Context, arg CountLogsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLogs, arg.After, arg.Before)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLog = `-- name: CreateLog :one
-INSERT INTO logs (level, message, fields, created_at)
-VALUES ($1, $2, $3, $4)
-RETURNING id, level, message, fields, created_at
+insert into logs (level, message, fields, created_at)
+values ($1, $2, $3, $4)
+returning id, level, message, fields, created_at
 `
 
 type CreateLogParams struct {
@@ -245,24 +264,30 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullStri
 	return i, err
 }
 
-const getLog = `-- name: GetLog :many
-SELECT id, level, message, fields, created_at
-FROM logs
-WHERE message LIKE $1::text
-  AND fields::text LIKE $2::text
-  AND created_at >= $3
-  AND created_at <= $4
+const getLogs = `-- name: GetLogs :many
+select id, level, message, fields, created_at
+from logs
+where message like $3::text
+  and fields::text like $4::text
+  and created_at >= $5
+  and created_at <= $6
+order by created_at desc
+limit $1 offset $2
 `
 
-type GetLogParams struct {
+type GetLogsParams struct {
+	Limit   int32
+	Offset  int32
 	Message string
 	Fields  string
 	After   time.Time
 	Before  time.Time
 }
 
-func (q *Queries) GetLog(ctx context.Context, arg GetLogParams) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLog,
+func (q *Queries) GetLogs(ctx context.Context, arg GetLogsParams) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, getLogs,
+		arg.Limit,
+		arg.Offset,
 		arg.Message,
 		arg.Fields,
 		arg.After,

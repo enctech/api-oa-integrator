@@ -249,7 +249,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/health/": {
+        "/health": {
             "get": {
                 "description": "To check overall system health",
                 "consumes": [
@@ -262,6 +262,20 @@ const docTemplate = `{
                     "health"
                 ],
                 "summary": "check system health",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Facility",
+                        "name": "facility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Device",
+                        "name": "device",
+                        "in": "query"
+                    }
+                ],
                 "responses": {}
             }
         },
@@ -518,6 +532,18 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Fields",
                         "name": "fields",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PerPage",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
                         "in": "query"
                     }
                 ],

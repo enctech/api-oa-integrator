@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type LogResponse struct {
+type LogData struct {
 	ID        string         `json:"id"`
 	Level     string         `json:"level"`
 	Message   string         `json:"message"`

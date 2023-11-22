@@ -16,7 +16,7 @@ func InitController(e *echo.Echo) {
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	g.Use(middlewares.GuardWithJWT())
+	//g.Use(middlewares.GuardWithJWT())
 	g.POST("/snb-config", c.createSnbConfig, middlewares.AdminOnlyMiddleware())
 	g.PUT("/snb-config", c.updateSnbConfig, middlewares.AdminOnlyMiddleware())
 	g.GET("/snb-config", c.getAllSnBConfig, middlewares.AdminOnlyMiddleware())

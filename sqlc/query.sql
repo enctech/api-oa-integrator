@@ -1,15 +1,23 @@
--- name: CreateLog :one
-INSERT INTO logs (level, message, fields, created_at)
-VALUES ($1, $2, $3, $4)
-RETURNING *;
+-- name: CountLogs :one
+select count(*)
+from logs
+where created_at >= sqlc.arg(after)
+  and created_at <= sqlc.arg(before);
 
--- name: GetLog :many
-SELECT *
-FROM logs
-WHERE message LIKE sqlc.arg(message)::text
-  AND fields::text LIKE sqlc.arg(fields)::text
-  AND created_at >= sqlc.arg(after)
-  AND created_at <= sqlc.arg(before);
+-- name: CreateLog :one
+insert into logs (level, message, fields, created_at)
+values ($1, $2, $3, $4)
+returning *;
+
+-- name: GetLogs :many
+select *
+from logs
+where message like sqlc.arg(message)::text
+  and fields::text like sqlc.arg(fields)::text
+  and created_at >= sqlc.arg(after)
+  and created_at <= sqlc.arg(before)
+order by created_at desc
+limit $1 offset $2;
 
 -------------Region S&B Config start-------------
 -- name: CreateSnbConfig :one

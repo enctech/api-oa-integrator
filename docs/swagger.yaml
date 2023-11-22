@@ -360,11 +360,20 @@ paths:
       summary: Create config for snb
       tags:
       - config
-  /health/:
+  /health:
     get:
       consumes:
       - application/json
       description: To check overall system health
+      parameters:
+      - description: Facility
+        in: query
+        name: facility
+        type: integer
+      - description: Device
+        in: query
+        name: device
+        type: integer
       produces:
       - application/json
       responses: {}
@@ -545,6 +554,14 @@ paths:
         in: query
         name: fields
         type: string
+      - description: PerPage
+        in: query
+        name: perPage
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
       produces:
       - application/json
       responses: {}

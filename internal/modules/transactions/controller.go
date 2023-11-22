@@ -2,10 +2,13 @@ package transactions
 
 import (
 	"api-oa-integrator/internal/database"
+	"api-oa-integrator/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -30,6 +33,8 @@ type Response struct {
 //	@Param			after	query	string	false	"After"		Format(dateTime)
 //	@Param			message	query	string	false	"Message"
 //	@Param			fields	query	string	false	"Fields"
+//	@Param			perPage	query	int		false	"PerPage"
+//	@Param			page	query	int		false	"Page"
 //	@Tags			transactions
 //	@Accept			application/json
 //	@Produce		application/json
@@ -43,21 +48,43 @@ func (con controller) getLogs(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "invalid before date")
 	}
-	logs, err := database.New(database.D()).GetLog(c.Request().Context(), database.GetLogParams{
+	perPage := 50
+	if c.QueryParam("perPage") != "" {
+		perPage, err = strconv.Atoi(c.QueryParam("perPage"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid perPage")
+		}
+	}
+	page := 0
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid page")
+		}
+	}
+
+	logs, err := database.New(database.D()).GetLogs(c.Request().Context(), database.GetLogsParams{
 		After:   after.UTC().Round(time.Microsecond),
 		Before:  before.UTC().Round(time.Microsecond),
 		Message: fmt.Sprintf("%%%v%%", c.QueryParam("message")),
 		Fields:  fmt.Sprintf("%%%v%%", c.QueryParam("fields")),
+		Limit:   int32(perPage),
+		Offset:  int32(page * perPage),
 	})
 
-	var out []LogResponse
+	totalData, err := database.New(database.D()).CountLogs(c.Request().Context(), database.CountLogsParams{
+		After:  after.UTC().Round(time.Microsecond),
+		Before: before.UTC().Round(time.Microsecond),
+	})
+
+	var logOutput []LogData
 
 	for _, log := range logs {
 		var fields map[string]any
 		if log.Fields.Valid {
 			err = json.Unmarshal(log.Fields.RawMessage, &fields)
 		}
-		out = append(out, LogResponse{
+		logOutput = append(logOutput, LogData{
 			ID:        log.ID.String(),
 			Level:     log.Level.String,
 			Message:   log.Message.String,
@@ -66,8 +93,14 @@ func (con controller) getLogs(c echo.Context) error {
 		})
 	}
 
-	if out == nil {
-		return c.JSON(http.StatusCreated, []LogResponse{})
+	out := utils.PaginationResponse[LogData]{
+		Data: logOutput,
+		Metadata: utils.PaginationMetadata{
+			TotalData: totalData,
+			Page:      int64(page),
+			PerPage:   int64(perPage),
+			TotalPage: int64(math.Ceil(float64(totalData) / float64(perPage))),
+		},
 	}
 
 	return c.JSON(http.StatusCreated, out)
