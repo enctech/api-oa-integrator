@@ -105,6 +105,37 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/config/integrator-config": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to send data to integrator.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Create config for integrator",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/config.IntegratorConfig"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/config/snb-config": {
             "get": {
                 "security": [
@@ -131,7 +162,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create configuration required for OA to send data to integrator.",
+                "description": "Create configuration required for OA to works.",
                 "consumes": [
                     "application/json"
                 ],
@@ -141,7 +172,7 @@ const docTemplate = `{
                 "tags": [
                     "config"
                 ],
-                "summary": "Create config for integrator",
+                "summary": "Create config for snb",
                 "parameters": [
                     {
                         "description": "Request Body",
@@ -608,6 +639,38 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "config.IntegratorConfig": {
+            "type": "object",
+            "properties": {
+                "clientId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "insecureSkipVerify": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "plazaIdMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "providerId": {
+                    "type": "integer"
+                },
+                "serviceProviderId": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

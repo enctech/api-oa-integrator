@@ -15,6 +15,27 @@ definitions:
       username:
         type: string
     type: object
+  config.IntegratorConfig:
+    properties:
+      clientId:
+        type: string
+      id:
+        type: string
+      insecureSkipVerify:
+        type: boolean
+      name:
+        type: string
+      plazaIdMap:
+        additionalProperties:
+          type: string
+        type: object
+      providerId:
+        type: integer
+      serviceProviderId:
+        type: string
+      url:
+        type: string
+    type: object
   config.SnbConfig:
     properties:
       devices:
@@ -269,6 +290,25 @@ paths:
       summary: delete user
       tags:
       - auth
+  /config/integrator-config:
+    post:
+      consumes:
+      - application/json
+      description: Create configuration required for OA to send data to integrator.
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/config.IntegratorConfig'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Create config for integrator
+      tags:
+      - config
   /config/snb-config:
     get:
       consumes:
@@ -285,7 +325,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create configuration required for OA to send data to integrator.
+      description: Create configuration required for OA to works.
       parameters:
       - description: Request Body
         in: body
@@ -297,7 +337,7 @@ paths:
       responses: {}
       security:
       - Bearer: []
-      summary: Create config for integrator
+      summary: Create config for snb
       tags:
       - config
   /config/snb-config/{id}:

@@ -4,7 +4,9 @@ import (
 	"api-oa-integrator/internal/database"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"go.uber.org/zap"
 )
 
@@ -99,4 +101,33 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 		return err
 	}
 	return nil
+}
+
+func createIntegratorConfigConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
+	txn, _ := database.D().Begin()
+	jsonString, _ := json.Marshal(in.PlazaIdMap)
+	config, err := database.New(database.D()).WithTx(txn).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
+		ClientID:           sql.NullString{String: in.ClientId, Valid: true},
+		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
+		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: true},
+		Name:               sql.NullString{String: in.Name, Valid: true},
+		InsecureSkipVerify: sql.NullBool{Bool: in.InsecureSkipVerify, Valid: true},
+		PlazaIDMap:         pqtype.NullRawMessage{Valid: true, RawMessage: jsonString},
+		Url:                sql.NullString{String: in.Url, Valid: true},
+	})
+	if err != nil {
+		zap.L().Sugar().Errorf("Error create user %v", err)
+		return IntegratorConfig{}, err
+	}
+	err = txn.Commit()
+	return IntegratorConfig{
+		Id:                 config.ID.String(),
+		ClientId:           config.ClientID.String,
+		ProviderId:         config.ProviderID.Int32,
+		ServiceProviderId:  config.SpID.String,
+		Name:               config.Name.String,
+		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
+		PlazaIdMap:         in.PlazaIdMap,
+		Url:                config.Url.String,
+	}, nil
 }

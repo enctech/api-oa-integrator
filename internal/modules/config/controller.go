@@ -23,7 +23,7 @@ func InitController(e *echo.Echo) {
 	g.GET("/snb-config/:id", c.getSnBConfig, middlewares.AdminOnlyMiddleware())
 	g.DELETE("/snb-config/:id", c.deleteSnbConfig, middlewares.AdminOnlyMiddleware())
 
-	g.POST("/integrator-config", c.createSnbConfig, middlewares.AdminOnlyMiddleware())
+	g.POST("/integrator-config", c.createIntegratorConfig, middlewares.AdminOnlyMiddleware())
 }
 
 // createSnbConfig godoc
@@ -130,13 +130,13 @@ func (con controller) deleteSnbConfig(c echo.Context) error {
 //	@Tags			config
 //	@Accept			application/json
 //	@Produce		application/json
-//	@Param			request	body	SnbConfig	false	"Request Body"
+//	@Param			request	body	IntegratorConfig	false	"Request Body"
 //	@Security		Bearer
-//	@Router			/config/snb-config [post]
+//	@Router			/config/integrator-config [post]
 func (con controller) createIntegratorConfig(c echo.Context) error {
-	req := new(SnbConfig)
+	req := new(IntegratorConfig)
 	err := c.Bind(req)
-	user, err := createSnbConfig(c.Request().Context(), *req)
+	user, err := createIntegratorConfigConfig(c.Request().Context(), *req)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}

@@ -11,10 +11,12 @@ type SnbConfig struct {
 }
 
 type IntegratorConfig struct {
-	Id                string `json:"id,omitempty"`
-	ClientId          string `json:"clientId,omitempty"`
-	ProviderId        int    `json:"providerId,omitempty"`
-	ServiceProviderId int    `json:"serviceProviderId,omitempty"`
-	Name              string `json:"name,omitempty"`
-	Url               string `json:"url,omitempty"`
+	Id                 string            `json:"id,omitempty"`
+	ClientId           string            `json:"clientId,omitempty"`
+	ProviderId         int32             `json:"providerId,omitempty"`
+	ServiceProviderId  string            `json:"serviceProviderId,omitempty"`
+	Name               string            `json:"name,omitempty"`
+	Url                string            `json:"url,omitempty"`
+	InsecureSkipVerify bool              `json:"insecureSkipVerify,omitempty"`
+	PlazaIdMap         map[string]string `json:"plazaIdMap,omitempty"`
 }
