@@ -33,7 +33,7 @@ create table integrator_config
     provider_id          int,
     name                 varchar,
     sp_id                varchar,
-    plaza_id             varchar,
+    plaza_id_map         json,
     url                  varchar,
     insecure_skip_verify boolean            default false,
     created_at           timestamp not null default NOW(),

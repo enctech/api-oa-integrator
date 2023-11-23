@@ -18,7 +18,7 @@ type IntegratorConfig struct {
 	ProviderID         sql.NullInt32
 	Name               sql.NullString
 	SpID               sql.NullString
-	PlazaID            sql.NullString
+	PlazaIDMap         pqtype.NullRawMessage
 	Url                sql.NullString
 	InsecureSkipVerify sql.NullBool
 	CreatedAt          time.Time

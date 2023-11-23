@@ -27,6 +27,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countLogsStmt, err = db.PrepareContext(ctx, countLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLogs: %w", err)
 	}
+	if q.createIntegratorConfigStmt, err = db.PrepareContext(ctx, createIntegratorConfig); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateIntegratorConfig: %w", err)
+	}
 	if q.createLogStmt, err = db.PrepareContext(ctx, createLog); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLog: %w", err)
 	}
@@ -39,6 +42,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
+	if q.deleteIntegratorConfigStmt, err = db.PrepareContext(ctx, deleteIntegratorConfig); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteIntegratorConfig: %w", err)
+	}
 	if q.deleteSnbConfigStmt, err = db.PrepareContext(ctx, deleteSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteSnbConfig: %w", err)
 	}
@@ -50,6 +56,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getIntegratorConfigStmt, err = db.PrepareContext(ctx, getIntegratorConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetIntegratorConfig: %w", err)
+	}
+	if q.getIntegratorConfigByClientStmt, err = db.PrepareContext(ctx, getIntegratorConfigByClient); err != nil {
+		return nil, fmt.Errorf("error preparing query GetIntegratorConfigByClient: %w", err)
+	}
+	if q.getIntegratorConfigByNameStmt, err = db.PrepareContext(ctx, getIntegratorConfigByName); err != nil {
+		return nil, fmt.Errorf("error preparing query GetIntegratorConfigByName: %w", err)
 	}
 	if q.getLogsStmt, err = db.PrepareContext(ctx, getLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLogs: %w", err)
@@ -66,6 +78,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
+	if q.updateIntegratorConfigStmt, err = db.PrepareContext(ctx, updateIntegratorConfig); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateIntegratorConfig: %w", err)
+	}
 	if q.updateOATransactionStmt, err = db.PrepareContext(ctx, updateOATransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateOATransaction: %w", err)
 	}
@@ -80,6 +95,11 @@ func (q *Queries) Close() error {
 	if q.countLogsStmt != nil {
 		if cerr := q.countLogsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countLogsStmt: %w", cerr)
+		}
+	}
+	if q.createIntegratorConfigStmt != nil {
+		if cerr := q.createIntegratorConfigStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createIntegratorConfigStmt: %w", cerr)
 		}
 	}
 	if q.createLogStmt != nil {
@@ -102,6 +122,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
 		}
 	}
+	if q.deleteIntegratorConfigStmt != nil {
+		if cerr := q.deleteIntegratorConfigStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteIntegratorConfigStmt: %w", cerr)
+		}
+	}
 	if q.deleteSnbConfigStmt != nil {
 		if cerr := q.deleteSnbConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteSnbConfigStmt: %w", cerr)
@@ -120,6 +145,16 @@ func (q *Queries) Close() error {
 	if q.getIntegratorConfigStmt != nil {
 		if cerr := q.getIntegratorConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getIntegratorConfigStmt: %w", cerr)
+		}
+	}
+	if q.getIntegratorConfigByClientStmt != nil {
+		if cerr := q.getIntegratorConfigByClientStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getIntegratorConfigByClientStmt: %w", cerr)
+		}
+	}
+	if q.getIntegratorConfigByNameStmt != nil {
+		if cerr := q.getIntegratorConfigByNameStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getIntegratorConfigByNameStmt: %w", cerr)
 		}
 	}
 	if q.getLogsStmt != nil {
@@ -145,6 +180,11 @@ func (q *Queries) Close() error {
 	if q.getUserStmt != nil {
 		if cerr := q.getUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
+		}
+	}
+	if q.updateIntegratorConfigStmt != nil {
+		if cerr := q.updateIntegratorConfigStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateIntegratorConfigStmt: %w", cerr)
 		}
 	}
 	if q.updateOATransactionStmt != nil {
@@ -197,19 +237,24 @@ type Queries struct {
 	db                                  DBTX
 	tx                                  *sql.Tx
 	countLogsStmt                       *sql.Stmt
+	createIntegratorConfigStmt          *sql.Stmt
 	createLogStmt                       *sql.Stmt
 	createOATransactionStmt             *sql.Stmt
 	createSnbConfigStmt                 *sql.Stmt
 	createUserStmt                      *sql.Stmt
+	deleteIntegratorConfigStmt          *sql.Stmt
 	deleteSnbConfigStmt                 *sql.Stmt
 	deleteUserStmt                      *sql.Stmt
 	getAllSnbConfigStmt                 *sql.Stmt
 	getIntegratorConfigStmt             *sql.Stmt
+	getIntegratorConfigByClientStmt     *sql.Stmt
+	getIntegratorConfigByNameStmt       *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOATransactionStmt                *sql.Stmt
 	getSnbConfigStmt                    *sql.Stmt
 	getSnbConfigByFacilityAndDeviceStmt *sql.Stmt
 	getUserStmt                         *sql.Stmt
+	updateIntegratorConfigStmt          *sql.Stmt
 	updateOATransactionStmt             *sql.Stmt
 	updateSnbConfigStmt                 *sql.Stmt
 }
@@ -219,19 +264,24 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db:                                  tx,
 		tx:                                  tx,
 		countLogsStmt:                       q.countLogsStmt,
+		createIntegratorConfigStmt:          q.createIntegratorConfigStmt,
 		createLogStmt:                       q.createLogStmt,
 		createOATransactionStmt:             q.createOATransactionStmt,
 		createSnbConfigStmt:                 q.createSnbConfigStmt,
 		createUserStmt:                      q.createUserStmt,
+		deleteIntegratorConfigStmt:          q.deleteIntegratorConfigStmt,
 		deleteSnbConfigStmt:                 q.deleteSnbConfigStmt,
 		deleteUserStmt:                      q.deleteUserStmt,
 		getAllSnbConfigStmt:                 q.getAllSnbConfigStmt,
 		getIntegratorConfigStmt:             q.getIntegratorConfigStmt,
+		getIntegratorConfigByClientStmt:     q.getIntegratorConfigByClientStmt,
+		getIntegratorConfigByNameStmt:       q.getIntegratorConfigByNameStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOATransactionStmt:                q.getOATransactionStmt,
 		getSnbConfigStmt:                    q.getSnbConfigStmt,
 		getSnbConfigByFacilityAndDeviceStmt: q.getSnbConfigByFacilityAndDeviceStmt,
 		getUserStmt:                         q.getUserStmt,
+		updateIntegratorConfigStmt:          q.updateIntegratorConfigStmt,
 		updateOATransactionStmt:             q.updateOATransactionStmt,
 		updateSnbConfigStmt:                 q.updateSnbConfigStmt,
 	}

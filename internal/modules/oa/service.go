@@ -54,7 +54,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		return
 	}
 
-	err = integrator.VerifyVehicle(btid, lpn, lane)
+	err = integrator.VerifyVehicle(metadata.vendor, metadata.facility, lpn, lane)
 	if err != nil {
 		zap.L().Sugar().Info("Error integrator.VerifyVehicle ", err)
 		go sendEmptyFinalMessage(metadata)
@@ -62,7 +62,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	}
 
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
 		if err != nil {
 			go sendEmptyFinalMessage(metadata)
 			return
@@ -165,7 +165,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
 		if err != nil {
 			go sendEmptyFinalMessage(metadata)
 			return
@@ -234,7 +234,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		})
 	}
 
-	err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amountConv)
+	err = integrator.PerformTransaction(metadata.vendor, metadata.facility, lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amountConv)
 	if err != nil {
 		jsonStr, err = json.Marshal(map[string]any{
 			"steps": "payment_exit_error",
@@ -288,7 +288,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	if extra["steps"] != "payment_exit_done" {
-		err = integrator.PerformTransaction(lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
+		err = integrator.PerformTransaction(metadata.vendor, metadata.facility, lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
 	}
 
 	go sendEmptyFinalMessage(metadata)
@@ -312,7 +312,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
-	vendor, err := database.New(database.D()).GetIntegratorConfig(context.Background(), sql.NullString{String: viper.GetString("vendor.id"), Valid: true})
+	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
 
 	counting := "RESERVED"
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{

@@ -19,11 +19,11 @@ func InitController(e *echo.Echo) {
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	g.PUT("/AuthorizationService3rdParty/version", c.version)
-	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
-	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
-	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
-	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId", c.createJob)
+	g.PUT("/:vendor/AuthorizationService3rdParty/version", c.version)
+	g.PUT("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
+	g.PUT("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
+	g.POST("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
+	g.POST("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId", c.createJob)
 }
 
 // version godoc
@@ -33,8 +33,9 @@ func InitController(e *echo.Echo) {
 //	@Tags			oa
 //	@Accept			application/xml
 //	@Produce		application/xml
+//	@Param			vendor	path	string					true	"Vendor"
 //	@Param			request	body	VersionRequestWrapper	false	"Request Body"
-//	@Router			/oa/AuthorizationService3rdParty/version [put]
+//	@Router			/oa/{vendor}/AuthorizationService3rdParty/version [put]
 func (con controller) version(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -44,6 +45,7 @@ func (con controller) version(c echo.Context) error {
 		zap.L().Sugar().
 			With("module", "OK").
 			With("requestBody", string(body)).
+			With("vendor", c.Param("vendor")).
 			Info("version")
 		if err != nil {
 			return
@@ -65,8 +67,9 @@ func (con controller) version(c echo.Context) error {
 //	@Param			facility	path	string				true	"Facility"
 //	@Param			device		path	string				true	"Device"
 //	@Param			jobId		path	string				true	"Job ID"
+//	@Param			vendor		path	string				true	"Vendor"
 //	@Param			request		body	CancelJobWrapper	false	"Request Body"
-//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel [put]
+//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel [put]
 func (con controller) cancel(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -77,6 +80,7 @@ func (con controller) cancel(c echo.Context) error {
 			With("facility", c.Param("facility")).
 			With("device", c.Param("device")).
 			With("jobId", c.Param("jobId")).
+			With("vendor", c.Param("vendor")).
 			With("requestBody", fmt.Sprintf("%v", string(body))).
 			Info("cancel")
 	}()
@@ -96,8 +100,9 @@ func (con controller) cancel(c echo.Context) error {
 //	@Param			facility	path	string					true	"Facility"
 //	@Param			device		path	string					true	"Device"
 //	@Param			jobId		path	string					true	"Job ID"
+//	@Param			vendor		path	string					true	"Vendor"
 //	@Param			request		body	FinalMessageSBWrapper	false	"Request Body"
-//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage [put]
+//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage [put]
 func (con controller) finalMessage(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -108,6 +113,7 @@ func (con controller) finalMessage(c echo.Context) error {
 			With("facility", c.Param("facility")).
 			With("device", c.Param("device")).
 			With("jobId", c.Param("jobId")).
+			With("vendor", c.Param("vendor")).
 			With("requestBody", fmt.Sprintf("%v", string(body))).
 			Info("finalMessage")
 	}()
@@ -128,8 +134,9 @@ func (con controller) finalMessage(c echo.Context) error {
 //	@Param			facility	path	string				true	"Facility"
 //	@Param			device		path	string				true	"Device"
 //	@Param			jobId		path	string				true	"Job ID"
+//	@Param			vendor		path	string				true	"Vendor"
 //	@Param			request		body	MediaDataWrapper	false	"Request Body"
-//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist [post]
+//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist [post]
 func (con controller) mediaList(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -140,6 +147,7 @@ func (con controller) mediaList(c echo.Context) error {
 			With("facility", c.Param("facility")).
 			With("device", c.Param("device")).
 			With("jobId", c.Param("jobId")).
+			With("vendor", c.Param("vendor")).
 			With("requestBody", fmt.Sprintf("%v", string(body))).
 			Info("mediaList")
 	}()
@@ -159,27 +167,28 @@ func (con controller) mediaList(c echo.Context) error {
 //	@Param			facility	path	string		true	"Facility"
 //	@Param			device		path	string		true	"Device"
 //	@Param			jobId		path	string		true	"Job ID"
+//	@Param			vendor		path	string		true	"Vendor"
 //	@Param			request		body	JobWrapper	false	"Request Body"
-//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId} [post]
+//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId} [post]
 func (con controller) createJob(c echo.Context) error {
 	rm := &RequestMetadata{
 		facility: c.Param("facility"),
 		device:   c.Param("device"),
 		jobId:    c.Param("jobId"),
+		vendor:   c.Param("vendor"),
 	}
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		go sendEmptyFinalMessage(rm)
 		return nil
 	}
-	go func() {
-		zap.L().Sugar().
-			With("facility", c.Param("facility")).
-			With("device", c.Param("device")).
-			With("jobId", c.Param("jobId")).
-			With("requestBody", fmt.Sprintf("%v", string(body))).
-			Info("createJob")
-	}()
+	zap.L().Sugar().
+		With("facility", c.Param("facility")).
+		With("device", c.Param("device")).
+		With("jobId", c.Param("jobId")).
+		With("vendor", c.Param("vendor")).
+		With("requestBody", fmt.Sprintf("%v", string(body))).
+		Info("createJob")
 
 	req := new(Job)
 	err = xml.Unmarshal(body, &req)

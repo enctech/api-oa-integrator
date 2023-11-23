@@ -9,3 +9,12 @@ type SnbConfig struct {
 	Facilities []string `json:"facilities"`
 	Devices    []string `json:"devices"`
 }
+
+type IntegratorConfig struct {
+	Id                string `json:"id,omitempty"`
+	ClientId          string `json:"clientId,omitempty"`
+	ProviderId        int    `json:"providerId,omitempty"`
+	ServiceProviderId int    `json:"serviceProviderId,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Url               string `json:"url,omitempty"`
+}

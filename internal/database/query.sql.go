@@ -34,6 +34,48 @@ func (q *Queries) CountLogs(ctx context.Context, arg CountLogsParams) (int64, er
 	return count, err
 }
 
+const createIntegratorConfig = `-- name: CreateIntegratorConfig :one
+insert into integrator_config (client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify)
+values ($1, $2, $3, $4, $5, $6, $7)
+returning id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+`
+
+type CreateIntegratorConfigParams struct {
+	ClientID           sql.NullString
+	ProviderID         sql.NullInt32
+	Name               sql.NullString
+	SpID               sql.NullString
+	PlazaIDMap         pqtype.NullRawMessage
+	Url                sql.NullString
+	InsecureSkipVerify sql.NullBool
+}
+
+func (q *Queries) CreateIntegratorConfig(ctx context.Context, arg CreateIntegratorConfigParams) (IntegratorConfig, error) {
+	row := q.queryRow(ctx, q.createIntegratorConfigStmt, createIntegratorConfig,
+		arg.ClientID,
+		arg.ProviderID,
+		arg.Name,
+		arg.SpID,
+		arg.PlazaIDMap,
+		arg.Url,
+		arg.InsecureSkipVerify,
+	)
+	var i IntegratorConfig
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ProviderID,
+		&i.Name,
+		&i.SpID,
+		&i.PlazaIDMap,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createLog = `-- name: CreateLog :one
 insert into logs (level, message, fields, created_at)
 values ($1, $2, $3, $4)
@@ -182,6 +224,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteIntegratorConfig = `-- name: DeleteIntegratorConfig :execresult
+delete
+from integrator_config
+where id = $1
+`
+
+func (q *Queries) DeleteIntegratorConfig(ctx context.Context, id uuid.UUID) (sql.Result, error) {
+	return q.exec(ctx, q.deleteIntegratorConfigStmt, deleteIntegratorConfig, id)
+}
+
 const deleteSnbConfig = `-- name: DeleteSnbConfig :execresult
 delete
 from snb_config
@@ -240,15 +292,15 @@ func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
 
-select id, client_id, provider_id, name, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
 from integrator_config
-where client_id = $1
+where id = $1
 `
 
 // -----------Region OA Transaction end-------------
 // -----------Region Integrator Config start-------------
-func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullString) (IntegratorConfig, error) {
-	row := q.queryRow(ctx, q.getIntegratorConfigStmt, getIntegratorConfig, clientID)
+func (q *Queries) GetIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, error) {
+	row := q.queryRow(ctx, q.getIntegratorConfigStmt, getIntegratorConfig, id)
 	var i IntegratorConfig
 	err := row.Scan(
 		&i.ID,
@@ -256,7 +308,55 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullStri
 		&i.ProviderID,
 		&i.Name,
 		&i.SpID,
-		&i.PlazaID,
+		&i.PlazaIDMap,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getIntegratorConfigByClient = `-- name: GetIntegratorConfigByClient :one
+select id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+from integrator_config
+where client_id = $1
+`
+
+func (q *Queries) GetIntegratorConfigByClient(ctx context.Context, clientID sql.NullString) (IntegratorConfig, error) {
+	row := q.queryRow(ctx, q.getIntegratorConfigByClientStmt, getIntegratorConfigByClient, clientID)
+	var i IntegratorConfig
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ProviderID,
+		&i.Name,
+		&i.SpID,
+		&i.PlazaIDMap,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getIntegratorConfigByName = `-- name: GetIntegratorConfigByName :one
+select id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+from integrator_config
+where name = $1
+`
+
+func (q *Queries) GetIntegratorConfigByName(ctx context.Context, name sql.NullString) (IntegratorConfig, error) {
+	row := q.queryRow(ctx, q.getIntegratorConfigByNameStmt, getIntegratorConfigByName, name)
+	var i IntegratorConfig
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ProviderID,
+		&i.Name,
+		&i.SpID,
+		&i.PlazaIDMap,
 		&i.Url,
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
@@ -409,6 +509,57 @@ func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, e
 		&i.Username,
 		&i.Password,
 		&i.Permission,
+	)
+	return i, err
+}
+
+const updateIntegratorConfig = `-- name: UpdateIntegratorConfig :one
+update integrator_config
+set provider_id          = coalesce($2, provider_id),
+    client_id            = coalesce($3, client_id),
+    name                 = coalesce($4, name),
+    sp_id                = coalesce($5, sp_id),
+    plaza_id_map         = coalesce($6, plaza_id_map),
+    url                  = coalesce($7, url),
+    insecure_skip_verify = coalesce($8, insecure_skip_verify)
+where id = $1
+returning id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+`
+
+type UpdateIntegratorConfigParams struct {
+	ID                 uuid.UUID
+	ProviderID         sql.NullInt32
+	ClientID           sql.NullString
+	Name               sql.NullString
+	SpID               sql.NullString
+	PlazaIDMap         pqtype.NullRawMessage
+	Url                sql.NullString
+	InsecureSkipVerify sql.NullBool
+}
+
+func (q *Queries) UpdateIntegratorConfig(ctx context.Context, arg UpdateIntegratorConfigParams) (IntegratorConfig, error) {
+	row := q.queryRow(ctx, q.updateIntegratorConfigStmt, updateIntegratorConfig,
+		arg.ID,
+		arg.ProviderID,
+		arg.ClientID,
+		arg.Name,
+		arg.SpID,
+		arg.PlazaIDMap,
+		arg.Url,
+		arg.InsecureSkipVerify,
+	)
+	var i IntegratorConfig
+	err := row.Scan(
+		&i.ID,
+		&i.ClientID,
+		&i.ProviderID,
+		&i.Name,
+		&i.SpID,
+		&i.PlazaIDMap,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

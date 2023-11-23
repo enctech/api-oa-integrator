@@ -17,6 +17,7 @@ import (
 
 type Config struct {
 	database.IntegratorConfig
+	PlazaId string
 }
 
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
@@ -50,7 +51,7 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 				},
 				"entryTimestamp": time.Now().Format(time.RFC3339),
 				"entrySPId":      c.SpID.String,
-				"entryPlazaId":   c.PlazaID.String,
+				"entryPlazaId":   c.PlazaId,
 				"entryLaneId":    entryLane,
 				"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
 			},
@@ -128,16 +129,16 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 					"deviceType": deviceTypeLPR,
 					"deviceNo":   in.LPN,
 				},
-				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaID.String, in.ExitLane, now.Format("20060102150405")),
+				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, in.ExitLane, now.Format("20060102150405")),
 				"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
 				"entryTimestamp":  in.EntryTime,
 				"entrySPId":       c.SpID.String,
-				"entryPlazaId":    c.PlazaID.String,
+				"entryPlazaId":    c.PlazaId,
 				"entryLaneId":     in.EntryLane,
 				"appSector":       appSectorParking,
 				"exitTimestamp":   now.Format(time.RFC3339),
 				"exitSPId":        c.SpID.String,
-				"exitPlazaId":     c.PlazaID.String,
+				"exitPlazaId":     c.PlazaId,
 				"exitLaneId":      in.ExitLane,
 				"vehicleClass":    vehicleClassPrivate,
 				"tranAmt":         in.Amount,
