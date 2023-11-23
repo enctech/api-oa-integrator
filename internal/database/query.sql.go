@@ -28,7 +28,7 @@ type CountLogsParams struct {
 }
 
 func (q *Queries) CountLogs(ctx context.Context, arg CountLogsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLogs, arg.After, arg.Before)
+	row := q.queryRow(ctx, q.countLogsStmt, countLogs, arg.After, arg.Before)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -48,7 +48,7 @@ type CreateLogParams struct {
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
-	row := q.db.QueryRowContext(ctx, createLog,
+	row := q.queryRow(ctx, q.createLogStmt, createLog,
 		arg.Level,
 		arg.Message,
 		arg.Fields,
@@ -88,7 +88,7 @@ type CreateOATransactionParams struct {
 // -----------Region S&B Config end---------------
 // -----------Region OA Transaction start-------------
 func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransactionParams) (OaTransaction, error) {
-	row := q.db.QueryRowContext(ctx, createOATransaction,
+	row := q.queryRow(ctx, q.createOATransactionStmt, createOATransaction,
 		arg.Businesstransactionid,
 		arg.Lpn,
 		arg.Customerid,
@@ -134,7 +134,7 @@ type CreateSnbConfigParams struct {
 
 // -----------Region S&B Config start-------------
 func (q *Queries) CreateSnbConfig(ctx context.Context, arg CreateSnbConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, createSnbConfig,
+	row := q.queryRow(ctx, q.createSnbConfigStmt, createSnbConfig,
 		arg.Endpoint,
 		pq.Array(arg.Facility),
 		pq.Array(arg.Device),
@@ -171,7 +171,7 @@ type CreateUserParams struct {
 // -----------Region Integrator Config end---------------
 // -----------Region Authentication start-------------
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Password, arg.Permission)
+	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Username, arg.Password, arg.Permission)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -189,7 +189,7 @@ where id = $1
 `
 
 func (q *Queries) DeleteSnbConfig(ctx context.Context, id uuid.UUID) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteSnbConfig, id)
+	return q.exec(ctx, q.deleteSnbConfigStmt, deleteSnbConfig, id)
 }
 
 const deleteUser = `-- name: DeleteUser :execresult
@@ -199,7 +199,7 @@ where id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, error) {
-	return q.db.ExecContext(ctx, deleteUser, id)
+	return q.exec(ctx, q.deleteUserStmt, deleteUser, id)
 }
 
 const getAllSnbConfig = `-- name: GetAllSnbConfig :many
@@ -208,7 +208,7 @@ from snb_config
 `
 
 func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
-	rows, err := q.db.QueryContext(ctx, getAllSnbConfig)
+	rows, err := q.query(ctx, q.getAllSnbConfigStmt, getAllSnbConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
 
-select id, client_id, name, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, sp_id, plaza_id, url, insecure_skip_verify, created_at, updated_at
 from integrator_config
 where client_id = $1
 `
@@ -248,11 +248,12 @@ where client_id = $1
 // -----------Region OA Transaction end-------------
 // -----------Region Integrator Config start-------------
 func (q *Queries) GetIntegratorConfig(ctx context.Context, clientID sql.NullString) (IntegratorConfig, error) {
-	row := q.db.QueryRowContext(ctx, getIntegratorConfig, clientID)
+	row := q.queryRow(ctx, q.getIntegratorConfigStmt, getIntegratorConfig, clientID)
 	var i IntegratorConfig
 	err := row.Scan(
 		&i.ID,
 		&i.ClientID,
+		&i.ProviderID,
 		&i.Name,
 		&i.SpID,
 		&i.PlazaID,
@@ -285,7 +286,7 @@ type GetLogsParams struct {
 }
 
 func (q *Queries) GetLogs(ctx context.Context, arg GetLogsParams) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, getLogs,
+	rows, err := q.query(ctx, q.getLogsStmt, getLogs,
 		arg.Limit,
 		arg.Offset,
 		arg.Message,
@@ -327,7 +328,7 @@ where businesstransactionid = $1
 `
 
 func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid string) (OaTransaction, error) {
-	row := q.db.QueryRowContext(ctx, getOATransaction, businesstransactionid)
+	row := q.queryRow(ctx, q.getOATransactionStmt, getOATransaction, businesstransactionid)
 	var i OaTransaction
 	err := row.Scan(
 		&i.ID,
@@ -353,7 +354,7 @@ where id = $1
 `
 
 func (q *Queries) GetSnbConfig(ctx context.Context, id uuid.UUID) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, getSnbConfig, id)
+	row := q.queryRow(ctx, q.getSnbConfigStmt, getSnbConfig, id)
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
@@ -380,7 +381,7 @@ type GetSnbConfigByFacilityAndDeviceParams struct {
 }
 
 func (q *Queries) GetSnbConfigByFacilityAndDevice(ctx context.Context, arg GetSnbConfigByFacilityAndDeviceParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, getSnbConfigByFacilityAndDevice, arg.Facility, arg.Device)
+	row := q.queryRow(ctx, q.getSnbConfigByFacilityAndDeviceStmt, getSnbConfigByFacilityAndDevice, arg.Facility, arg.Device)
 	var i SnbConfig
 	err := row.Scan(
 		&i.ID,
@@ -401,7 +402,7 @@ where username = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, username)
+	row := q.queryRow(ctx, q.getUserStmt, getUser, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -437,7 +438,7 @@ type UpdateOATransactionParams struct {
 }
 
 func (q *Queries) UpdateOATransaction(ctx context.Context, arg UpdateOATransactionParams) (OaTransaction, error) {
-	row := q.db.QueryRowContext(ctx, updateOATransaction,
+	row := q.queryRow(ctx, q.updateOATransactionStmt, updateOATransaction,
 		arg.Businesstransactionid,
 		arg.Lpn,
 		arg.Customerid,
@@ -488,7 +489,7 @@ type UpdateSnbConfigParams struct {
 }
 
 func (q *Queries) UpdateSnbConfig(ctx context.Context, arg UpdateSnbConfigParams) (SnbConfig, error) {
-	row := q.db.QueryRowContext(ctx, updateSnbConfig,
+	row := q.queryRow(ctx, q.updateSnbConfigStmt, updateSnbConfig,
 		arg.ID,
 		arg.Endpoint,
 		pq.Array(arg.Facility),

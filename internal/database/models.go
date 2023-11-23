@@ -15,6 +15,7 @@ import (
 type IntegratorConfig struct {
 	ID                 uuid.UUID
 	ClientID           sql.NullString
+	ProviderID         sql.NullInt32
 	Name               sql.NullString
 	SpID               sql.NullString
 	PlazaID            sql.NullString

@@ -319,7 +319,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		PaymentInformation: in.PaymentInformation,
 		ProviderInformation: &ProviderInformation{
 			Provider: Provider{
-				ProviderId:   viper.GetString("vendor.id"),
+				ProviderId:   fmt.Sprintf("%v", vendor.ProviderID.Int32),
 				ProviderName: vendor.Name.String,
 			},
 		},

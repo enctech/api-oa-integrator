@@ -2,6 +2,7 @@ create table if not exists integrator_config
 (
     id                   uuid               default uuid_generate_v4() primary key,
     client_id            varchar,
+    provider_id          int,
     name                 varchar,
     sp_id                varchar,
     plaza_id             varchar,

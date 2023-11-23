@@ -16,9 +16,9 @@ func InitController(e *echo.Echo) {
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	//g.Use(middlewares.GuardWithJWT())
+	g.Use(middlewares.GuardWithJWT())
 	g.POST("/snb-config", c.createSnbConfig, middlewares.AdminOnlyMiddleware())
-	g.PUT("/snb-config", c.updateSnbConfig, middlewares.AdminOnlyMiddleware())
+	g.PUT("/snb-config/:id", c.updateSnbConfig, middlewares.AdminOnlyMiddleware())
 	g.GET("/snb-config", c.getAllSnBConfig, middlewares.AdminOnlyMiddleware())
 	g.GET("/snb-config/:id", c.getSnBConfig, middlewares.AdminOnlyMiddleware())
 	g.DELETE("/snb-config/:id", c.deleteSnbConfig, middlewares.AdminOnlyMiddleware())
@@ -58,7 +58,7 @@ func (con controller) createSnbConfig(c echo.Context) error {
 func (con controller) updateSnbConfig(c echo.Context) error {
 	req := new(SnbConfig)
 	err := c.Bind(req)
-	id := uuid.MustParse(c.Param("facility"))
+	id := uuid.MustParse(c.Param("id"))
 	user, err := updateSnbConfig(c.Request().Context(), id, *req)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")
@@ -95,11 +95,11 @@ func (con controller) getAllSnBConfig(c echo.Context) error {
 //	@Router			/config/snb-config/{id} [get]
 func (con controller) getSnBConfig(c echo.Context) error {
 	id := uuid.MustParse(c.Param("id"))
-	user, err := getSnbConfig(c.Request().Context(), id)
+	config, err := getSnbConfig(c.Request().Context(), id)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}
-	return c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusOK, config)
 }
 
 // deleteSnbConfig godoc

@@ -11,8 +11,8 @@ create table snb_config
 (
     id       uuid primary key,
     name     varchar,
-    username   varchar,
-    password   varchar,
+    username varchar,
+    password varchar,
     endpoint varchar,
     facility varchar[],
     device   varchar[]
@@ -30,6 +30,7 @@ create table integrator_config
 (
     id                   uuid primary key,
     client_id            varchar,
+    provider_id          int,
     name                 varchar,
     sp_id                varchar,
     plaza_id             varchar,

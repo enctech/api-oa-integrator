@@ -51,6 +51,8 @@ func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig
 		Endpoint:   config.Endpoint.String,
 		Facilities: config.Facility,
 		Devices:    config.Device,
+		Username:   config.Username.String,
+		Password:   config.Password.String,
 	}, nil
 }
 
@@ -81,9 +83,12 @@ func getSnbConfig(ctx context.Context, in uuid.UUID) (SnbConfig, error) {
 		return SnbConfig{}, err
 	}
 	return SnbConfig{
+		Name:       config.Name.String,
 		Endpoint:   config.Endpoint.String,
 		Facilities: config.Facility,
 		Devices:    config.Device,
+		Username:   config.Username.String,
+		Password:   config.Password.String,
 	}, nil
 }
 

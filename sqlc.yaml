@@ -7,3 +7,4 @@ sql:
       go:
         package: "database"
         out: "internal/database"
+        emit_prepared_queries: true
