@@ -63,6 +63,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getIntegratorConfigByNameStmt, err = db.PrepareContext(ctx, getIntegratorConfigByName); err != nil {
 		return nil, fmt.Errorf("error preparing query GetIntegratorConfigByName: %w", err)
 	}
+	if q.getIntegratorConfigsStmt, err = db.PrepareContext(ctx, getIntegratorConfigs); err != nil {
+		return nil, fmt.Errorf("error preparing query GetIntegratorConfigs: %w", err)
+	}
 	if q.getLogsStmt, err = db.PrepareContext(ctx, getLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLogs: %w", err)
 	}
@@ -157,6 +160,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getIntegratorConfigByNameStmt: %w", cerr)
 		}
 	}
+	if q.getIntegratorConfigsStmt != nil {
+		if cerr := q.getIntegratorConfigsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getIntegratorConfigsStmt: %w", cerr)
+		}
+	}
 	if q.getLogsStmt != nil {
 		if cerr := q.getLogsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getLogsStmt: %w", cerr)
@@ -249,6 +257,7 @@ type Queries struct {
 	getIntegratorConfigStmt             *sql.Stmt
 	getIntegratorConfigByClientStmt     *sql.Stmt
 	getIntegratorConfigByNameStmt       *sql.Stmt
+	getIntegratorConfigsStmt            *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOATransactionStmt                *sql.Stmt
 	getSnbConfigStmt                    *sql.Stmt
@@ -276,6 +285,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorConfigStmt:             q.getIntegratorConfigStmt,
 		getIntegratorConfigByClientStmt:     q.getIntegratorConfigByClientStmt,
 		getIntegratorConfigByNameStmt:       q.getIntegratorConfigByNameStmt,
+		getIntegratorConfigsStmt:            q.getIntegratorConfigsStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOATransactionStmt:                q.getOATransactionStmt,
 		getSnbConfigStmt:                    q.getSnbConfigStmt,

@@ -106,7 +106,7 @@ const docTemplate = `{
             }
         },
         "/config/integrator-config": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "Bearer": []
@@ -123,6 +123,25 @@ const docTemplate = `{
                     "config"
                 ],
                 "summary": "Create config for integrator",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get configurations for all integrators",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get configs for all integrator",
                 "parameters": [
                     {
                         "description": "Request Body",

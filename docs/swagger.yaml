@@ -291,10 +291,22 @@ paths:
       tags:
       - auth
   /config/integrator-config:
-    post:
+    get:
       consumes:
       - application/json
       description: Create configuration required for OA to send data to integrator.
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Create config for integrator
+      tags:
+      - config
+    post:
+      consumes:
+      - application/json
+      description: Get configurations for all integrators
       parameters:
       - description: Request Body
         in: body
@@ -306,7 +318,7 @@ paths:
       responses: {}
       security:
       - Bearer: []
-      summary: Create config for integrator
+      summary: Get configs for all integrator
       tags:
       - config
   /config/snb-config:

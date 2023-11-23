@@ -103,7 +103,7 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 	return nil
 }
 
-func createIntegratorConfigConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
+func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
 	txn, _ := database.D().Begin()
 	jsonString, _ := json.Marshal(in.PlazaIdMap)
 	config, err := database.New(database.D()).WithTx(txn).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
@@ -130,4 +130,31 @@ func createIntegratorConfigConfig(ctx context.Context, in IntegratorConfig) (Int
 		PlazaIdMap:         in.PlazaIdMap,
 		Url:                config.Url.String,
 	}, nil
+}
+
+func getIntegratorConfigs(ctx context.Context, in IntegratorConfig) ([]IntegratorConfig, error) {
+	txn, _ := database.D().Begin()
+	configs, err := database.New(database.D()).WithTx(txn).GetIntegratorConfigs(ctx)
+
+	var out []IntegratorConfig
+	if err != nil {
+		zap.L().Sugar().Errorf("Error create user %v", err)
+		return out, err
+	}
+	err = txn.Commit()
+
+	for _, config := range configs {
+		out = append(out, IntegratorConfig{
+			Id:                 config.ID.String(),
+			ClientId:           config.ClientID.String,
+			ProviderId:         config.ProviderID.Int32,
+			ServiceProviderId:  config.SpID.String,
+			Name:               config.Name.String,
+			InsecureSkipVerify: config.InsecureSkipVerify.Bool,
+			PlazaIdMap:         in.PlazaIdMap,
+			Url:                config.Url.String,
+		})
+	}
+
+	return out, nil
 }

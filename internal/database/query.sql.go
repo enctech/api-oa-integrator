@@ -291,14 +291,11 @@ func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 }
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
-
 select id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
 from integrator_config
 where id = $1
 `
 
-// -----------Region OA Transaction end-------------
-// -----------Region Integrator Config start-------------
 func (q *Queries) GetIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, error) {
 	row := q.queryRow(ctx, q.getIntegratorConfigStmt, getIntegratorConfig, id)
 	var i IntegratorConfig
@@ -363,6 +360,48 @@ func (q *Queries) GetIntegratorConfigByName(ctx context.Context, name sql.NullSt
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getIntegratorConfigs = `-- name: GetIntegratorConfigs :many
+
+select id, client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+from integrator_config
+`
+
+// -----------Region OA Transaction end-------------
+// -----------Region Integrator Config start-------------
+func (q *Queries) GetIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
+	rows, err := q.query(ctx, q.getIntegratorConfigsStmt, getIntegratorConfigs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IntegratorConfig
+	for rows.Next() {
+		var i IntegratorConfig
+		if err := rows.Scan(
+			&i.ID,
+			&i.ClientID,
+			&i.ProviderID,
+			&i.Name,
+			&i.SpID,
+			&i.PlazaIDMap,
+			&i.Url,
+			&i.InsecureSkipVerify,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getLogs = `-- name: GetLogs :many

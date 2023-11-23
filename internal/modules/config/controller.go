@@ -24,6 +24,7 @@ func InitController(e *echo.Echo) {
 	g.DELETE("/snb-config/:id", c.deleteSnbConfig, middlewares.AdminOnlyMiddleware())
 
 	g.POST("/integrator-config", c.createIntegratorConfig, middlewares.AdminOnlyMiddleware())
+	g.GET("/integrator-config", c.createIntegratorConfig, middlewares.AdminOnlyMiddleware())
 }
 
 // createSnbConfig godoc
@@ -123,6 +124,26 @@ func (con controller) deleteSnbConfig(c echo.Context) error {
 	return c.JSON(http.StatusOK, "deleted")
 }
 
+// getIntegratorConfigs godoc
+//
+//	@Summary		Get configs for all integrator
+//	@Description   Get configurations for all integrators
+//	@Tags			config
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Param			request	body	IntegratorConfig	false	"Request Body"
+//	@Security		Bearer
+//	@Router			/config/integrator-config [post]
+func (con controller) getIntegratorConfigs(c echo.Context) error {
+	req := new(IntegratorConfig)
+	err := c.Bind(req)
+	config, err := createIntegratorConfig(c.Request().Context(), *req)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "")
+	}
+	return c.JSON(http.StatusCreated, config)
+}
+
 // createIntegratorConfig godoc
 //
 //	@Summary		Create config for integrator
@@ -130,15 +151,14 @@ func (con controller) deleteSnbConfig(c echo.Context) error {
 //	@Tags			config
 //	@Accept			application/json
 //	@Produce		application/json
-//	@Param			request	body	IntegratorConfig	false	"Request Body"
 //	@Security		Bearer
-//	@Router			/config/integrator-config [post]
+//	@Router			/config/integrator-config [get]
 func (con controller) createIntegratorConfig(c echo.Context) error {
 	req := new(IntegratorConfig)
 	err := c.Bind(req)
-	user, err := createIntegratorConfigConfig(c.Request().Context(), *req)
+	configs, err := getIntegratorConfigs(c.Request().Context(), *req)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}
-	return c.JSON(http.StatusCreated, user)
+	return c.JSON(http.StatusCreated, configs)
 }

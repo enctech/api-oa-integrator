@@ -84,6 +84,10 @@ returning *;
 -------------Region OA Transaction end-------------
 
 -------------Region Integrator Config start-------------
+-- name: GetIntegratorConfigs :many
+select *
+from integrator_config;
+
 -- name: GetIntegratorConfig :one
 select *
 from integrator_config
