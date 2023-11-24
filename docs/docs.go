@@ -112,25 +112,6 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create configuration required for OA to send data to integrator.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "config"
-                ],
-                "summary": "Create config for integrator",
-                "responses": {}
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
                 "description": "Get configurations for all integrators",
                 "consumes": [
                     "application/json"
@@ -142,6 +123,25 @@ const docTemplate = `{
                     "config"
                 ],
                 "summary": "Get configs for all integrator",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to send data to integrator.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Create config for integrator",
                 "parameters": [
                     {
                         "description": "Request Body",
@@ -155,6 +155,72 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/config/integrator-config/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to send data to integrator.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Create config for integrator",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request Body",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/config.IntegratorConfig"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Create configuration required for OA to send data to integrator.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Delete config for integrator",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/config/snb-config": {
             "get": {
                 "security": [
@@ -162,7 +228,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Get configuration required for OA to works.",
+                "description": "Get all configuration required for OA to works.",
                 "consumes": [
                     "application/json"
                 ],
@@ -240,7 +306,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Create configuration required for OA to works.",
+                "description": "Update configuration required for OA to works.",
                 "consumes": [
                     "application/json"
                 ],
@@ -250,7 +316,7 @@ const docTemplate = `{
                 "tags": [
                     "config"
                 ],
-                "summary": "Create config for snb",
+                "summary": "Update config for snb",
                 "parameters": [
                     {
                         "description": "Request Body",
@@ -276,7 +342,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Get configuration required for OA to works.",
+                "description": "Delete configuration required for OA to works.",
                 "consumes": [
                     "application/json"
                 ],
@@ -286,7 +352,7 @@ const docTemplate = `{
                 "tags": [
                     "config"
                 ],
-                "summary": "Get config for snb",
+                "summary": "Delete config for snb",
                 "parameters": [
                     {
                         "type": "string",

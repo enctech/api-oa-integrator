@@ -105,34 +105,37 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 
 func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
 	txn, _ := database.D().Begin()
-	jsonString, _ := json.Marshal(in.PlazaIdMap)
+	jsonString, err := json.Marshal(in.PlazaIdMap)
 	config, err := database.New(database.D()).WithTx(txn).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
-		ClientID:           sql.NullString{String: in.ClientId, Valid: true},
+		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
-		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: true},
-		Name:               sql.NullString{String: in.Name, Valid: true},
-		InsecureSkipVerify: sql.NullBool{Bool: in.InsecureSkipVerify, Valid: true},
-		PlazaIDMap:         pqtype.NullRawMessage{Valid: true, RawMessage: jsonString},
-		Url:                sql.NullString{String: in.Url, Valid: true},
+		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
+		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
+		InsecureSkipVerify: sql.NullBool{Bool: *(in.InsecureSkipVerify), Valid: in.InsecureSkipVerify != nil},
+		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: jsonString != nil},
+		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
 		return IntegratorConfig{}, err
 	}
 	err = txn.Commit()
+
+	var plazaId map[string]string
+	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 	return IntegratorConfig{
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
 		ProviderId:         config.ProviderID.Int32,
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
-		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         in.PlazaIdMap,
+		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
+		PlazaIdMap:         plazaId,
 		Url:                config.Url.String,
 	}, nil
 }
 
-func getIntegratorConfigs(ctx context.Context, in IntegratorConfig) ([]IntegratorConfig, error) {
+func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 	txn, _ := database.D().Begin()
 	configs, err := database.New(database.D()).WithTx(txn).GetIntegratorConfigs(ctx)
 
@@ -142,19 +145,61 @@ func getIntegratorConfigs(ctx context.Context, in IntegratorConfig) ([]Integrato
 		return out, err
 	}
 	err = txn.Commit()
-
 	for _, config := range configs {
+		var plazaId map[string]string
+		_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 		out = append(out, IntegratorConfig{
 			Id:                 config.ID.String(),
 			ClientId:           config.ClientID.String,
 			ProviderId:         config.ProviderID.Int32,
 			ServiceProviderId:  config.SpID.String,
 			Name:               config.Name.String,
-			InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-			PlazaIdMap:         in.PlazaIdMap,
+			InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
+			PlazaIdMap:         plazaId,
 			Url:                config.Url.String,
 		})
 	}
 
 	return out, nil
+}
+
+func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConfig) (IntegratorConfig, error) {
+	txn, _ := database.D().Begin()
+	jsonString, err := json.Marshal(in.PlazaIdMap)
+	config, err := database.New(database.D()).WithTx(txn).UpdateIntegratorConfig(ctx, database.UpdateIntegratorConfigParams{
+		ID:                 id,
+		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
+		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
+		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
+		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
+		InsecureSkipVerify: sql.NullBool{Bool: *(in.InsecureSkipVerify), Valid: in.InsecureSkipVerify != nil},
+		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: err == nil},
+		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
+	})
+	if err != nil {
+		zap.L().Sugar().Errorf("Error update integrator %v", err)
+		return IntegratorConfig{}, err
+	}
+	err = txn.Commit()
+	return IntegratorConfig{
+		Id:                 config.ID.String(),
+		ClientId:           config.ClientID.String,
+		ProviderId:         config.ProviderID.Int32,
+		ServiceProviderId:  config.SpID.String,
+		Name:               config.Name.String,
+		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
+		PlazaIdMap:         in.PlazaIdMap,
+		Url:                config.Url.String,
+	}, nil
+}
+
+func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
+	txn, _ := database.D().Begin()
+	_, err := database.New(database.D()).WithTx(txn).DeleteIntegratorConfig(ctx, id)
+	if err != nil {
+		zap.L().Sugar().Errorf("Error update integrator %v", err)
+		return err
+	}
+	err = txn.Commit()
+	return nil
 }

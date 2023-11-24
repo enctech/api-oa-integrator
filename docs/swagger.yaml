@@ -294,19 +294,19 @@ paths:
     get:
       consumes:
       - application/json
-      description: Create configuration required for OA to send data to integrator.
+      description: Get configurations for all integrators
       produces:
       - application/json
       responses: {}
       security:
       - Bearer: []
-      summary: Create config for integrator
+      summary: Get configs for all integrator
       tags:
       - config
     post:
       consumes:
       - application/json
-      description: Get configurations for all integrators
+      description: Create configuration required for OA to send data to integrator.
       parameters:
       - description: Request Body
         in: body
@@ -318,14 +318,56 @@ paths:
       responses: {}
       security:
       - Bearer: []
-      summary: Get configs for all integrator
+      summary: Create config for integrator
+      tags:
+      - config
+  /config/integrator-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Create configuration required for OA to send data to integrator.
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Delete config for integrator
+      tags:
+      - config
+    put:
+      consumes:
+      - application/json
+      description: Create configuration required for OA to send data to integrator.
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/config.IntegratorConfig'
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Create config for integrator
       tags:
       - config
   /config/snb-config:
     get:
       consumes:
       - application/json
-      description: Get configuration required for OA to works.
+      description: Get all configuration required for OA to works.
       produces:
       - application/json
       responses: {}
@@ -356,7 +398,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Get configuration required for OA to works.
+      description: Delete configuration required for OA to works.
       parameters:
       - description: Id
         in: path
@@ -368,7 +410,7 @@ paths:
       responses: {}
       security:
       - Bearer: []
-      summary: Get config for snb
+      summary: Delete config for snb
       tags:
       - config
     get:
@@ -392,7 +434,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Create configuration required for OA to works.
+      description: Update configuration required for OA to works.
       parameters:
       - description: Request Body
         in: body
@@ -409,7 +451,7 @@ paths:
       responses: {}
       security:
       - Bearer: []
-      summary: Create config for snb
+      summary: Update config for snb
       tags:
       - config
   /health:
