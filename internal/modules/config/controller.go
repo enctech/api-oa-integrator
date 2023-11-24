@@ -25,6 +25,7 @@ func InitController(e *echo.Echo) {
 	g.DELETE("/snb-config/:id", c.deleteSnbConfig, middlewares.AdminOnlyMiddleware())
 
 	g.GET("/integrator-config", c.getIntegratorConfigs, middlewares.AdminOnlyMiddleware())
+	g.GET("/integrator-config/:id", c.getIntegratorConfig, middlewares.AdminOnlyMiddleware())
 	g.POST("/integrator-config", c.createIntegratorConfig, middlewares.AdminOnlyMiddleware())
 	g.PUT("/integrator-config/:id", c.updateIntegratorConfig, middlewares.AdminOnlyMiddleware())
 	g.DELETE("/integrator-config/:id", c.deleteIntegratorConfig, middlewares.AdminOnlyMiddleware())
@@ -146,6 +147,25 @@ func (con controller) getIntegratorConfigs(c echo.Context) error {
 	return c.JSON(http.StatusOK, config)
 }
 
+// getIntegratorConfig godoc
+//
+//	@Summary		Get config for specific integrator
+//	@Description	Get configuration for a specific integrator
+//	@Tags			config
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Security		Bearer
+//	@Param			id	path	string	true	"Id"
+//	@Router			/config/integrator-config/{id} [get]
+func (con controller) getIntegratorConfig(c echo.Context) error {
+	id := uuid.MustParse(c.Param("id"))
+	config, err := getIntegratorConfig(c.Request().Context(), id)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "")
+	}
+	return c.JSON(http.StatusOK, config)
+}
+
 // createIntegratorConfig godoc
 //
 //	@Summary		Create config for integrator
@@ -203,7 +223,7 @@ func (con controller) updateIntegratorConfig(c echo.Context) error {
 //	@Accept			application/json
 //	@Produce		application/json
 //	@Security		Bearer
-//	@Param			id		path	string				true	"Id"
+//	@Param			id	path	string	true	"Id"
 //	@Router			/config/integrator-config/{id} [delete]
 func (con controller) deleteIntegratorConfig(c echo.Context) error {
 	id := uuid.MustParse(c.Param("id"))

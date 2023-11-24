@@ -11,8 +11,7 @@ import (
 )
 
 func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
-	txn, _ := database.D().Begin()
-	config, err := database.New(database.D()).WithTx(txn).CreateSnbConfig(ctx, database.CreateSnbConfigParams{
+	config, err := database.New(database.D()).CreateSnbConfig(ctx, database.CreateSnbConfigParams{
 		Endpoint: sql.NullString{String: in.Endpoint, Valid: true},
 		Facility: in.Facilities,
 		Device:   in.Devices,
@@ -24,7 +23,6 @@ func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
 		zap.L().Sugar().Errorf("Error create user %v", err)
 		return SnbConfig{}, err
 	}
-	err = txn.Commit()
 	return SnbConfig{
 		Endpoint:   config.Endpoint.String,
 		Facilities: config.Facility,
@@ -33,8 +31,7 @@ func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
 }
 
 func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig, error) {
-	txn, _ := database.D().Begin()
-	config, err := database.New(database.D()).WithTx(txn).UpdateSnbConfig(ctx, database.UpdateSnbConfigParams{
+	config, err := database.New(database.D()).UpdateSnbConfig(ctx, database.UpdateSnbConfigParams{
 		ID:       id,
 		Endpoint: sql.NullString{String: in.Endpoint, Valid: true},
 		Facility: in.Facilities,
@@ -47,7 +44,6 @@ func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig
 		zap.L().Sugar().Errorf("Error create user %v", err)
 		return SnbConfig{}, err
 	}
-	err = txn.Commit()
 	return SnbConfig{
 		Name:       config.Name.String,
 		Endpoint:   config.Endpoint.String,
@@ -104,9 +100,8 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 }
 
 func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
-	txn, _ := database.D().Begin()
 	jsonString, err := json.Marshal(in.PlazaIdMap)
-	config, err := database.New(database.D()).WithTx(txn).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
+	config, err := database.New(database.D()).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
 		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
 		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
@@ -119,7 +114,6 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		zap.L().Sugar().Errorf("Error create user %v", err)
 		return IntegratorConfig{}, err
 	}
-	err = txn.Commit()
 
 	var plazaId map[string]string
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
@@ -136,15 +130,13 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 }
 
 func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
-	txn, _ := database.D().Begin()
-	configs, err := database.New(database.D()).WithTx(txn).GetIntegratorConfigs(ctx)
+	configs, err := database.New(database.D()).GetIntegratorConfigs(ctx)
 
 	var out []IntegratorConfig
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
 		return out, err
 	}
-	err = txn.Commit()
 	for _, config := range configs {
 		var plazaId map[string]string
 		_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
@@ -163,10 +155,30 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 	return out, nil
 }
 
+func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, error) {
+	config, err := database.New(database.D()).GetIntegratorConfig(ctx, id)
+
+	if err != nil {
+		zap.L().Sugar().Errorf("Error create user %v", err)
+		return IntegratorConfig{}, err
+	}
+	var plazaId map[string]string
+	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+	return IntegratorConfig{
+		Id:                 config.ID.String(),
+		ClientId:           config.ClientID.String,
+		ProviderId:         config.ProviderID.Int32,
+		ServiceProviderId:  config.SpID.String,
+		Name:               config.Name.String,
+		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
+		PlazaIdMap:         plazaId,
+		Url:                config.Url.String,
+	}, nil
+}
+
 func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConfig) (IntegratorConfig, error) {
-	txn, _ := database.D().Begin()
 	jsonString, err := json.Marshal(in.PlazaIdMap)
-	config, err := database.New(database.D()).WithTx(txn).UpdateIntegratorConfig(ctx, database.UpdateIntegratorConfigParams{
+	config, err := database.New(database.D()).UpdateIntegratorConfig(ctx, database.UpdateIntegratorConfigParams{
 		ID:                 id,
 		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
@@ -180,7 +192,6 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		zap.L().Sugar().Errorf("Error update integrator %v", err)
 		return IntegratorConfig{}, err
 	}
-	err = txn.Commit()
 	return IntegratorConfig{
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
@@ -194,12 +205,10 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 }
 
 func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
-	txn, _ := database.D().Begin()
-	_, err := database.New(database.D()).WithTx(txn).DeleteIntegratorConfig(ctx, id)
+	_, err := database.New(database.D()).DeleteIntegratorConfig(ctx, id)
 	if err != nil {
 		zap.L().Sugar().Errorf("Error update integrator %v", err)
 		return err
 	}
-	err = txn.Commit()
 	return nil
 }

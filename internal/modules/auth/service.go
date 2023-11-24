@@ -18,19 +18,13 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 		return LoginResponse{}, err
 	}
 
-	txn, _ := database.D().Begin()
-	user, err := database.New(database.D()).WithTx(txn).CreateUser(ctx, database.CreateUserParams{
+	user, err := database.New(database.D()).CreateUser(ctx, database.CreateUserParams{
 		Username:   sql.NullString{String: in.Username, Valid: true},
 		Password:   sql.NullString{String: hp, Valid: true},
 		Permission: sql.NullString{String: in.Permission, Valid: true},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
-		return LoginResponse{}, err
-	}
-	err = txn.Commit()
-	if err != nil {
-		zap.L().Sugar().Errorf("Error commit user txn %v", err)
 		return LoginResponse{}, err
 	}
 
@@ -57,9 +51,7 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 }
 
 func login(ctx context.Context, in LoginRequest) (LoginResponse, error) {
-	txn, _ := database.D().Begin()
-	user, err := database.New(database.D()).WithTx(txn).GetUser(ctx, sql.NullString{String: in.Username, Valid: true})
-
+	user, err := database.New(database.D()).GetUser(ctx, sql.NullString{String: in.Username, Valid: true})
 	if !checkPassword(in.Password, user.Password.String) {
 		return LoginResponse{}, errors.New("invalid password")
 	}
@@ -88,12 +80,6 @@ func login(ctx context.Context, in LoginRequest) (LoginResponse, error) {
 }
 
 func deleteUser(ctx context.Context, in uuid.UUID) error {
-	txn, _ := database.D().Begin()
-	_, err := database.New(database.D()).WithTx(txn).DeleteUser(ctx, in)
-	if err != nil {
-		return err
-	}
-	err = txn.Commit()
-
+	_, err := database.New(database.D()).DeleteUser(ctx, in)
 	return err
 }
