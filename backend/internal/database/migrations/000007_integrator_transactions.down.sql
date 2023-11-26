@@ -1,0 +1,3 @@
+drop trigger set_integrator_transactions_timestamp on integrator_transactions;
+
+drop table if exists integrator_transactions;

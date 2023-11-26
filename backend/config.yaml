@@ -1,0 +1,7 @@
+app:
+  port: 1323
+  version: 0.0.1
+  secret: QjrwoX405TUmRVsZPmZ5qVuZDIhz3tDCUQf2TBZQCGk0jCcMx-JcaJizu82-GoeSudfrbtAgwvA-7R6aB3AKOQ==
+
+database:
+  url: postgres://postgres:postgres123@localhost:5432/postgres?sslmode=disable
