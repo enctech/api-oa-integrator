@@ -3,6 +3,9 @@ import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Button,
   Container,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
   TextField,
   Tooltip,
   tooltipClasses,
@@ -12,6 +15,7 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
 import {
   getIntegratorConfig,
+  getIntegrators,
   IntegratorConfigs,
   updateIntegratorConfig,
 } from "../../api/config";
@@ -23,6 +27,7 @@ interface FormData {
   url: string;
   name: string;
   clientId: string;
+  integratorName?: string;
   serviceProviderId: string;
   providerId: number;
   isInsecure: boolean;
@@ -47,14 +52,17 @@ const IntegratorConfigsDetails = () => {
       plazaIdMappers: [],
     },
   });
-  const { fields, append, remove } = useFieldArray({
+  let { id } = useParams();
+  const { fields, remove, append, update } = useFieldArray({
     control,
     name: "plazaIdMappers",
   });
 
-  let { id } = useParams();
   const { data } = useQuery(["getIntegratorConfig"], () =>
     getIntegratorConfig(id || ""),
+  );
+  const { data: integrators } = useQuery(["getIntegrators"], () =>
+    getIntegrators(),
   );
   const { mutate, data: newData } = useMutation(
     "updateIntegratorConfig",
@@ -73,23 +81,24 @@ const IntegratorConfigsDetails = () => {
     setValue("providerId", data.providerId);
     setValue("isInsecure", data.insecureSkipVerify);
     setValue("serviceProviderId", data.serviceProviderId);
-    const map = new Map(Object.entries(data.plazaIdMap));
-    map.forEach((value, key) => {
-      if (fields.map((item) => item.field1).includes(key)) return;
-      append({
-        field1: key,
-        field2: value as string,
+    setValue("integratorName", data.integratorName);
+    if (data.plazaIdMap) {
+      const keys = Object.keys(data.plazaIdMap);
+      keys.forEach((key, index) => {
+        update(index, {
+          field1: key,
+          field2: new Map(Object.entries(data.plazaIdMap)).get(key) || "",
+        });
       });
-    });
+    }
   };
 
   useEffect(reset, [data]);
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
-    console.log(data);
-    const plazaIdMap: { [key: string]: string } = {};
+    const plazaIdMap: Map<string, string> = new Map();
     data.plazaIdMappers.forEach((item) => {
-      plazaIdMap[item.field1] = item.field2;
+      plazaIdMap.set(item.field1, item.field2);
     });
 
     mutate({
@@ -101,6 +110,7 @@ const IntegratorConfigsDetails = () => {
       providerId: data.providerId,
       insecureSkipVerify: data.isInsecure,
       plazaIdMap: plazaIdMap,
+      integratorName: data.integratorName,
     } satisfies IntegratorConfigs);
   };
 
@@ -223,31 +233,73 @@ const IntegratorConfigsDetails = () => {
           </div>
         </div>
 
+        {data && data?.integratorName && (
+          <RadioGroup
+            value={data?.integratorName}
+            className="mb-8"
+            {...register(`integratorName` as const)}
+          >
+            <div>
+              Integrator type
+              <Tooltip
+                className="ml-2"
+                title="Which integrator is this configuration system is for?"
+              >
+                <InfoIcon />
+              </Tooltip>
+            </div>
+            {integrators?.map((value) => (
+              <FormControlLabel
+                key={value}
+                value={value}
+                control={<Radio />}
+                label={value.toUpperCase()}
+              />
+            ))}
+          </RadioGroup>
+        )}
+
         <div>
           <h2>Plaza ID Mapper</h2>
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex">
-              <div>
-                <div>OA Facility ID</div>
-                <TextField
-                  {...register(`plazaIdMappers.${index}.field1` as const)}
-                />
+          {data &&
+            fields.map((field, index) => (
+              <div
+                key={`${field.id}-${field.field1}-${field.field2}`}
+                className="flex"
+              >
+                <div>
+                  <div>OA Facility ID</div>
+                  <TextField
+                    disabled={!isEditing}
+                    sx={{
+                      "& .MuiInputBase-input.Mui-disabled": {
+                        WebkitTextFillColor: "#000000",
+                      },
+                    }}
+                    {...register(`plazaIdMappers.${index}.field1` as const)}
+                  />
+                </div>
+                <div className="w-8" />
+                <div>
+                  <div>Vendor Location ID</div>
+                  <TextField
+                    disabled={!isEditing}
+                    sx={{
+                      "& .MuiInputBase-input.Mui-disabled": {
+                        WebkitTextFillColor: "#000000",
+                      },
+                    }}
+                    {...register(`plazaIdMappers.${index}.field2` as const)}
+                  />
+                </div>
+                <div className="w-8" />
+                {isEditing && (
+                  <Button type="button" onClick={() => remove(index)}>
+                    Remove
+                  </Button>
+                )}
               </div>
-              <div className="w-8" />
-              <div>
-                <div>Vendor Location ID</div>
-                <TextField
-                  {...register(`plazaIdMappers.${index}.field2` as const)}
-                />
-              </div>
-              <div className="w-8" />
-              {isEditing && (
-                <Button type="button" onClick={() => remove(index)}>
-                  Remove
-                </Button>
-              )}
-            </div>
-          ))}
+            ))}
           {isEditing && (
             <Button
               type="button"

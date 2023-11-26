@@ -58,17 +58,22 @@ export interface IntegratorConfigs {
   providerId: number;
   serviceProviderId: string;
   name: string;
+  integratorName?: string;
   url: string;
   insecureSkipVerify: boolean;
-  plazaIdMap: {
-    [key: string]: string;
-  };
+  plazaIdMap: Map<string, string>;
 }
 
 export const getIntegratorConfigs = async () => {
   return axios
     .get(`/config/integrator-config`)
     .then((response) => response.data as IntegratorConfigs[]);
+};
+
+export const getIntegrators = async () => {
+  return axios
+    .get(`/config/integrators`)
+    .then((response) => response.data as string[]);
 };
 
 export const getIntegratorConfig = async (id: string) => {
@@ -80,7 +85,19 @@ export const getIntegratorConfig = async (id: string) => {
 export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
   const data = { ...arg };
   delete data["id"];
+  console.log(data);
   return axios
-    .put(`/config/integrator-config/${arg.id}`, data)
+    .put(`/config/integrator-config/${arg.id}`, {
+      clientId: data.clientId,
+      providerId: data.providerId,
+      serviceProviderId: data.serviceProviderId,
+      name: data.name,
+      integratorName: data.integratorName,
+      url: data.url,
+      insecureSkipVerify: data.insecureSkipVerify,
+      plazaIdMap: JSON.parse(
+        JSON.stringify(Object.fromEntries(arg.plazaIdMap)),
+      ),
+    })
     .then((response) => response.data as IntegratorConfigs);
 };

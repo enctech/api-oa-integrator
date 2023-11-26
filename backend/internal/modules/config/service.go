@@ -109,6 +109,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		InsecureSkipVerify: sql.NullBool{Bool: *(in.InsecureSkipVerify), Valid: in.InsecureSkipVerify != nil},
 		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: jsonString != nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
+		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
@@ -118,6 +119,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 	var plazaId map[string]string
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 	return IntegratorConfig{
+		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
 		ProviderId:         config.ProviderID.Int32,
@@ -141,6 +143,7 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 		var plazaId map[string]string
 		_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 		out = append(out, IntegratorConfig{
+			IntegratorName:     config.IntegratorName.String,
 			Id:                 config.ID.String(),
 			ClientId:           config.ClientID.String,
 			ProviderId:         config.ProviderID.Int32,
@@ -165,6 +168,7 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 	var plazaId map[string]string
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 	return IntegratorConfig{
+		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
 		ProviderId:         config.ProviderID.Int32,
@@ -187,12 +191,14 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		InsecureSkipVerify: sql.NullBool{Bool: *(in.InsecureSkipVerify), Valid: in.InsecureSkipVerify != nil},
 		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: err == nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
+		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error update integrator %v", err)
 		return IntegratorConfig{}, err
 	}
 	return IntegratorConfig{
+		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
 		ProviderId:         config.ProviderID.Int32,

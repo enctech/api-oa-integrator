@@ -249,6 +249,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/config/integrators": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get integrators that will be used in integrator config",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "config"
+                ],
+                "summary": "Get integrators name",
+                "responses": {}
+            }
+        },
         "/config/snb-config": {
             "get": {
                 "security": [
@@ -767,6 +788,9 @@ const docTemplate = `{
                 },
                 "insecureSkipVerify": {
                     "type": "boolean"
+                },
+                "integratorName": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

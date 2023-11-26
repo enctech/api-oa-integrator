@@ -23,6 +23,8 @@ definitions:
         type: string
       insecureSkipVerify:
         type: boolean
+      integratorName:
+        type: string
       name:
         type: string
       plazaIdMap:
@@ -379,6 +381,19 @@ paths:
       security:
       - Bearer: []
       summary: Create config for integrator
+      tags:
+      - config
+  /config/integrators:
+    get:
+      consumes:
+      - application/json
+      description: Get integrators that will be used in integrator config
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - Bearer: []
+      summary: Get integrators name
       tags:
       - config
   /config/snb-config:

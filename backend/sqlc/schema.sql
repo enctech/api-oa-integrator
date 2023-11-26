@@ -32,6 +32,7 @@ create table integrator_config
     client_id            varchar,
     provider_id          int,
     name                 varchar,
+    integrator_name      varchar,
     sp_id                varchar,
     plaza_id_map         json,
     url                  varchar,

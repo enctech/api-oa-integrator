@@ -55,7 +55,7 @@ const IntegratorConfigsPage = () => {
         </TableHead>
         <TableBody>
           {data?.map((row) => (
-            <IntegratorConfig row={row} handleRowClick={handleRowClick} />
+            <IntegratorConfig key={row.id} row={row} handleRowClick={handleRowClick} />
           ))}
         </TableBody>
       </Table>

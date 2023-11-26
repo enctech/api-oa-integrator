@@ -99,9 +99,9 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
-func (c Config) PerformTransaction(in TransactionArg) error {
-	zap.L().Sugar().With("plateNumber", in.LPN).Info("VerifyVehicle")
-	if in.LPN == "" {
+func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) error {
+	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
+	if plateNumber == "" {
 		return errors.New("empty plate number")
 	}
 
@@ -111,7 +111,7 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 	}
 
 	extendInfo, err := json.Marshal(map[string]any{
-		"vehiclePlateNo": in.LPN,
+		"vehiclePlateNo": plateNumber,
 		"vehicleType":    "Motorcar",
 	})
 	now := time.Now()
@@ -127,25 +127,25 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 			"body": map[string]any{
 				"deviceInfo": map[string]any{
 					"deviceType": deviceTypeLPR,
-					"deviceNo":   in.LPN,
+					"deviceNo":   plateNumber,
 				},
-				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, in.ExitLane, now.Format("20060102150405")),
+				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405")),
 				"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
-				"entryTimestamp":  in.EntryTime,
+				"entryTimestamp":  entryAt,
 				"entrySPId":       c.SpID.String,
 				"entryPlazaId":    c.PlazaId,
-				"entryLaneId":     in.EntryLane,
+				"entryLaneId":     entryLane,
 				"appSector":       appSectorParking,
 				"exitTimestamp":   now.Format(time.RFC3339),
 				"exitSPId":        c.SpID.String,
 				"exitPlazaId":     c.PlazaId,
-				"exitLaneId":      in.ExitLane,
+				"exitLaneId":      exitLane,
 				"vehicleClass":    vehicleClassPrivate,
-				"tranAmt":         in.Amount,
+				"tranAmt":         amount,
 				"surchargeAmt":    0.00,
 				"surchargeTaxAmt": 0.00,
-				"parkingAmt":      in.Amount, // not sure what is this.
-				"parkingTaxAmt":   0.00,      // not sure what is this.
+				"parkingAmt":      amount, // not sure what is this.
+				"parkingTaxAmt":   0.00,   // not sure what is this.
 				"extendInfo":      fmt.Sprintf("%v", string(extendInfo)),
 			},
 		},
@@ -153,12 +153,12 @@ func (c Config) PerformTransaction(in TransactionArg) error {
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", in.LPN).Errorf("Error marshaling data to JSON: %v", err)
+		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error marshaling data to JSON: %v", err)
 		return err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", in.LPN).Errorf("Error creating request: %v", err)
+		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error creating request: %v", err)
 		return err
 	}
 

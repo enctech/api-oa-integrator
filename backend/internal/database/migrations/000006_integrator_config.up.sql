@@ -4,6 +4,7 @@ create table if not exists integrator_config
     client_id            varchar,
     provider_id          int unique     not null,
     name                 varchar unique not null,
+    integrator_name      varchar,
     sp_id                varchar,
     plaza_id_map         json,
     url                  varchar,

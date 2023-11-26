@@ -2,6 +2,7 @@ package config
 
 import (
 	"api-oa-integrator/internal/middlewares"
+	"api-oa-integrator/internal/modules/integrator"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -24,6 +25,7 @@ func InitController(e *echo.Echo) {
 	g.GET("/snb-config/:id", c.getSnBConfig, middlewares.AdminOnlyMiddleware())
 	g.DELETE("/snb-config/:id", c.deleteSnbConfig, middlewares.AdminOnlyMiddleware())
 
+	g.GET("/integrators", c.getIntegrators, middlewares.AdminOnlyMiddleware())
 	g.GET("/integrator-config", c.getIntegratorConfigs, middlewares.AdminOnlyMiddleware())
 	g.GET("/integrator-config/:id", c.getIntegratorConfig, middlewares.AdminOnlyMiddleware())
 	g.POST("/integrator-config", c.createIntegratorConfig, middlewares.AdminOnlyMiddleware())
@@ -126,6 +128,19 @@ func (con controller) deleteSnbConfig(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "")
 	}
 	return c.JSON(http.StatusOK, "deleted")
+}
+
+// getIntegrators godoc
+//
+//	@Summary		Get integrators name
+//	@Description	Get integrators that will be used in integrator config
+//	@Tags			config
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Security		Bearer
+//	@Router			/config/integrators [get]
+func (con controller) getIntegrators(c echo.Context) error {
+	return c.JSON(http.StatusOK, integrator.Integrators)
 }
 
 // getIntegratorConfigs godoc
