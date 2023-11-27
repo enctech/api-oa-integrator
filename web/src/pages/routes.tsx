@@ -134,6 +134,10 @@ function PersistentDrawerRight() {
         <List>
           {[
             {
+              text: "Home",
+              link: "/",
+            },
+            {
               text: "OA Configs",
               link: "/oa-configs",
             },

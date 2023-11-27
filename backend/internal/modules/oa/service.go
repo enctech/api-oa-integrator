@@ -16,8 +16,10 @@ import (
 	"github.com/spf13/viper"
 	"github.com/sqlc-dev/pqtype"
 	"go.uber.org/zap"
+	"maps"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetadata) {
@@ -241,10 +243,15 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 			"error": err.Error(),
 		})
 		go sendZeroAmount()
+		oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+			Businesstransactionid: job.BusinessTransaction.ID,
+			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		})
 		return
 	}
 	jsonStr, err = json.Marshal(map[string]any{
-		"steps": "payment_exit_done",
+		"steps":     "payment_exit_done",
+		"paymentAt": time.Now().UTC(),
 	})
 
 	if err != nil {
@@ -290,6 +297,24 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	if extra["steps"] != "payment_exit_done" {
 		err = integrator.PerformTransaction(metadata.vendor, metadata.facility, lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
 	}
+
+	newExtra := map[string]any{
+		"steps":   "payment_exit_done",
+		"leaveAt": time.Now().UTC(),
+	}
+
+	maps.Copy(newExtra, extra)
+
+	jsonStr, err := json.Marshal(newExtra)
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	oaTxn, _ = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		Businesstransactionid: job.BusinessTransaction.ID,
+		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+	})
 
 	go sendEmptyFinalMessage(metadata)
 }

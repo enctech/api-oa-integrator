@@ -92,18 +92,22 @@ const OaConfigsDetailsPage = () => {
   return (
     <Container className="p-16">
       <div className="flex content-between items-center justify-center mb-6">
-        {oaHealth?.oa === "up" ? (
-          <div
-            className="w-5 h-5 mr-6 rounded-full
+        {id !== "new" && (
+          <div>
+            {oaHealth?.oa === "up" ? (
+              <div
+                className="w-5 h-5 mr-6 rounded-full
                 inline-flex items-center justify-center
                 bg-green-500"
-          ></div>
-        ) : (
-          <div
-            className="w-5 h-5 mr-6 rounded-full
+              ></div>
+            ) : (
+              <div
+                className="w-5 h-5 mr-6 rounded-full
                 inline-flex items-center justify-center
                 bg-red-500"
-          ></div>
+              ></div>
+            )}
+          </div>
         )}
         <Typography variant="h5" component="h2">
           SnB Config Details
