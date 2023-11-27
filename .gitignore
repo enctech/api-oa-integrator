@@ -3,3 +3,4 @@
 *.logs
 ssh
 api-oa-integrator
+.env
