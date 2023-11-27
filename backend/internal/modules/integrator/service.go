@@ -33,7 +33,7 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	case "tng":
 		return tng.Config{IntegratorConfig: cfg, PlazaId: fmt.Sprintf("%v", plazaIdMap[locationId])}, nil
 	default:
-		return nil, errors.New("invalid integrator name")
+		return nil, errors.New(fmt.Sprintf("integrator %v not found", cfg.IntegratorName.String))
 	}
 }
 
