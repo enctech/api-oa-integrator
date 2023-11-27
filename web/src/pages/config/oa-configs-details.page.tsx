@@ -8,27 +8,33 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery } from "react-query";
-import { getOAConfig, updateOAConfig } from "../../api/config";
-import { useParams } from "react-router-dom";
+import { createOAConfig, getOAConfig, updateOAConfig } from "../../api/config";
+import { useNavigate, useParams } from "react-router-dom";
 import { getOAHealth } from "../../api/health";
 
 const OaConfigsDetailsPage = () => {
+  const navigate = useNavigate();
   let { id } = useParams();
-  const { data } = useQuery(["getOAConfig"], () => getOAConfig(id || ""));
+  const { data } = useQuery(["getOAConfig", id], () => getOAConfig(id || ""));
   const { mutate, data: newData } = useMutation(
     "updateOAConfig",
     updateOAConfig,
   );
 
-  const [isEditing, setIsEditing] = useState(false);
+  const { mutate: create, data: createdData } = useMutation(
+    "createOAConfig",
+    createOAConfig,
+  );
+
+  const [isEditing, setIsEditing] = useState(id === "new");
   const [name, setName] = useState(data?.name);
-  const [facilities, setFacilities] = useState(data?.facilities);
-  const [devices, setDevices] = useState(data?.devices);
+  const [facilities, setFacilities] = useState(data?.facilities || []);
+  const [devices, setDevices] = useState(data?.devices || []);
   const [endpoint, setEndpoint] = useState(data?.endpoint);
   const [username, setUsername] = useState(data?.username);
   const [password, setPassword] = useState(data?.password);
 
-  const { data: oaHealth } = useQuery("getOAHealth", () =>
+  const { data: oaHealth } = useQuery(["getOAHealth", id], () =>
     devices && devices.length > 0 && facilities && facilities.length > 0
       ? getOAHealth({
           device: devices[0],
@@ -38,6 +44,18 @@ const OaConfigsDetailsPage = () => {
   );
 
   const handleSubmit = () => {
+    if (id === "new") {
+      create({
+        id: id || "",
+        name,
+        facilities: facilities,
+        devices: devices,
+        endpoint,
+        username,
+        password,
+      });
+      return;
+    }
     mutate({
       id: id || "",
       name,
@@ -50,16 +68,26 @@ const OaConfigsDetailsPage = () => {
   };
 
   const reset = () => {
-    if (!data) return;
+    if (!data) {
+      setFacilities([]);
+      setDevices([]);
+      return;
+    }
     setName((newData || data).name);
-    setFacilities((newData || data).facilities);
-    setDevices((newData || data).devices);
+    if ((newData || data).facilities)
+      setFacilities((newData || data).facilities);
+    if ((newData || data).devices) setDevices((newData || data).devices);
     setEndpoint((newData || data).endpoint);
     setUsername((newData || data).username);
     setPassword((newData || data).password);
   };
 
   useEffect(reset, [data]);
+  useEffect(() => {
+    if (createdData) {
+      navigate(-1);
+    }
+  }, [createdData]);
 
   return (
     <Container className="p-16">
@@ -81,16 +109,18 @@ const OaConfigsDetailsPage = () => {
           SnB Config Details
         </Typography>
         <div className="flex-1" />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            setIsEditing(!isEditing);
-            reset();
-          }}
-        >
-          Edit
-        </Button>
+        {id !== "new" && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setIsEditing(!isEditing);
+              reset();
+            }}
+          >
+            {isEditing ? "Cancel Edit" : "Edit"}
+          </Button>
+        )}
       </div>
       <form>
         <div className="mb-8">
@@ -108,7 +138,7 @@ const OaConfigsDetailsPage = () => {
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-        {facilities && facilities.length > 0 && (
+        {facilities && (
           <div className="mb-8">
             <div>Facilities</div>
             <Autocomplete
@@ -148,7 +178,7 @@ const OaConfigsDetailsPage = () => {
             />
           </div>
         )}
-        {devices && devices.length > 0 && (
+        {devices && (
           <div className="mb-8">
             <div>Devices</div>
             <Autocomplete

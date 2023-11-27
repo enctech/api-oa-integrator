@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Button,
   Paper,
   Table,
   TableBody,
@@ -41,33 +42,46 @@ const OAConfigsPage = () => {
     navigate(`/oa-configs/${id}`);
   };
 
+  const createNewConfig = () => {
+    navigate(`/oa-configs/new`);
+  };
+
   return (
-    <TableContainer component={Paper} className="mt-4">
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Facilities</TableCell>
-            <TableCell>Devices</TableCell>
-            <TableCell>Status</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data?.map((row) => (
-            <OAConfigRow row={row} handleRowClick={handleRowClick} />
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination
-        rowsPerPageOptions={perPagesDefault.current}
-        component="div"
-        count={data?.length || 0}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
-    </TableContainer>
+    <div>
+      <Button variant="contained" color="primary" onClick={createNewConfig}>
+        New
+      </Button>
+      <TableContainer component={Paper} className="mt-4">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Facilities</TableCell>
+              <TableCell>Devices</TableCell>
+              <TableCell>Status</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data?.map((row) => (
+              <OAConfigRow
+                key={row.id}
+                row={row}
+                handleRowClick={handleRowClick}
+              />
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          rowsPerPageOptions={perPagesDefault.current}
+          component="div"
+          count={data?.length || 0}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </TableContainer>
+    </div>
   );
 };
 
@@ -97,8 +111,8 @@ const OAConfigRow = ({
       onClick={() => handleRowClick(row.id)}
     >
       <TableCell>{row.name}</TableCell>
-      <TableCell>{row.facilities.join(", ")}</TableCell>
-      <TableCell>{row.devices.join(", ")}</TableCell>
+      <TableCell>{row.facilities?.join(", ")}</TableCell>
+      <TableCell>{row.devices?.join(", ")}</TableCell>
       <TableCell>
         {oaHealth?.oa === "up" ? (
           <div

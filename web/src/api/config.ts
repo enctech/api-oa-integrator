@@ -24,6 +24,7 @@ export const getOAConfigs = async () => {
 };
 
 export const getOAConfig = async (id: string) => {
+  if (id == "new") return {} as typeof sampleDetails;
   return axios
     .get(`/config/snb-config/${id}`)
     .then((response) => response.data as typeof sampleDetails);
@@ -42,6 +43,19 @@ interface UpdateOAConfigRequest {
 export const updateOAConfig = async (req: UpdateOAConfigRequest) => {
   return axios
     .put(`/config/snb-config/${req.id}`, {
+      devices: req?.devices,
+      facilities: req?.facilities,
+      endpoint: req.endpoint,
+      name: req.name,
+      username: req.username,
+      password: req.password,
+    })
+    .then((response) => response.data as typeof sampleDetails);
+};
+
+export const createOAConfig = async (req: UpdateOAConfigRequest) => {
+  return axios
+    .post(`/config/snb-config`, {
       devices: req?.devices,
       facilities: req?.facilities,
       endpoint: req.endpoint,
@@ -106,7 +120,6 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
 export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
   const data = { ...arg };
   delete data["id"];
-  console.log(data);
   return axios
     .post(`/config/integrator-config`, {
       clientId: data.clientId,
