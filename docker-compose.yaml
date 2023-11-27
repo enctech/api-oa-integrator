@@ -10,7 +10,10 @@ services:
     depends_on:
       - postgres_db
   oa-dashboard:
-    build: ./web
+    build:
+      context: ./web
+      args:
+        REACT_APP_API_URL: http://localhost:1323
     container_name: oa-dashboard
     ports:
       - "3000:3000"
