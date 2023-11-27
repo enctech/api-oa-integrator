@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import {
   Button,
+  Checkbox,
   Container,
   FormControlLabel,
   Radio,
@@ -14,6 +15,7 @@ import {
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
 import {
+  createIntegratorConfig,
   getIntegratorConfig,
   getIntegrators,
   IntegratorConfigs,
@@ -58,18 +60,23 @@ const IntegratorConfigsDetails = () => {
     name: "plazaIdMappers",
   });
 
-  const { data } = useQuery(["getIntegratorConfig"], () =>
+  const { data, isLoading } = useQuery(["getIntegratorConfig", id], () =>
     getIntegratorConfig(id || ""),
   );
   const { data: integrators } = useQuery(["getIntegrators"], () =>
     getIntegrators(),
   );
-  const { mutate, data: newData } = useMutation(
+  const { mutate, data: updatedData } = useMutation(
     "updateIntegratorConfig",
     updateIntegratorConfig,
   );
 
-  const [isEditing, setIsEditing] = useState(false);
+  const { mutate: create, data: newData } = useMutation(
+    "createIntegratorConfig",
+    createIntegratorConfig,
+  );
+
+  const [isEditing, setIsEditing] = useState(id === "new");
   const [name, setName] = useState("");
 
   const reset = () => {
@@ -90,16 +97,34 @@ const IntegratorConfigsDetails = () => {
           field2: new Map(Object.entries(data.plazaIdMap)).get(key) || "",
         });
       });
+    } else {
+      update(0, { field1: "", field2: "" });
     }
   };
 
   useEffect(reset, [data]);
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
+    console.log(data);
     const plazaIdMap: Map<string, string> = new Map();
     data.plazaIdMappers.forEach((item) => {
       plazaIdMap.set(item.field1, item.field2);
     });
+
+    if (id == "new") {
+      create({
+        id: id || "",
+        url: data.url,
+        name: data.name,
+        clientId: data.clientId,
+        serviceProviderId: data.serviceProviderId,
+        providerId: data.providerId,
+        insecureSkipVerify: data.isInsecure,
+        plazaIdMap: plazaIdMap,
+        integratorName: data.integratorName,
+      } satisfies IntegratorConfigs);
+      return;
+    }
 
     mutate({
       id: id || "",
@@ -121,16 +146,18 @@ const IntegratorConfigsDetails = () => {
           {data?.name} Config Details
         </Typography>
         <div className="flex-1" />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => {
-            setIsEditing(!isEditing);
-            reset();
-          }}
-        >
-          Edit
-        </Button>
+        {id !== "new" && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setIsEditing(!isEditing);
+              reset();
+            }}
+          >
+            Edit
+          </Button>
+        )}
       </div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
@@ -161,18 +188,26 @@ const IntegratorConfigsDetails = () => {
           </div>
         </div>
         <div>
-          <div className="mb-8">
-            <div>URL</div>
-            <TextField
-              fullWidth={true}
-              variant="outlined"
-              disabled={!isEditing}
-              sx={{
-                "& .MuiInputBase-input.Mui-disabled": {
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-              {...register("url")}
+          <div className="flex">
+            <div className="mb-8 flex-1">
+              <div>URL</div>
+              <TextField
+                fullWidth={true}
+                variant="outlined"
+                disabled={!isEditing}
+                sx={{
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#000000",
+                  },
+                }}
+                {...register("url")}
+              />
+            </div>
+            <div className="w-8" />
+            <FormControlLabel
+              {...register("isInsecure")}
+              control={<Checkbox />}
+              label="Insecure endpoint"
             />
           </div>
         </div>
@@ -233,9 +268,33 @@ const IntegratorConfigsDetails = () => {
           </div>
         </div>
 
-        {data && data?.integratorName && (
+        {data && data?.integratorName ? (
           <RadioGroup
             value={data?.integratorName}
+            className="mb-8"
+            {...register(`integratorName` as const)}
+          >
+            <div>
+              Integrator type
+              <Tooltip
+                className="ml-2"
+                title="Which integrator is this configuration system is for?"
+              >
+                <InfoIcon />
+              </Tooltip>
+            </div>
+            {integrators?.map((value) => (
+              <FormControlLabel
+                key={value}
+                value={value}
+                control={<Radio />}
+                label={value.toUpperCase()}
+              />
+            ))}
+          </RadioGroup>
+        ) : (
+          <RadioGroup
+            key={"new"}
             className="mb-8"
             {...register(`integratorName` as const)}
           >

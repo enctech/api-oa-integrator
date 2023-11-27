@@ -77,6 +77,7 @@ export const getIntegrators = async () => {
 };
 
 export const getIntegratorConfig = async (id: string) => {
+  if (id == "new") return {} as IntegratorConfigs;
   return axios
     .get(`/config/integrator-config/${id}`)
     .then((response) => response.data as IntegratorConfigs);
@@ -88,6 +89,26 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
   console.log(data);
   return axios
     .put(`/config/integrator-config/${arg.id}`, {
+      clientId: data.clientId,
+      providerId: data.providerId,
+      serviceProviderId: data.serviceProviderId,
+      name: data.name,
+      integratorName: data.integratorName,
+      url: data.url,
+      insecureSkipVerify: data.insecureSkipVerify,
+      plazaIdMap: JSON.parse(
+        JSON.stringify(Object.fromEntries(arg.plazaIdMap)),
+      ),
+    })
+    .then((response) => response.data as IntegratorConfigs);
+};
+
+export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
+  const data = { ...arg };
+  delete data["id"];
+  console.log(data);
+  return axios
+    .post(`/config/integrator-config`, {
       clientId: data.clientId,
       providerId: data.providerId,
       serviceProviderId: data.serviceProviderId,
