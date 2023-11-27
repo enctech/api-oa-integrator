@@ -720,6 +720,57 @@ paths:
       summary: get all logs
       tags:
       - transactions
+  /transactions/oa:
+    get:
+      consumes:
+      - application/json
+      description: To get all transactions made through OA
+      parameters:
+      - description: After
+        format: dateTime
+        in: query
+        name: after
+        type: string
+      - description: Before
+        format: dateTime
+        in: query
+        name: before
+        required: true
+        type: string
+      - description: Exit Lane
+        in: query
+        name: exitLane
+        type: string
+      - description: Entry Lane
+        in: query
+        name: entryLane
+        type: string
+      - description: Licence Plate Number
+        in: query
+        name: lpn
+        type: string
+      - description: Facility
+        in: query
+        name: facility
+        type: string
+      - description: Job ID
+        in: query
+        name: jobid
+        type: string
+      - description: PerPage
+        in: query
+        name: perPage
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: get all OA logs
+      tags:
+      - transactions
 securityDefinitions:
   Bearer:
     description: Type "Bearer" followed by a space and JWT token.

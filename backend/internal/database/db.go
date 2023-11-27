@@ -72,6 +72,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getOATransactionStmt, err = db.PrepareContext(ctx, getOATransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query GetOATransaction: %w", err)
 	}
+	if q.getOATransactionsStmt, err = db.PrepareContext(ctx, getOATransactions); err != nil {
+		return nil, fmt.Errorf("error preparing query GetOATransactions: %w", err)
+	}
+	if q.getOATransactionsCountStmt, err = db.PrepareContext(ctx, getOATransactionsCount); err != nil {
+		return nil, fmt.Errorf("error preparing query GetOATransactionsCount: %w", err)
+	}
 	if q.getSnbConfigStmt, err = db.PrepareContext(ctx, getSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSnbConfig: %w", err)
 	}
@@ -175,6 +181,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getOATransactionStmt: %w", cerr)
 		}
 	}
+	if q.getOATransactionsStmt != nil {
+		if cerr := q.getOATransactionsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getOATransactionsStmt: %w", cerr)
+		}
+	}
+	if q.getOATransactionsCountStmt != nil {
+		if cerr := q.getOATransactionsCountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getOATransactionsCountStmt: %w", cerr)
+		}
+	}
 	if q.getSnbConfigStmt != nil {
 		if cerr := q.getSnbConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSnbConfigStmt: %w", cerr)
@@ -260,6 +276,8 @@ type Queries struct {
 	getIntegratorConfigsStmt            *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOATransactionStmt                *sql.Stmt
+	getOATransactionsStmt               *sql.Stmt
+	getOATransactionsCountStmt          *sql.Stmt
 	getSnbConfigStmt                    *sql.Stmt
 	getSnbConfigByFacilityAndDeviceStmt *sql.Stmt
 	getUserStmt                         *sql.Stmt
@@ -288,6 +306,8 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorConfigsStmt:            q.getIntegratorConfigsStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOATransactionStmt:                q.getOATransactionStmt,
+		getOATransactionsStmt:               q.getOATransactionsStmt,
+		getOATransactionsCountStmt:          q.getOATransactionsCountStmt,
 		getSnbConfigStmt:                    q.getSnbConfigStmt,
 		getSnbConfigByFacilityAndDeviceStmt: q.getSnbConfigByFacilityAndDeviceStmt,
 		getUserStmt:                         q.getUserStmt,

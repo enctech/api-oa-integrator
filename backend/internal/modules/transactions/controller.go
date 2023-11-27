@@ -19,6 +19,7 @@ func InitController(e *echo.Echo) {
 	g := e.Group("transactions")
 	c := controller{}
 	g.GET("/logs", c.getLogs)
+	g.GET("/oa", c.getOATransaction)
 }
 
 type Response struct {
@@ -95,6 +96,100 @@ func (con controller) getLogs(c echo.Context) error {
 
 	out := utils.PaginationResponse[LogData]{
 		Data: logOutput,
+		Metadata: utils.PaginationMetadata{
+			TotalData: totalData,
+			Page:      int64(page),
+			PerPage:   int64(perPage),
+			TotalPage: int64(math.Ceil(float64(totalData) / float64(perPage))),
+		},
+	}
+
+	return c.JSON(http.StatusCreated, out)
+}
+
+// getOATransaction godoc
+//
+//	@Summary		get all OA logs
+//	@Description	To get all transactions made through OA
+//	@Param			after		query	string	false	"After"		Format(dateTime)
+//	@Param			before		query	string	true	"Before"	Format(dateTime)
+//	@Param			exitLane	query	string	false	"Exit Lane"
+//	@Param			entryLane	query	string	false	"Entry Lane"
+//	@Param			lpn			query	string	false	"Licence Plate Number"
+//	@Param			facility	query	string	false	"Facility"
+//	@Param			jobid		query	string	false	"Job ID"
+//	@Param			perPage		query	int		false	"PerPage"
+//	@Param			page		query	int		false	"Page"
+//	@Tags			transactions
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/transactions/oa [get]
+func (con controller) getOATransaction(c echo.Context) error {
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("after"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("before"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "invalid before date")
+	}
+	perPage := 50
+	if c.QueryParam("perPage") != "" {
+		perPage, err = strconv.Atoi(c.QueryParam("perPage"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid perPage")
+		}
+	}
+	page := 0
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid page")
+		}
+	}
+
+	txns, err := database.New(database.D()).GetOATransactions(c.Request().Context(), database.GetOATransactionsParams{
+		After:     after.UTC().Round(time.Microsecond),
+		Before:    before.UTC().Round(time.Microsecond),
+		ExitLane:  c.QueryParam("exitLane"),
+		EntryLane: c.QueryParam("entryLane"),
+		Lpn:       c.QueryParam("lpn"),
+		Facility:  c.QueryParam("facility"),
+		Jobid:     c.QueryParam("jobid"),
+	})
+
+	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
+		After:     after.UTC().Round(time.Microsecond),
+		Before:    before.UTC().Round(time.Microsecond),
+		ExitLane:  c.QueryParam("exitLane"),
+		EntryLane: c.QueryParam("entryLane"),
+		Lpn:       c.QueryParam("lpn"),
+		Facility:  c.QueryParam("facility"),
+		Jobid:     c.QueryParam("jobid"),
+	})
+
+	var txnData []OATransaction
+
+	for _, log := range txns {
+		var extra map[string]any
+		if log.Extra.Valid {
+			err = json.Unmarshal(log.Extra.RawMessage, &extra)
+		}
+		txnData = append(txnData, OATransaction{
+			ID:                    log.ID.String(),
+			BusinessTransactionId: log.Businesstransactionid,
+			Lpn:                   log.Lpn.String,
+			Customerid:            log.Customerid.String,
+			Jobid:                 log.Jobid.String,
+			Facility:              log.Facility.String,
+			Device:                log.Device.String,
+			Extra:                 extra,
+			EntryLane:             log.EntryLane.String,
+			ExitLane:              log.ExitLane.String,
+			UpdatedAt:             log.UpdatedAt,
+			CreatedAt:             log.CreatedAt,
+		})
+	}
+
+	out := utils.PaginationResponse[OATransaction]{
+		Data: txnData,
 		Metadata: utils.PaginationMetadata{
 			TotalData: totalData,
 			Page:      int64(page),

@@ -741,6 +741,81 @@
                 ],
                 "responses": {}
             }
+        },
+        "/transactions/oa": {
+            "get": {
+                "description": "To get all transactions made through OA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "get all OA logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "After",
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "Before",
+                        "name": "before",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Exit Lane",
+                        "name": "exitLane",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entry Lane",
+                        "name": "entryLane",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Licence Plate Number",
+                        "name": "lpn",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Facility",
+                        "name": "facility",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Job ID",
+                        "name": "jobid",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PerPage",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {

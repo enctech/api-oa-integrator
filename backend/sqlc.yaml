@@ -1,7 +1,12 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "sqlc/query.sql"
+    queries:
+      - "sqlc/authentication.sql"
+      - "sqlc/integrator_config.sql"
+      - "sqlc/logs.sql"
+      - "sqlc/snb_config.sql"
+      - "sqlc/transactions.sql"
     schema: "sqlc/schema.sql"
     gen:
       go:
