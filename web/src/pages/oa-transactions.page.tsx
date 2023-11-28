@@ -22,9 +22,10 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "react-query";
 import { getOATransactions } from "../api/transactions";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { DateTimePicker } from "@mui/x-date-pickers";
+import { ClearIcon, DateTimePicker } from "@mui/x-date-pickers";
 import moment from "moment";
 import dayjs, { Dayjs } from "dayjs";
+import IconButton from "@mui/material/IconButton";
 
 const statusMapper: Map<string, string> = new Map([
   ["identification_entry_start", "User entry verification"],
@@ -35,8 +36,8 @@ const statusMapper: Map<string, string> = new Map([
 ]);
 
 interface FormData {
-  startAt?: Dayjs;
-  endAt?: Dayjs;
+  startAt?: Dayjs | null;
+  endAt?: Dayjs | null;
   exitLane: string;
   entryLane: string;
   lpn: string;
@@ -48,21 +49,22 @@ const OATransactionsPage: React.FC = () => {
   const perPagesDefault = useRef([100, 500, 1000]);
   const [currentQueryParameters, setSearchParams] = useSearchParams();
   const newParams = useRef(new URLSearchParams());
-  const { control, register, handleSubmit, watch } = useForm<FormData>({
-    defaultValues: {
-      lpn: currentQueryParameters.get("lpn") || "",
-      jobId: currentQueryParameters.get("jobId") || "",
-      entryLane: currentQueryParameters.get("entryLane") || "",
-      facility: currentQueryParameters.get("facility") || "",
-      exitLane: currentQueryParameters.get("exitLane") || "",
-      startAt: dayjs(
-        moment(currentQueryParameters.get("startAt")).local().toDate(),
-      ),
-      endAt: dayjs(
-        moment(currentQueryParameters.get("endAt")).local().toDate(),
-      ),
-    },
-  });
+  const { control, register, handleSubmit, watch, setValue } =
+    useForm<FormData>({
+      defaultValues: {
+        lpn: currentQueryParameters.get("lpn") || "",
+        jobId: currentQueryParameters.get("jobId") || "",
+        entryLane: currentQueryParameters.get("entryLane") || "",
+        facility: currentQueryParameters.get("facility") || "",
+        exitLane: currentQueryParameters.get("exitLane") || "",
+        startAt: dayjs(
+          moment(currentQueryParameters.get("startAt")).local().toDate(),
+        ),
+        endAt: dayjs(
+          moment(currentQueryParameters.get("endAt")).local().toDate(),
+        ),
+      },
+    });
 
   const debouncedSearchTerm = useDebounce(currentQueryParameters, 300);
 
@@ -181,17 +183,29 @@ const OATransactionsPage: React.FC = () => {
                   name="startAt"
                   control={control}
                   render={({ field }) => (
-                    <DateTimePicker
-                      className="flex-1 w-full"
-                      {...field}
-                      onChange={(_) => {}}
-                      label="Start Date"
-                      onAccept={(value) => {
-                        if (!value) return;
-                        field.onChange(value);
-                        handleFieldChange();
-                      }}
-                    />
+                    <div className="flex">
+                      <DateTimePicker
+                        format={"DD/MM/YYYY hh:mm"}
+                        className="flex-1 w-full"
+                        {...field}
+                        onChange={(_) => {}}
+                        label="Start Date"
+                        onAccept={(value) => {
+                          if (!value) return;
+                          field.onChange(value);
+                          handleFieldChange();
+                        }}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          setValue("startAt", null);
+                          newParams.current.delete("startAt");
+                          setSearchParams(newParams.current);
+                        }}
+                      >
+                        <ClearIcon />
+                      </IconButton>
+                    </div>
                   )}
                 />
               </Grid>
@@ -200,17 +214,37 @@ const OATransactionsPage: React.FC = () => {
                   name="endAt"
                   control={control}
                   render={({ field }) => (
-                    <DateTimePicker
-                      className="flex-1 w-full"
-                      {...field}
-                      format={"DD/MM/YYYY hh:mm"}
-                      label="End Date"
-                      onAccept={(value) => {
-                        if (!value) return;
-                        field.onChange(value);
-                        handleFieldChange();
-                      }}
-                    />
+                    <div className="flex">
+                      <DateTimePicker
+                        slotProps={{
+                          toolbar: {
+                            toolbarFormat: "YYYY",
+                            toolbarPlaceholder: "??",
+                          },
+                          actionBar: {
+                            actions: ["clear", "accept"],
+                          },
+                        }}
+                        className="flex-1 w-full"
+                        {...field}
+                        format={"DD/MM/YYYY hh:mm"}
+                        label="End Date"
+                        onAccept={(value) => {
+                          if (!value) return;
+                          field.onChange(value);
+                          handleFieldChange();
+                        }}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          setValue("endAt", null);
+                          newParams.current.delete("endAt");
+                          setSearchParams(newParams.current);
+                        }}
+                      >
+                        <ClearIcon />
+                      </IconButton>
+                    </div>
                   )}
                 />
               </Grid>
@@ -273,7 +307,9 @@ const OATransactionsPage: React.FC = () => {
             {data?.data?.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
-                  {moment(row.createdAt).local().format("DD/MM/yyyy hh:mm:ss")}
+                  {moment(row.createdAt)
+                    .local()
+                    .format("DD/MM/yyyy hh:mm:ss A")}
                 </TableCell>
                 <TableCell>{row.lpn}</TableCell>
                 <TableCell>{row.entryLane}</TableCell>
