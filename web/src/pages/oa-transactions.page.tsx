@@ -32,7 +32,11 @@ const statusMapper: Map<string, string> = new Map([
   ["identification_entry_done", "User entry verification done"],
   ["identification_entry_error", "User entry verification failed"],
   ["leave_loop_entry_done", "User entered"],
+  ["identification_exit_done", "User exit identification done"],
+  ["payment_exit_start", "Initializing payment"],
+  ["payment_exit_done", "Payment success"],
   ["payment_exit_error", "Payment failed"],
+  ["exit_leave_loop_done", "User left the location"],
 ]);
 
 interface FormData {

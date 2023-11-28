@@ -316,7 +316,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	newExtra := map[string]any{
-		"steps":   "payment_exit_done",
+		"steps":   "exit_leave_loop_done",
 		"leaveAt": time.Now().UTC(),
 	}
 
