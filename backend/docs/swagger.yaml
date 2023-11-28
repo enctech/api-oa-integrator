@@ -726,15 +726,15 @@ paths:
       - application/json
       description: To get all transactions made through OA
       parameters:
-      - description: After
+      - description: Start At
         format: dateTime
         in: query
-        name: after
+        name: startAt
         type: string
-      - description: Before
+      - description: End At
         format: dateTime
         in: query
-        name: before
+        name: endAt
         required: true
         type: string
       - description: Exit Lane

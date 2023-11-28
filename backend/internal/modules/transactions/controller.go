@@ -111,8 +111,8 @@ func (con controller) getLogs(c echo.Context) error {
 //
 //	@Summary		get all OA logs
 //	@Description	To get all transactions made through OA
-//	@Param			after		query	string	false	"After"		Format(dateTime)
-//	@Param			before		query	string	true	"Before"	Format(dateTime)
+//	@Param			startAt		query	string	false	"Start At"	Format(dateTime)
+//	@Param			endAt		query	string	true	"End At"	Format(dateTime)
 //	@Param			exitLane	query	string	false	"Exit Lane"
 //	@Param			entryLane	query	string	false	"Entry Lane"
 //	@Param			lpn			query	string	false	"Licence Plate Number"
@@ -125,10 +125,10 @@ func (con controller) getLogs(c echo.Context) error {
 //	@Produce		application/json
 //	@Router			/transactions/oa [get]
 func (con controller) getOATransaction(c echo.Context) error {
-	after, _ := time.Parse(time.RFC3339, c.QueryParam("after"))
-	before, err := time.Parse(time.RFC3339, c.QueryParam("before"))
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid before date")
+		before = time.Now()
 	}
 	perPage := 50
 	if c.QueryParam("perPage") != "" {
@@ -146,8 +146,8 @@ func (con controller) getOATransaction(c echo.Context) error {
 	}
 
 	txns, err := database.New(database.D()).GetOATransactions(c.Request().Context(), database.GetOATransactionsParams{
-		After:     after.UTC().Round(time.Microsecond),
-		Before:    before.UTC().Round(time.Microsecond),
+		StartAt:   after.UTC().Round(time.Microsecond),
+		EndAt:     before.UTC().Round(time.Microsecond),
 		ExitLane:  c.QueryParam("exitLane"),
 		EntryLane: c.QueryParam("entryLane"),
 		Lpn:       c.QueryParam("lpn"),
@@ -156,8 +156,8 @@ func (con controller) getOATransaction(c echo.Context) error {
 	})
 
 	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
-		After:     after.UTC().Round(time.Microsecond),
-		Before:    before.UTC().Round(time.Microsecond),
+		StartAt:   after.UTC().Round(time.Microsecond),
+		EndAt:     before.UTC().Round(time.Microsecond),
 		ExitLane:  c.QueryParam("exitLane"),
 		EntryLane: c.QueryParam("entryLane"),
 		Lpn:       c.QueryParam("lpn"),

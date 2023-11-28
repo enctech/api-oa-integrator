@@ -17,8 +17,8 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and facility::text like concat('%', sqlc.arg(facility)::text, '%')
   and entry_lane::text like concat('%', sqlc.arg(entry_lane)::text, '%')
   and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
-  and created_at >= sqlc.arg(after)
-  and created_at <= sqlc.arg(before);
+  and created_at >= sqlc.arg(start_at)
+  and created_at <= sqlc.arg(end_at);
 
 -- name: GetOATransactionsCount :one
 select count(*)
@@ -28,8 +28,8 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and facility::text like concat('%', sqlc.arg(facility)::text, '%')
   and entry_lane::text like concat('%', sqlc.arg(entry_lane)::text, '%')
   and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
-  and created_at >= sqlc.arg(after)
-  and created_at <= sqlc.arg(before);
+  and created_at >= sqlc.arg(start_at)
+  and created_at <= sqlc.arg(end_at);
 
 -- name: UpdateOATransaction :one
 update oa_transactions

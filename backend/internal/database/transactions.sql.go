@@ -106,8 +106,8 @@ type GetOATransactionsParams struct {
 	Facility  string
 	EntryLane string
 	ExitLane  string
-	After     time.Time
-	Before    time.Time
+	StartAt   time.Time
+	EndAt     time.Time
 }
 
 func (q *Queries) GetOATransactions(ctx context.Context, arg GetOATransactionsParams) ([]OaTransaction, error) {
@@ -117,8 +117,8 @@ func (q *Queries) GetOATransactions(ctx context.Context, arg GetOATransactionsPa
 		arg.Facility,
 		arg.EntryLane,
 		arg.ExitLane,
-		arg.After,
-		arg.Before,
+		arg.StartAt,
+		arg.EndAt,
 	)
 	if err != nil {
 		return nil, err
@@ -172,8 +172,8 @@ type GetOATransactionsCountParams struct {
 	Facility  string
 	EntryLane string
 	ExitLane  string
-	After     time.Time
-	Before    time.Time
+	StartAt   time.Time
+	EndAt     time.Time
 }
 
 func (q *Queries) GetOATransactionsCount(ctx context.Context, arg GetOATransactionsCountParams) (int64, error) {
@@ -183,8 +183,8 @@ func (q *Queries) GetOATransactionsCount(ctx context.Context, arg GetOATransacti
 		arg.Facility,
 		arg.EntryLane,
 		arg.ExitLane,
-		arg.After,
-		arg.Before,
+		arg.StartAt,
+		arg.EndAt,
 	)
 	var count int64
 	err := row.Scan(&count)

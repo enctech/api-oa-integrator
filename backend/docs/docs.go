@@ -767,15 +767,15 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "format": "dateTime",
-                        "description": "After",
-                        "name": "after",
+                        "description": "Start At",
+                        "name": "startAt",
                         "in": "query"
                     },
                     {
                         "type": "string",
                         "format": "dateTime",
-                        "description": "Before",
-                        "name": "before",
+                        "description": "End At",
+                        "name": "endAt",
                         "in": "query",
                         "required": true
                     },
