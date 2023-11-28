@@ -58,24 +58,30 @@ const OATransactionsPage: React.FC = () => {
 
   const debouncedSearchTerm = useDebounce(currentQueryParameters, 300);
 
-  const { data, refetch } = useQuery("getOATransactions", () =>
-    getOATransactions({
-      page: +(currentQueryParameters.get("page") || "0"),
-      perPage: +(
-        currentQueryParameters.get("perPage") || `${perPagesDefault.current[0]}`
-      ),
-      startAt: currentQueryParameters.get("startAt")
-        ? moment(currentQueryParameters.get("startAt")).utc().toDate()
-        : undefined,
-      endAt: currentQueryParameters.get("endAt")
-        ? moment(currentQueryParameters.get("endAt")).utc().toDate()
-        : undefined,
-      exitLane: currentQueryParameters.get("exitLane") || undefined,
-      entryLane: currentQueryParameters.get("entryLane") || undefined,
-      lpn: currentQueryParameters.get("lpn") || undefined,
-      facility: currentQueryParameters.get("facility") || undefined,
-      jobId: currentQueryParameters.get("jobId") || undefined,
-    }),
+  const { data, refetch } = useQuery(
+    "getOATransactions",
+    () =>
+      getOATransactions({
+        page: +(currentQueryParameters.get("page") || "0"),
+        perPage: +(
+          currentQueryParameters.get("perPage") ||
+          `${perPagesDefault.current[0]}`
+        ),
+        startAt: currentQueryParameters.get("startAt")
+          ? moment(currentQueryParameters.get("startAt")).utc().toDate()
+          : undefined,
+        endAt: currentQueryParameters.get("endAt")
+          ? moment(currentQueryParameters.get("endAt")).utc().toDate()
+          : undefined,
+        exitLane: currentQueryParameters.get("exitLane") || undefined,
+        entryLane: currentQueryParameters.get("entryLane") || undefined,
+        lpn: currentQueryParameters.get("lpn") || undefined,
+        facility: currentQueryParameters.get("facility") || undefined,
+        jobId: currentQueryParameters.get("jobId") || undefined,
+      }),
+    {
+      refetchInterval: 5000,
+    },
   );
 
   useEffect(() => {
