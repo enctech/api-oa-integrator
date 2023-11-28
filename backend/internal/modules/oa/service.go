@@ -59,7 +59,24 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	err = integrator.VerifyVehicle(metadata.vendor, metadata.facility, lpn, lane)
 	if err != nil {
 		zap.L().Sugar().Info("Error integrator.VerifyVehicle ", err)
-		go sendEmptyFinalMessage(metadata)
+		jsonStr, err := json.Marshal(map[string]any{
+			"steps": "identification_entry_error",
+			"error": err.Error(),
+		})
+		if err != nil {
+			zap.L().Sugar().Info("Error Marshal ", err)
+			go sendEmptyFinalMessage(metadata)
+			return
+		}
+		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+			Businesstransactionid: data.Businesstransactionid,
+			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		})
+		if err != nil {
+			zap.L().Sugar().Info("Error UpdateOATransaction ", err)
+			go sendEmptyFinalMessage(metadata)
+			return
+		}
 		return
 	}
 

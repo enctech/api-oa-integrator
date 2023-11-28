@@ -26,6 +26,14 @@ import { DateTimePicker } from "@mui/x-date-pickers";
 import moment from "moment";
 import dayjs, { Dayjs } from "dayjs";
 
+const statusMapper: Map<string, string> = new Map([
+  ["identification_entry_start", "User entry verification"],
+  ["identification_entry_done", "User entry verification done"],
+  ["identification_entry_error", "User entry verification failed"],
+  ["leave_loop_entry_done", "User entered"],
+  ["payment_exit_error", "Payment failed"],
+]);
+
 interface FormData {
   startAt?: Dayjs;
   endAt?: Dayjs;
@@ -156,7 +164,7 @@ const OATransactionsPage: React.FC = () => {
   };
 
   return (
-    <Container className="p-16">
+    <Container maxWidth={false}>
       <Accordion>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
@@ -253,8 +261,12 @@ const OATransactionsPage: React.FC = () => {
               <TableCell>License Plate Number</TableCell>
               <TableCell>Entry Lane</TableCell>
               <TableCell>Exit Lane</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Error</TableCell>
+              <TableCell>
+                <div className="w-32">Status</div>
+              </TableCell>
+              <TableCell>
+                <div className="w-96">Error</div>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -266,8 +278,20 @@ const OATransactionsPage: React.FC = () => {
                 <TableCell>{row.lpn}</TableCell>
                 <TableCell>{row.entryLane}</TableCell>
                 <TableCell>{row.exitLane || "-"}</TableCell>
-                <TableCell>{row.extra.steps}</TableCell>
-                <TableCell>{row.extra.error}</TableCell>
+                <TableCell>
+                  <div className="w-32">
+                    {statusMapper.get(row.extra.steps) || row.extra.steps}
+                  </div>
+                </TableCell>
+                <TableCell
+                  style={{
+                    width: "30px",
+                    whiteSpace: "normal",
+                    wordWrap: "break-word",
+                  }}
+                >
+                  <div className="w-[40rem]">{row.extra.error}</div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

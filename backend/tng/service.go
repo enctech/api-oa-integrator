@@ -81,8 +81,9 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		return err
 	}
 
-	if data["response"].(map[string]any)["body"].(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
-		return errors.New("fail to verify vehicle")
+	responseBody := data["response"].(map[string]any)["body"]
+	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
+		return errors.New(fmt.Sprintf("fail to verify vehicle %v", responseBody))
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
