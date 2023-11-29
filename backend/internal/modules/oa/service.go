@@ -210,6 +210,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
+	btid := job.BusinessTransaction.ID
 
 	jsonStr, err := json.Marshal(map[string]any{
 		"steps": "payment_exit_start",
@@ -223,7 +224,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	lpn := job.MediaDataList.Identifier.Name
 
 	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-		Businesstransactionid: job.BusinessTransaction.ID,
+		Businesstransactionid: btid,
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
@@ -253,7 +254,17 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		})
 	}
 
-	err = integrator.PerformTransaction(metadata.vendor, metadata.facility, lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, amountConv)
+	arg := integrator.TransactionArg{
+		LPN:                   lpn,
+		EntryLane:             oaTxn.EntryLane.String,
+		ExitLane:              oaTxn.ExitLane.String,
+		Amount:                amountConv,
+		EntryAt:               oaTxn.CreatedAt,
+		BusinessTransactionId: btid,
+		Client:                metadata.vendor,
+		Facility:              metadata.facility,
+	}
+	err = integrator.PerformTransaction(arg)
 	if err != nil {
 		jsonStr, err = json.Marshal(map[string]any{
 			"steps": "payment_exit_error",
@@ -261,7 +272,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		})
 		go sendZeroAmount()
 		oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-			Businesstransactionid: job.BusinessTransaction.ID,
+			Businesstransactionid: btid,
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		})
 		return
@@ -277,7 +288,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-		Businesstransactionid: job.BusinessTransaction.ID,
+		Businesstransactionid: btid,
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 
@@ -301,7 +312,14 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 
 	lpn := job.MediaDataList.Identifier.Name
 
-	oaTxn, err := database.New(database.D()).GetOATransaction(context.Background(), job.BusinessTransaction.ID)
+	if job.BusinessTransaction == nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	btid := job.BusinessTransaction.ID
+
+	oaTxn, err := database.New(database.D()).GetOATransaction(context.Background(), btid)
 
 	var extra map[string]any
 
@@ -312,7 +330,17 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	if extra["steps"] != "payment_exit_done" {
-		err = integrator.PerformTransaction(metadata.vendor, metadata.facility, lpn, oaTxn.EntryLane.String, oaTxn.ExitLane.String, oaTxn.CreatedAt, 0.00)
+		arg := integrator.TransactionArg{
+			LPN:                   lpn,
+			EntryLane:             oaTxn.EntryLane.String,
+			ExitLane:              oaTxn.ExitLane.String,
+			Amount:                0.00,
+			EntryAt:               oaTxn.CreatedAt,
+			BusinessTransactionId: btid,
+			Client:                metadata.vendor,
+			Facility:              metadata.facility,
+		}
+		err = integrator.PerformTransaction(arg)
 	}
 
 	newExtra := map[string]any{
@@ -329,7 +357,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	oaTxn, _ = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-		Businesstransactionid: job.BusinessTransaction.ID,
+		Businesstransactionid: btid,
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 	})
 

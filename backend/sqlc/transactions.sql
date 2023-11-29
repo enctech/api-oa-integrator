@@ -16,7 +16,8 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and jobid::text like concat('%', sqlc.arg(jobid)::text, '%')
   and facility::text like concat('%', sqlc.arg(facility)::text, '%')
   and entry_lane::text like concat('%', sqlc.arg(entry_lane)::text, '%')
-  and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
+  and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or
+       (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
@@ -27,7 +28,8 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and jobid::text like concat('%', sqlc.arg(jobid)::text, '%')
   and facility::text like concat('%', sqlc.arg(facility)::text, '%')
   and entry_lane::text like concat('%', sqlc.arg(entry_lane)::text, '%')
-  and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
+  and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or
+       (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
@@ -42,3 +44,12 @@ set lpn        = coalesce($2, lpn),
     exit_lane  = coalesce($8, exit_lane)
 where businesstransactionid = $1
 returning *;
+
+-- name: CreateIntegratorTransaction :one
+with inserted_transaction as (
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, extra)
+        values ($1, $2, $3, $4, $5, $6, $7)
+        returning *)
+select *
+from inserted_transaction
+         inner join integrator_config on integrator_config.id = $3;

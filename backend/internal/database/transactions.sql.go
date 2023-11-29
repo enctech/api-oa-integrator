@@ -10,8 +10,84 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
+
+const createIntegratorTransaction = `-- name: CreateIntegratorTransaction :one
+with inserted_transaction as (
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, extra)
+        values ($1, $2, $3, $4, $5, $6, $7)
+        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra)
+select business_transaction_id, lpn, integrator_id, status, amount, error, extra, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+from inserted_transaction
+         inner join integrator_config on integrator_config.id = $3
+`
+
+type CreateIntegratorTransactionParams struct {
+	BusinessTransactionID uuid.UUID
+	Lpn                   sql.NullString
+	ID                    uuid.UUID
+	Status                sql.NullString
+	Amount                sql.NullString
+	Error                 sql.NullString
+	Extra                 pqtype.NullRawMessage
+}
+
+type CreateIntegratorTransactionRow struct {
+	BusinessTransactionID uuid.UUID
+	Lpn                   sql.NullString
+	IntegratorID          uuid.NullUUID
+	Status                sql.NullString
+	Amount                sql.NullString
+	Error                 sql.NullString
+	Extra                 pqtype.NullRawMessage
+	ID                    uuid.UUID
+	ClientID              sql.NullString
+	ProviderID            sql.NullInt32
+	Name                  sql.NullString
+	IntegratorName        sql.NullString
+	SpID                  sql.NullString
+	PlazaIDMap            pqtype.NullRawMessage
+	Url                   sql.NullString
+	InsecureSkipVerify    sql.NullBool
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
+func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateIntegratorTransactionParams) (CreateIntegratorTransactionRow, error) {
+	row := q.queryRow(ctx, q.createIntegratorTransactionStmt, createIntegratorTransaction,
+		arg.BusinessTransactionID,
+		arg.Lpn,
+		arg.ID,
+		arg.Status,
+		arg.Amount,
+		arg.Error,
+		arg.Extra,
+	)
+	var i CreateIntegratorTransactionRow
+	err := row.Scan(
+		&i.BusinessTransactionID,
+		&i.Lpn,
+		&i.IntegratorID,
+		&i.Status,
+		&i.Amount,
+		&i.Error,
+		&i.Extra,
+		&i.ID,
+		&i.ClientID,
+		&i.ProviderID,
+		&i.Name,
+		&i.IntegratorName,
+		&i.SpID,
+		&i.PlazaIDMap,
+		&i.Url,
+		&i.InsecureSkipVerify,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const createOATransaction = `-- name: CreateOATransaction :one
 insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane,
@@ -95,7 +171,8 @@ where lpn like concat('%', $1::text, '%')
   and jobid::text like concat('%', $2::text, '%')
   and facility::text like concat('%', $3::text, '%')
   and entry_lane::text like concat('%', $4::text, '%')
-  and (exit_lane::text LIKE concat('%', $5::text, '%') or (exit_lane is null and ($5::text) = ''))
+  and (exit_lane::text LIKE concat('%', $5::text, '%') or
+       (exit_lane is null and ($5::text) = ''))
   and created_at >= $6
   and created_at <= $7
 `
@@ -161,7 +238,8 @@ where lpn like concat('%', $1::text, '%')
   and jobid::text like concat('%', $2::text, '%')
   and facility::text like concat('%', $3::text, '%')
   and entry_lane::text like concat('%', $4::text, '%')
-  and (exit_lane::text LIKE concat('%', $5::text, '%') or (exit_lane is null and ($5::text) = ''))
+  and (exit_lane::text LIKE concat('%', $5::text, '%') or
+       (exit_lane is null and ($5::text) = ''))
   and created_at >= $6
   and created_at <= $7
 `

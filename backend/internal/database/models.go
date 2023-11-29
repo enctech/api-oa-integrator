@@ -26,6 +26,16 @@ type IntegratorConfig struct {
 	UpdatedAt          time.Time
 }
 
+type IntegratorTransaction struct {
+	BusinessTransactionID uuid.UUID
+	Lpn                   sql.NullString
+	IntegratorID          uuid.NullUUID
+	Status                sql.NullString
+	Amount                sql.NullString
+	Error                 sql.NullString
+	Extra                 pqtype.NullRawMessage
+}
+
 type Log struct {
 	ID        uuid.UUID
 	Level     sql.NullString

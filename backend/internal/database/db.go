@@ -30,6 +30,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createIntegratorConfigStmt, err = db.PrepareContext(ctx, createIntegratorConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateIntegratorConfig: %w", err)
 	}
+	if q.createIntegratorTransactionStmt, err = db.PrepareContext(ctx, createIntegratorTransaction); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateIntegratorTransaction: %w", err)
+	}
 	if q.createLogStmt, err = db.PrepareContext(ctx, createLog); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLog: %w", err)
 	}
@@ -109,6 +112,11 @@ func (q *Queries) Close() error {
 	if q.createIntegratorConfigStmt != nil {
 		if cerr := q.createIntegratorConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createIntegratorConfigStmt: %w", cerr)
+		}
+	}
+	if q.createIntegratorTransactionStmt != nil {
+		if cerr := q.createIntegratorTransactionStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createIntegratorTransactionStmt: %w", cerr)
 		}
 	}
 	if q.createLogStmt != nil {
@@ -262,6 +270,7 @@ type Queries struct {
 	tx                                  *sql.Tx
 	countLogsStmt                       *sql.Stmt
 	createIntegratorConfigStmt          *sql.Stmt
+	createIntegratorTransactionStmt     *sql.Stmt
 	createLogStmt                       *sql.Stmt
 	createOATransactionStmt             *sql.Stmt
 	createSnbConfigStmt                 *sql.Stmt
@@ -292,6 +301,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		tx:                                  tx,
 		countLogsStmt:                       q.countLogsStmt,
 		createIntegratorConfigStmt:          q.createIntegratorConfigStmt,
+		createIntegratorTransactionStmt:     q.createIntegratorTransactionStmt,
 		createLogStmt:                       q.createLogStmt,
 		createOATransactionStmt:             q.createOATransactionStmt,
 		createSnbConfigStmt:                 q.createSnbConfigStmt,

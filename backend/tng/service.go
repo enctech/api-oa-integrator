@@ -100,15 +100,15 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
-func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) error {
+func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, error) {
 	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
 	if plateNumber == "" {
-		return errors.New("empty plate number")
+		return nil, errors.New("empty plate number")
 	}
 
 	signature := createSignature("ssh/id_rsa.pub")
 	if signature == "" {
-		return errors.New("empty signature")
+		return nil, errors.New("empty signature")
 	}
 
 	extendInfo, err := json.Marshal(map[string]any{
@@ -116,6 +116,30 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"vehicleType":    "Motorcar",
 	})
 	now := time.Now()
+	body := map[string]any{
+		"deviceInfo": map[string]any{
+			"deviceType": deviceTypeLPR,
+			"deviceNo":   plateNumber,
+		},
+		"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405")),
+		"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
+		"entryTimestamp":  entryAt,
+		"entrySPId":       c.SpID.String,
+		"entryPlazaId":    c.PlazaId,
+		"entryLaneId":     entryLane,
+		"appSector":       appSectorParking,
+		"exitTimestamp":   now.Format(time.RFC3339),
+		"exitSPId":        c.SpID.String,
+		"exitPlazaId":     c.PlazaId,
+		"exitLaneId":      exitLane,
+		"vehicleClass":    vehicleClassPrivate,
+		"tranAmt":         amount,
+		"surchargeAmt":    0.00,
+		"surchargeTaxAmt": 0.00,
+		"parkingAmt":      amount, // not sure what is this.
+		"parkingTaxAmt":   0.00,   // not sure what is this.
+		"extendInfo":      fmt.Sprintf("%v", string(extendInfo)),
+	}
 	reqBody := map[string]interface{}{
 		"request": map[string]any{
 			"header": map[string]any{
@@ -125,53 +149,30 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 				"function":  "falcon.parking.transaction",
 				"version":   viper.GetString("app.version"),
 			},
-			"body": map[string]any{
-				"deviceInfo": map[string]any{
-					"deviceType": deviceTypeLPR,
-					"deviceNo":   plateNumber,
-				},
-				"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405")),
-				"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
-				"entryTimestamp":  entryAt,
-				"entrySPId":       c.SpID.String,
-				"entryPlazaId":    c.PlazaId,
-				"entryLaneId":     entryLane,
-				"appSector":       appSectorParking,
-				"exitTimestamp":   now.Format(time.RFC3339),
-				"exitSPId":        c.SpID.String,
-				"exitPlazaId":     c.PlazaId,
-				"exitLaneId":      exitLane,
-				"vehicleClass":    vehicleClassPrivate,
-				"tranAmt":         amount,
-				"surchargeAmt":    0.00,
-				"surchargeTaxAmt": 0.00,
-				"parkingAmt":      amount, // not sure what is this.
-				"parkingTaxAmt":   0.00,   // not sure what is this.
-				"extendInfo":      fmt.Sprintf("%v", string(extendInfo)),
-			},
+			"body": body,
 		},
 		"signature": signature,
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
 		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error marshaling data to JSON: %v", err)
-		return err
+		return body, err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error creating request: %v", err)
-		return err
+		return body, err
 	}
 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return body, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("invalid response status")
+		return body, errors.New("invalid response status")
 	}
-	return nil
+	return body, nil
 }
