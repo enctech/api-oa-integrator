@@ -23,6 +23,7 @@ import OaConfigsDetailsPage from "./config/oa-configs-details.page";
 import IntegratorConfigsPage from "./config/integrator-configs.page";
 import IntegratorConfigsDetailsPage from "./config/integrator-configs-details.page";
 import OATransactionPage from "./oa-transactions.page";
+import IntegratorTransactionsPage from "./integrators-transactions.page";
 
 const drawerWidth = 240;
 
@@ -154,6 +155,10 @@ function PersistentDrawerRight() {
               text: "Online Authorisation Transactions",
               link: "/oa-transactions",
             },
+            {
+              text: "Integrator Transactions",
+              link: "/integrator-transactions",
+            },
           ].map(({ text, link }, index) => (
             <ListItem key={link} disablePadding>
               <ListItemButton onClick={() => navigation(link)}>
@@ -182,6 +187,10 @@ function AppRoutes() {
         element={<IntegratorConfigsDetailsPage />}
       />
       <Route path="/oa-transactions" element={<OATransactionPage />} />
+      <Route
+        path="/integrator-transactions"
+        element={<IntegratorTransactionsPage />}
+      />
     </Routes>
   );
 }

@@ -90,3 +90,47 @@ export const getOATransactions = async (query: OATransactionsQuery) => {
     .get(`/transactions/oa`, { params: { ...query } })
     .then((response) => response.data as typeof sampleOATransactionResponse);
 };
+
+const sampleIntegratorTransactionResponse = {
+  data: [
+    {
+      businessTransactionId: "45525bff-59d1-4777-a47b-c158f09fc52b",
+      lpn: "UVW2345",
+      integratorId: "",
+      status: "success",
+      amount: "10",
+      error: "",
+      integratorName: "TNG",
+      extra: {},
+      taxData: {},
+      createdAt: "2023-11-30T16:24:39.483222Z",
+      updatedAt: "2023-11-30T16:24:39.483222Z",
+    },
+  ],
+  metadata: {
+    page: 0,
+    perPage: 50,
+    totalData: 15,
+    totalPage: 1,
+  },
+};
+
+export interface IntegratorTransactionsQuery {
+  startAt?: Date;
+  endAt?: Date;
+  lpn?: string;
+  status?: string;
+  integratorName?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export const getIntegratorTransactions = async (
+  query: IntegratorTransactionsQuery,
+) => {
+  return axios
+    .get(`/transactions/integrator`, { params: { ...query } })
+    .then(
+      (response) => response.data as typeof sampleIntegratorTransactionResponse,
+    );
+};
