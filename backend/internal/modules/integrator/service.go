@@ -18,7 +18,7 @@ var Integrators = []string{"tng"}
 
 type Process interface {
 	VerifyVehicle(plateNumber, entryLane string) error
-	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, error)
+	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error)
 }
 
 func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Process, database.IntegratorConfig, error) {
@@ -74,8 +74,9 @@ func PerformTransaction(arg TransactionArg) error {
 	if err != nil {
 		return err
 	}
-	data, err := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
+	data, taxData, err := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
 	jsonStr, err := json.Marshal(data)
+	taxJsonStr, err := json.Marshal(taxData)
 
 	status := "success"
 	errorMessage := ""
@@ -88,6 +89,7 @@ func PerformTransaction(arg TransactionArg) error {
 		Lpn:                   sql.NullString{String: arg.LPN, Valid: true},
 		BusinessTransactionID: uuid.MustParse(arg.BusinessTransactionId),
 		Extra:                 pqtype.NullRawMessage{Valid: err == nil, RawMessage: jsonStr},
+		TaxData:               pqtype.NullRawMessage{Valid: err == nil, RawMessage: taxJsonStr},
 		ID:                    integratorConfig.ID,
 		Error:                 sql.NullString{String: errorMessage, Valid: err != nil},
 		Amount:                sql.NullString{String: fmt.Sprintf("%v", arg.Amount), Valid: true},

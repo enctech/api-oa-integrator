@@ -6,9 +6,10 @@ create table if not exists integrator_transactions
     status                  varchar,
     amount                  numeric,
     error                   varchar,
+    tax_data                jsonb,
     extra                   jsonb,
 
-    FOREIGN KEY (integrator_id) REFERENCES integrator_config(id)
+    FOREIGN KEY (integrator_id) REFERENCES integrator_config (id)
 );
 
 create trigger set_integrator_transactions_timestamp

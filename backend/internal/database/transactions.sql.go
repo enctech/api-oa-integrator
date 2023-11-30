@@ -16,10 +16,10 @@ import (
 
 const createIntegratorTransaction = `-- name: CreateIntegratorTransaction :one
 with inserted_transaction as (
-    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, extra)
-        values ($1, $2, $3, $4, $5, $6, $7)
-        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra)
-select business_transaction_id, lpn, integrator_id, status, amount, error, extra, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data, extra)
+        values ($1, $2, $3, $4, $5, $6, $7, $8)
+        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data)
+select business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3
 `
@@ -31,6 +31,7 @@ type CreateIntegratorTransactionParams struct {
 	Status                sql.NullString
 	Amount                sql.NullString
 	Error                 sql.NullString
+	TaxData               pqtype.NullRawMessage
 	Extra                 pqtype.NullRawMessage
 }
 
@@ -42,6 +43,7 @@ type CreateIntegratorTransactionRow struct {
 	Amount                sql.NullString
 	Error                 sql.NullString
 	Extra                 pqtype.NullRawMessage
+	TaxData               pqtype.NullRawMessage
 	ID                    uuid.UUID
 	ClientID              sql.NullString
 	ProviderID            sql.NullInt32
@@ -63,6 +65,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		arg.Status,
 		arg.Amount,
 		arg.Error,
+		arg.TaxData,
 		arg.Extra,
 	)
 	var i CreateIntegratorTransactionRow
@@ -74,6 +77,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.Amount,
 		&i.Error,
 		&i.Extra,
+		&i.TaxData,
 		&i.ID,
 		&i.ClientID,
 		&i.ProviderID,

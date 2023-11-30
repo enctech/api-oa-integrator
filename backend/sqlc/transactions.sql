@@ -47,8 +47,8 @@ returning *;
 
 -- name: CreateIntegratorTransaction :one
 with inserted_transaction as (
-    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, extra)
-        values ($1, $2, $3, $4, $5, $6, $7)
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data, extra)
+        values ($1, $2, $3, $4, $5, $6, $7, $8)
         returning *)
 select *
 from inserted_transaction

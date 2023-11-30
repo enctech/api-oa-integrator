@@ -66,6 +66,7 @@ create table integrator_transactions
     amount                  numeric,
     error                   varchar,
     extra                   jsonb,
+    tax_data                jsonb,
 
     FOREIGN KEY (integrator_id) REFERENCES integrator_config (id)
 );

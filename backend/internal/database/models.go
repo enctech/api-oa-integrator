@@ -34,6 +34,7 @@ type IntegratorTransaction struct {
 	Amount                sql.NullString
 	Error                 sql.NullString
 	Extra                 pqtype.NullRawMessage
+	TaxData               pqtype.NullRawMessage
 }
 
 type Log struct {

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"maps"
 	"net/http"
 	"time"
 )
@@ -100,21 +101,28 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
-func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, error) {
+func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
 	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
 	if plateNumber == "" {
-		return nil, errors.New("empty plate number")
+		return nil, nil, errors.New("empty plate number")
 	}
 
 	signature := createSignature("ssh/id_rsa.pub")
 	if signature == "" {
-		return nil, errors.New("empty signature")
+		return nil, nil, errors.New("empty signature")
 	}
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
 		"vehicleType":    "Motorcar",
 	})
+
+	taxData := map[string]any{
+		"surchargeAmt":    0.00,
+		"surchargeTaxAmt": 0.00,
+		"parkingAmt":      amount, // not sure what is this.
+		"parkingTaxAmt":   0.00,   // not sure what is this.
+	}
 	now := time.Now()
 	body := map[string]any{
 		"deviceInfo": map[string]any{
@@ -134,12 +142,10 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"exitLaneId":      exitLane,
 		"vehicleClass":    vehicleClassPrivate,
 		"tranAmt":         amount,
-		"surchargeAmt":    0.00,
-		"surchargeTaxAmt": 0.00,
-		"parkingAmt":      amount, // not sure what is this.
-		"parkingTaxAmt":   0.00,   // not sure what is this.
 		"extendInfo":      fmt.Sprintf("%v", string(extendInfo)),
 	}
+
+	maps.Copy(body, taxData)
 	reqBody := map[string]interface{}{
 		"request": map[string]any{
 			"header": map[string]any{
@@ -156,23 +162,23 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
 		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error marshaling data to JSON: %v", err)
-		return body, err
+		return body, taxData, err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error creating request: %v", err)
-		return body, err
+		return body, taxData, err
 	}
 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
-		return body, err
+		return body, taxData, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return body, errors.New("invalid response status")
+		return body, taxData, errors.New("invalid response status")
 	}
-	return body, nil
+	return body, taxData, nil
 }
