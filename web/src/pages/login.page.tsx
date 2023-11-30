@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Button, Container, Paper, TextField, Typography } from "@mui/material";
 import { login } from "../api/auth";
 import { useMutation } from "react-query";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const { mutate, isLoading, isError } = useMutation("login", login);
 
   const [username, setUsername] = useState("");
@@ -40,6 +42,7 @@ const LoginPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <div className="h-4" />
           <Button
             variant="contained"
             color="primary"
@@ -47,6 +50,15 @@ const LoginPage = () => {
             onClick={handleLogin}
           >
             Login
+          </Button>
+          <div className="h-4" />
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: "darkgray", color: "#fff" }}
+            fullWidth
+            onClick={() => navigate("/")}
+          >
+            Back to Home
           </Button>
         </form>
       </Paper>

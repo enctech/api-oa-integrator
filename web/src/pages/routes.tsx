@@ -2,13 +2,14 @@ import * as React from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
-import Login from "./login.page";
+import LoginPage from "./login.page";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import CssBaseline from "@mui/material/CssBaseline";
 import List from "@mui/material/List";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
+import LoginIcon from "@mui/icons-material/Login";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -107,6 +108,15 @@ function PersistentDrawerRight() {
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }} component="div">
             Online Authorization Dashboard
           </Typography>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={() => navigation("/login")}
+            sx={{ ...(open && { display: "none" }) }}
+          >
+            <LoginIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Main open={open}>
@@ -176,7 +186,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<LoginPage />} />
       {/*<Route path="users/*" element={<Users/>}/>*/}
       <Route path="/logs" element={<LogsPage />} />
       <Route path="/oa-configs" element={<OAConfigsPage />} />
