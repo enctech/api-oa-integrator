@@ -14,7 +14,7 @@ type LogData struct {
 
 type OATransaction struct {
 	ID                    string         `json:"id"`
-	BusinessTransactionId string         `json:"businessTransactionId"`
+	BusinessTransactionID string         `json:"businessTransactionId"`
 	Lpn                   string         `json:"lpn"`
 	Customerid            string         `json:"customerid"`
 	Jobid                 string         `json:"jobid"`
@@ -23,6 +23,20 @@ type OATransaction struct {
 	Extra                 map[string]any `json:"extra"`
 	EntryLane             string         `json:"entryLane"`
 	ExitLane              string         `json:"exitLane"`
+	CreatedAt             time.Time      `json:"createdAt"`
+	UpdatedAt             time.Time      `json:"updatedAt"`
+}
+
+type IntegratorTransactions struct {
+	BusinessTransactionID string         `json:"businessTransactionId"`
+	Lpn                   string         `json:"lpn"`
+	IntegratorID          string         `json:"integratorId"`
+	Status                string         `json:"status"`
+	Amount                string         `json:"amount"`
+	Error                 string         `json:"error"`
+	IntegratorName        string         `json:"integratorName"`
+	Extra                 map[string]any `json:"extra"`
+	TaxData               map[string]any `json:"taxData"`
 	CreatedAt             time.Time      `json:"createdAt"`
 	UpdatedAt             time.Time      `json:"updatedAt"`
 }

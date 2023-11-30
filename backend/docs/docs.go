@@ -693,6 +693,68 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/transactions/integrator": {
+            "get": {
+                "description": "To get all transactions made through OA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "get all OA logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "LPN",
+                        "name": "lpn",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Integrator Name",
+                        "name": "integratorName",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "Start At",
+                        "name": "startAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "End At",
+                        "name": "endAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PerPage",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/transactions/logs": {
             "get": {
                 "description": "To check overall system health",

@@ -180,5 +180,14 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	if resp.StatusCode != http.StatusOK {
 		return body, taxData, errors.New("invalid response status")
 	}
+	var data map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return body, taxData, err
+	}
+	responseBody := data["response"].(map[string]any)["body"]
+	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
+		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
+	}
 	return body, taxData, nil
 }

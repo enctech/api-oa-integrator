@@ -47,9 +47,30 @@ returning *;
 
 -- name: CreateIntegratorTransaction :one
 with inserted_transaction as (
-    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data, extra)
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data,
+                                         extra)
         values ($1, $2, $3, $4, $5, $6, $7, $8)
         returning *)
 select *
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3;
+
+-- name: GetIntegratorTransactions :many
+select it.*, ic.name as integrator_name
+from integrator_transactions it
+         inner join public.integrator_config ic on ic.id = it.integrator_id
+where lpn like concat('%', sqlc.arg(lpn)::text, '%')
+  and integrator_name::text like concat('%', sqlc.arg(integrator_name)::text, '%')
+  and status::text like concat('%', sqlc.arg(status)::text, '%')
+  and it.created_at >= sqlc.arg(start_at)
+  and it.created_at <= sqlc.arg(end_at);
+
+-- name: GetIntegratorTransactionsCount :one
+select count(*)
+from integrator_transactions it
+         inner join public.integrator_config ic on ic.id = it.integrator_id
+where lpn like concat('%', sqlc.arg(lpn)::text, '%')
+  and integrator_name::text like concat('%', sqlc.arg(integrator_name)::text, '%')
+  and status::text like concat('%', sqlc.arg(status)::text, '%')
+  and it.created_at >= sqlc.arg(start_at)
+  and it.created_at <= sqlc.arg(end_at);

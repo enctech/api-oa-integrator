@@ -67,6 +67,8 @@ create table integrator_transactions
     error                   varchar,
     extra                   jsonb,
     tax_data                jsonb,
+    created_at              timestamp not null default NOW(),
+    updated_at              timestamp not null default NOW(),
 
     FOREIGN KEY (integrator_id) REFERENCES integrator_config (id)
 );

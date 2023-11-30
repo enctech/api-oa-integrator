@@ -16,10 +16,11 @@ import (
 
 const createIntegratorTransaction = `-- name: CreateIntegratorTransaction :one
 with inserted_transaction as (
-    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data, extra)
+    insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data,
+                                         extra)
         values ($1, $2, $3, $4, $5, $6, $7, $8)
-        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data)
-select business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, created_at, updated_at
+        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, created_at, updated_at)
+select business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3
 `
@@ -44,6 +45,8 @@ type CreateIntegratorTransactionRow struct {
 	Error                 sql.NullString
 	Extra                 pqtype.NullRawMessage
 	TaxData               pqtype.NullRawMessage
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 	ID                    uuid.UUID
 	ClientID              sql.NullString
 	ProviderID            sql.NullInt32
@@ -53,8 +56,8 @@ type CreateIntegratorTransactionRow struct {
 	PlazaIDMap            pqtype.NullRawMessage
 	Url                   sql.NullString
 	InsecureSkipVerify    sql.NullBool
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	CreatedAt_2           time.Time
+	UpdatedAt_2           time.Time
 }
 
 func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateIntegratorTransactionParams) (CreateIntegratorTransactionRow, error) {
@@ -78,6 +81,8 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.Error,
 		&i.Extra,
 		&i.TaxData,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.ID,
 		&i.ClientID,
 		&i.ProviderID,
@@ -87,8 +92,8 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.PlazaIDMap,
 		&i.Url,
 		&i.InsecureSkipVerify,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.CreatedAt_2,
+		&i.UpdatedAt_2,
 	)
 	return i, err
 }
@@ -140,6 +145,112 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getIntegratorTransactions = `-- name: GetIntegratorTransactions :many
+select it.business_transaction_id, it.lpn, it.integrator_id, it.status, it.amount, it.error, it.extra, it.tax_data, it.created_at, it.updated_at, ic.name as integrator_name
+from integrator_transactions it
+         inner join public.integrator_config ic on ic.id = it.integrator_id
+where lpn like concat('%', $1::text, '%')
+  and integrator_name::text like concat('%', $2::text, '%')
+  and status::text like concat('%', $3::text, '%')
+  and it.created_at >= $4
+  and it.created_at <= $5
+`
+
+type GetIntegratorTransactionsParams struct {
+	Lpn            string
+	IntegratorName string
+	Status         string
+	StartAt        time.Time
+	EndAt          time.Time
+}
+
+type GetIntegratorTransactionsRow struct {
+	BusinessTransactionID uuid.UUID
+	Lpn                   sql.NullString
+	IntegratorID          uuid.NullUUID
+	Status                sql.NullString
+	Amount                sql.NullString
+	Error                 sql.NullString
+	Extra                 pqtype.NullRawMessage
+	TaxData               pqtype.NullRawMessage
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	IntegratorName        sql.NullString
+}
+
+func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegratorTransactionsParams) ([]GetIntegratorTransactionsRow, error) {
+	rows, err := q.query(ctx, q.getIntegratorTransactionsStmt, getIntegratorTransactions,
+		arg.Lpn,
+		arg.IntegratorName,
+		arg.Status,
+		arg.StartAt,
+		arg.EndAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetIntegratorTransactionsRow
+	for rows.Next() {
+		var i GetIntegratorTransactionsRow
+		if err := rows.Scan(
+			&i.BusinessTransactionID,
+			&i.Lpn,
+			&i.IntegratorID,
+			&i.Status,
+			&i.Amount,
+			&i.Error,
+			&i.Extra,
+			&i.TaxData,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IntegratorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getIntegratorTransactionsCount = `-- name: GetIntegratorTransactionsCount :one
+select count(*)
+from integrator_transactions it
+         inner join public.integrator_config ic on ic.id = it.integrator_id
+where lpn like concat('%', $1::text, '%')
+  and integrator_name::text like concat('%', $2::text, '%')
+  and status::text like concat('%', $3::text, '%')
+  and it.created_at >= $4
+  and it.created_at <= $5
+`
+
+type GetIntegratorTransactionsCountParams struct {
+	Lpn            string
+	IntegratorName string
+	Status         string
+	StartAt        time.Time
+	EndAt          time.Time
+}
+
+func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetIntegratorTransactionsCountParams) (int64, error) {
+	row := q.queryRow(ctx, q.getIntegratorTransactionsCountStmt, getIntegratorTransactionsCount,
+		arg.Lpn,
+		arg.IntegratorName,
+		arg.Status,
+		arg.StartAt,
+		arg.EndAt,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getOATransaction = `-- name: GetOATransaction :one

@@ -20,6 +20,7 @@ func InitController(e *echo.Echo) {
 	c := controller{}
 	g.GET("/logs", c.getLogs)
 	g.GET("/oa", c.getOATransaction)
+	g.GET("/integrator", c.getIntegratorTransactions)
 }
 
 type Response struct {
@@ -174,7 +175,7 @@ func (con controller) getOATransaction(c echo.Context) error {
 		}
 		txnData = append(txnData, OATransaction{
 			ID:                    log.ID.String(),
-			BusinessTransactionId: log.Businesstransactionid,
+			BusinessTransactionID: log.Businesstransactionid,
 			Lpn:                   log.Lpn.String,
 			Customerid:            log.Customerid.String,
 			Jobid:                 log.Jobid.String,
@@ -189,6 +190,99 @@ func (con controller) getOATransaction(c echo.Context) error {
 	}
 
 	out := utils.PaginationResponse[OATransaction]{
+		Data: txnData,
+		Metadata: utils.PaginationMetadata{
+			TotalData: totalData,
+			Page:      int64(page),
+			PerPage:   int64(perPage),
+			TotalPage: int64(math.Ceil(float64(totalData) / float64(perPage))),
+		},
+	}
+
+	return c.JSON(http.StatusCreated, out)
+}
+
+// getIntegratorTransactions godoc
+//
+//	@Summary		get all OA logs
+//	@Description	To get all transactions made through OA
+//	@Param			lpn				query	string	false	"LPN"
+//	@Param			status			query	string	false	"Status"
+//	@Param			integratorName	query	string	false	"Integrator Name"
+//	@Param			startAt			query	string	false	"Start At"	Format(dateTime)
+//	@Param			endAt			query	string	false	"End At"	Format(dateTime)
+//	@Param			perPage			query	int		false	"PerPage"
+//	@Param			page			query	int		false	"Page"
+//	@Tags			transactions
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/transactions/integrator [get]
+func (con controller) getIntegratorTransactions(c echo.Context) error {
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
+	if err != nil {
+		before = time.Now()
+	}
+	perPage := 50
+	if c.QueryParam("perPage") != "" {
+		perPage, err = strconv.Atoi(c.QueryParam("perPage"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid perPage")
+		}
+	}
+	page := 0
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid page")
+		}
+	}
+
+	txns, err := database.New(database.D()).GetIntegratorTransactions(c.Request().Context(), database.GetIntegratorTransactionsParams{
+		StartAt:        after.UTC().Round(time.Microsecond),
+		EndAt:          before.UTC().Round(time.Microsecond),
+		Status:         c.QueryParam("status"),
+		IntegratorName: c.QueryParam("integratorName"),
+		Lpn:            c.QueryParam("lpn"),
+	})
+
+	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
+		StartAt:   after.UTC().Round(time.Microsecond),
+		EndAt:     before.UTC().Round(time.Microsecond),
+		ExitLane:  c.QueryParam("exitLane"),
+		EntryLane: c.QueryParam("entryLane"),
+		Lpn:       c.QueryParam("lpn"),
+		Facility:  c.QueryParam("facility"),
+		Jobid:     c.QueryParam("jobid"),
+	})
+
+	var txnData []IntegratorTransactions
+
+	for _, txn := range txns {
+		var extra map[string]any
+		if txn.Extra.Valid {
+			err = json.Unmarshal(txn.Extra.RawMessage, &extra)
+		}
+
+		var taxData map[string]any
+		if txn.Extra.Valid {
+			err = json.Unmarshal(txn.TaxData.RawMessage, &taxData)
+		}
+		txnData = append(txnData, IntegratorTransactions{
+			BusinessTransactionID: txn.BusinessTransactionID.String(),
+			Lpn:                   txn.Lpn.String,
+			Extra:                 extra,
+			TaxData:               taxData,
+			IntegratorName:        txn.IntegratorName.String,
+			Status:                txn.Status.String,
+			Amount:                txn.Amount.String,
+			Error:                 txn.Error.String,
+			UpdatedAt:             txn.UpdatedAt,
+			CreatedAt:             txn.CreatedAt,
+		})
+	}
+
+	out := utils.PaginationResponse[IntegratorTransactions]{
 		Data: txnData,
 		Metadata: utils.PaginationMetadata{
 			TotalData: totalData,

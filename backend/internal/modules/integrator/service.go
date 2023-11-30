@@ -74,16 +74,15 @@ func PerformTransaction(arg TransactionArg) error {
 	if err != nil {
 		return err
 	}
-	data, taxData, err := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
-	jsonStr, err := json.Marshal(data)
-	taxJsonStr, err := json.Marshal(taxData)
-
+	data, taxData, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
 	status := "success"
 	errorMessage := ""
-	if err != nil {
+	if txnErr != nil {
 		status = "fail"
-		errorMessage = err.Error()
+		errorMessage = txnErr.Error()
 	}
+	jsonStr, err := json.Marshal(data)
+	taxJsonStr, err := json.Marshal(taxData)
 
 	_, err = database.New(database.D()).CreateIntegratorTransaction(context.Background(), database.CreateIntegratorTransactionParams{
 		Lpn:                   sql.NullString{String: arg.LPN, Valid: true},
@@ -91,7 +90,7 @@ func PerformTransaction(arg TransactionArg) error {
 		Extra:                 pqtype.NullRawMessage{Valid: err == nil, RawMessage: jsonStr},
 		TaxData:               pqtype.NullRawMessage{Valid: err == nil, RawMessage: taxJsonStr},
 		ID:                    integratorConfig.ID,
-		Error:                 sql.NullString{String: errorMessage, Valid: err != nil},
+		Error:                 sql.NullString{String: errorMessage, Valid: txnErr != nil},
 		Amount:                sql.NullString{String: fmt.Sprintf("%v", arg.Amount), Valid: true},
 		Status:                sql.NullString{String: status, Valid: true},
 	})

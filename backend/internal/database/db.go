@@ -69,6 +69,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getIntegratorConfigsStmt, err = db.PrepareContext(ctx, getIntegratorConfigs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetIntegratorConfigs: %w", err)
 	}
+	if q.getIntegratorTransactionsStmt, err = db.PrepareContext(ctx, getIntegratorTransactions); err != nil {
+		return nil, fmt.Errorf("error preparing query GetIntegratorTransactions: %w", err)
+	}
+	if q.getIntegratorTransactionsCountStmt, err = db.PrepareContext(ctx, getIntegratorTransactionsCount); err != nil {
+		return nil, fmt.Errorf("error preparing query GetIntegratorTransactionsCount: %w", err)
+	}
 	if q.getLogsStmt, err = db.PrepareContext(ctx, getLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLogs: %w", err)
 	}
@@ -179,6 +185,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getIntegratorConfigsStmt: %w", cerr)
 		}
 	}
+	if q.getIntegratorTransactionsStmt != nil {
+		if cerr := q.getIntegratorTransactionsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getIntegratorTransactionsStmt: %w", cerr)
+		}
+	}
+	if q.getIntegratorTransactionsCountStmt != nil {
+		if cerr := q.getIntegratorTransactionsCountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getIntegratorTransactionsCountStmt: %w", cerr)
+		}
+	}
 	if q.getLogsStmt != nil {
 		if cerr := q.getLogsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getLogsStmt: %w", cerr)
@@ -283,6 +299,8 @@ type Queries struct {
 	getIntegratorConfigByClientStmt     *sql.Stmt
 	getIntegratorConfigByNameStmt       *sql.Stmt
 	getIntegratorConfigsStmt            *sql.Stmt
+	getIntegratorTransactionsStmt       *sql.Stmt
+	getIntegratorTransactionsCountStmt  *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOATransactionStmt                *sql.Stmt
 	getOATransactionsStmt               *sql.Stmt
@@ -314,6 +332,8 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorConfigByClientStmt:     q.getIntegratorConfigByClientStmt,
 		getIntegratorConfigByNameStmt:       q.getIntegratorConfigByNameStmt,
 		getIntegratorConfigsStmt:            q.getIntegratorConfigsStmt,
+		getIntegratorTransactionsStmt:       q.getIntegratorTransactionsStmt,
+		getIntegratorTransactionsCountStmt:  q.getIntegratorTransactionsCountStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOATransactionStmt:                q.getOATransactionStmt,
 		getOATransactionsStmt:               q.getOATransactionsStmt,

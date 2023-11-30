@@ -8,6 +8,8 @@ create table if not exists integrator_transactions
     error                   varchar,
     tax_data                jsonb,
     extra                   jsonb,
+    created_at              timestamp not null default NOW(),
+    updated_at              timestamp not null default NOW(),
 
     FOREIGN KEY (integrator_id) REFERENCES integrator_config (id)
 );

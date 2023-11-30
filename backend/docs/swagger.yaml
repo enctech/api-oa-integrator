@@ -681,6 +681,48 @@ paths:
       summary: check version
       tags:
       - oa
+  /transactions/integrator:
+    get:
+      consumes:
+      - application/json
+      description: To get all transactions made through OA
+      parameters:
+      - description: LPN
+        in: query
+        name: lpn
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Integrator Name
+        in: query
+        name: integratorName
+        type: string
+      - description: Start At
+        format: dateTime
+        in: query
+        name: startAt
+        type: string
+      - description: End At
+        format: dateTime
+        in: query
+        name: endAt
+        type: string
+      - description: PerPage
+        in: query
+        name: perPage
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: get all OA logs
+      tags:
+      - transactions
   /transactions/logs:
     get:
       consumes:
