@@ -25,6 +25,10 @@ import IntegratorConfigsPage from "./config/integrator-configs.page";
 import IntegratorConfigsDetailsPage from "./config/integrator-configs-details.page";
 import OATransactionPage from "./oa-transactions.page";
 import IntegratorTransactionsPage from "./integrators-transactions.page";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useSession } from "../context/session-context";
+import AlertDialog from "../components/dialog";
+import { Button } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -91,6 +95,10 @@ function PersistentDrawerRight() {
     setOpen(false);
   };
 
+  const { session, logout } = useSession();
+
+  const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
+
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -108,15 +116,27 @@ function PersistentDrawerRight() {
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }} component="div">
             Online Authorization Dashboard
           </Typography>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={() => navigation("/login")}
-            sx={{ ...(open && { display: "none" }) }}
-          >
-            <LoginIcon />
-          </IconButton>
+          {session ? (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={() => setShowLogoutDialog(true)}
+              sx={{ ...(open && { display: "none" }) }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={() => navigation("/login")}
+              sx={{ ...(open && { display: "none" }) }}
+            >
+              <LoginIcon />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
       <Main open={open}>
@@ -144,32 +164,52 @@ function PersistentDrawerRight() {
           </IconButton>
         </DrawerHeader>
         <List>
-          {[
-            {
-              text: "Home",
-              link: "/",
-            },
-            {
-              text: "OA Configs",
-              link: "/oa-configs",
-            },
-            {
-              text: "Integrator Configs",
-              link: "/integrator-configs",
-            },
-            {
-              text: "Logs",
-              link: "/logs",
-            },
-            {
-              text: "Online Authorisation Transactions",
-              link: "/oa-transactions",
-            },
-            {
-              text: "Integrator Transactions",
-              link: "/integrator-transactions",
-            },
-          ].map(({ text, link }, index) => (
+          {(session
+            ? [
+                {
+                  text: "Home",
+                  link: "/",
+                },
+                {
+                  text: "OA Configs",
+                  link: "/oa-configs",
+                },
+                {
+                  text: "Integrator Configs",
+                  link: "/integrator-configs",
+                },
+                {
+                  text: "Logs",
+                  link: "/logs",
+                },
+                {
+                  text: "Online Authorisation Transactions",
+                  link: "/oa-transactions",
+                },
+                {
+                  text: "Integrator Transactions",
+                  link: "/integrator-transactions",
+                },
+              ]
+            : [
+                {
+                  text: "Home",
+                  link: "/",
+                },
+                {
+                  text: "Logs",
+                  link: "/logs",
+                },
+                {
+                  text: "Online Authorisation Transactions",
+                  link: "/oa-transactions",
+                },
+                {
+                  text: "Integrator Transactions",
+                  link: "/integrator-transactions",
+                },
+              ]
+          ).map(({ text, link }, index) => (
             <ListItem key={link} disablePadding>
               <ListItemButton onClick={() => navigation(link)}>
                 <ListItemText primary={text} />
@@ -178,6 +218,32 @@ function PersistentDrawerRight() {
           ))}
         </List>
       </Drawer>
+      <AlertDialog
+        isOpen={showLogoutDialog}
+        handleClose={() => setShowLogoutDialog(false)}
+        title={"Are you sure you want to logout?"}
+        description={"You will be logged out of the system."}
+        buttons={[
+          <Button
+            key="cancel"
+            onClick={() => setShowLogoutDialog(false)}
+            color="primary"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="logout"
+            onClick={() => {
+              logout();
+              setShowLogoutDialog(false);
+            }}
+            color="primary"
+            autoFocus
+          >
+            Logout
+          </Button>,
+        ]}
+      />
     </Box>
   );
 }

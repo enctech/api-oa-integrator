@@ -7,40 +7,65 @@ import PaidIcon from "@mui/icons-material/Paid";
 import FeedIcon from "@mui/icons-material/Feed";
 import SettingsIcon from "@mui/icons-material/Settings";
 import EngineeringIcon from "@mui/icons-material/Engineering";
+import { useSession } from "../context/session-context";
 
 const HomePage = () => {
   const navigation = useNavigate();
+  const { session } = useSession();
   return (
     <Container maxWidth={false}>
       <div className="flex">
-        {[
-          {
-            text: "OA Configs",
-            link: "/oa-configs",
-            icon: <SettingsIcon sx={{ fontSize: 80 }} />,
-          },
-          {
-            text: "Integrator Configs",
-            link: "/integrator-configs",
-            icon: <EngineeringIcon sx={{ fontSize: 80 }} />,
-          },
-          {
-            text: "Logs",
-            link: "/logs",
-            icon: <FeedIcon sx={{ fontSize: 80 }} />,
-          },
-          {
-            text: "Online Authorisation Transactions",
-            link: "/oa-transactions",
-            icon: <ContactlessIcon sx={{ fontSize: 80 }} />,
-          },
-          {
-            text: "Integrator Transactions",
-            link: "/integrator-transactions",
-            icon: <PaidIcon sx={{ fontSize: 80 }} />,
-          },
-        ].map(({ text, link, icon }, index) => (
-          <Button className="flex-1 flex-col" onClick={() => navigation(link)}>
+        {(session
+          ? [
+              {
+                text: "OA Configs",
+                link: "/oa-configs",
+                icon: <SettingsIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Integrator Configs",
+                link: "/integrator-configs",
+                icon: <EngineeringIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Logs",
+                link: "/logs",
+                icon: <FeedIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Online Authorisation Transactions",
+                link: "/oa-transactions",
+                icon: <ContactlessIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Integrator Transactions",
+                link: "/integrator-transactions",
+                icon: <PaidIcon sx={{ fontSize: 80 }} />,
+              },
+            ]
+          : [
+              {
+                text: "Logs",
+                link: "/logs",
+                icon: <FeedIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Online Authorisation Transactions",
+                link: "/oa-transactions",
+                icon: <ContactlessIcon sx={{ fontSize: 80 }} />,
+              },
+              {
+                text: "Integrator Transactions",
+                link: "/integrator-transactions",
+                icon: <PaidIcon sx={{ fontSize: 80 }} />,
+              },
+            ]
+        ).map(({ text, link, icon }, index) => (
+          <Button
+            key={index}
+            className="flex-1 flex-col"
+            onClick={() => navigation(link)}
+          >
             {icon && icon}
             {text}
           </Button>

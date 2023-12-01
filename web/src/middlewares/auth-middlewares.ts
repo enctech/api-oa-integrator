@@ -1,16 +1,9 @@
 import { InternalAxiosRequestConfig } from "axios";
-import { resolvePromise } from "../utils/promise";
-import { internal } from "../api/axios";
 
 const authMiddleware = async (config: InternalAxiosRequestConfig<any>) => {
-  const response = await resolvePromise(
-    internal.post("/auth/login", {
-      username: "string",
-      password: "string",
-    }),
-  );
-  console.log("ERROR", response?.error);
-  const token = response?.result?.data.token;
+  const storedUserData = sessionStorage.getItem("userData");
+  if (!storedUserData) return config;
+  const token = JSON.parse(storedUserData)?.token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

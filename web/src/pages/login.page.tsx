@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Container, Paper, TextField, Typography } from "@mui/material";
 import { login } from "../api/auth";
 import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
+import { useSession } from "../context/session-context";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { mutate, isLoading, isError } = useMutation("login", login);
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const { mutate, data } = useMutation(["login", username, password], login);
+  const { login: loginUser } = useSession();
 
   const handleLogin = () => {
     mutate({
@@ -17,6 +19,12 @@ const LoginPage = () => {
       password,
     });
   };
+
+  useEffect(() => {
+    if (!data) return;
+    loginUser(data);
+    navigate("/");
+  }, [data]);
 
   return (
     <Container maxWidth="xs">

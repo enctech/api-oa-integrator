@@ -10,5 +10,11 @@ export const login = async ({ username, password }: LoginRequest) => {
     username,
     password,
   });
+  console.log(response.data);
+  sessionStorage.setItem("userData", JSON.stringify(response.data));
   return response.data;
+};
+
+export const logout = () => {
+  sessionStorage.removeItem("userData");
 };
