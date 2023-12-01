@@ -20,44 +20,84 @@ const HomePage = () => {
               {
                 text: "OA Configs",
                 link: "/oa-configs",
-                icon: <SettingsIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <SettingsIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Integrator Configs",
                 link: "/integrator-configs",
-                icon: <EngineeringIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <EngineeringIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Logs",
                 link: "/logs",
-                icon: <FeedIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <FeedIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Online Authorisation Transactions",
                 link: "/oa-transactions",
-                icon: <ContactlessIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <ContactlessIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Integrator Transactions",
                 link: "/integrator-transactions",
-                icon: <PaidIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <PaidIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
             ]
           : [
               {
                 text: "Logs",
                 link: "/logs",
-                icon: <FeedIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <FeedIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Online Authorisation Transactions",
                 link: "/oa-transactions",
-                icon: <ContactlessIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <ContactlessIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
               {
                 text: "Integrator Transactions",
                 link: "/integrator-transactions",
-                icon: <PaidIcon sx={{ fontSize: 80 }} />,
+                icon: (
+                  <PaidIcon
+                    sx={{ fontSize: 80 }}
+                    style={{ color: "#141617" }}
+                  />
+                ),
               },
             ]
         ).map(({ text, link, icon }, index) => (
@@ -67,7 +107,7 @@ const HomePage = () => {
             onClick={() => navigation(link)}
           >
             {icon && icon}
-            {text}
+            <Typography style={{ color: "#141617" }}>{text}</Typography>
           </Button>
         ))}
       </div>

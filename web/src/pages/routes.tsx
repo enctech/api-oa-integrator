@@ -9,10 +9,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import List from "@mui/material/List";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
-import LoginIcon from "@mui/icons-material/Login";
 import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
@@ -25,10 +22,15 @@ import IntegratorConfigsPage from "./config/integrator-configs.page";
 import IntegratorConfigsDetailsPage from "./config/integrator-configs-details.page";
 import OATransactionPage from "./oa-transactions.page";
 import IntegratorTransactionsPage from "./integrators-transactions.page";
-import LogoutIcon from "@mui/icons-material/Logout";
 import { useSession } from "../context/session-context";
 import AlertDialog from "../components/dialog";
-import { Button } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const drawerWidth = 240;
 
@@ -63,6 +65,7 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  backgroundColor: "#fdc300",
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
     transition: theme.transitions.create(["margin", "width"], {
@@ -88,11 +91,7 @@ function PersistentDrawerRight() {
   const [open, setOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
+    setOpen(!open);
   };
 
   const { session, logout } = useSession();
@@ -109,33 +108,26 @@ function PersistentDrawerRight() {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerOpen}
-            sx={{ ...(open && { display: "none" }) }}
           >
-            <MenuIcon />
+            <MenuIcon style={{ color: "#141617" }} />
           </IconButton>
-          <Typography variant="h6" noWrap sx={{ flexGrow: 1 }} component="div">
+          <Typography
+            variant="h6"
+            noWrap
+            sx={{ flexGrow: 1 }}
+            component="div"
+            style={{ color: "#141617" }}
+          >
             Online Authorization Dashboard
           </Typography>
           {session ? (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={() => setShowLogoutDialog(true)}
-              sx={{ ...(open && { display: "none" }) }}
-            >
-              <LogoutIcon />
-            </IconButton>
+            <Button color="inherit" onClick={() => setShowLogoutDialog(true)}>
+              <Typography style={{ color: "#141617" }}>Logout</Typography>
+            </Button>
           ) : (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={() => navigation("/login")}
-              sx={{ ...(open && { display: "none" }) }}
-            >
-              <LoginIcon />
-            </IconButton>
+            <Button color="inherit" onClick={() => navigation("/login")}>
+              <Typography style={{ color: "#141617" }}>Login</Typography>
+            </Button>
           )}
         </Toolbar>
       </AppBar>
@@ -144,6 +136,11 @@ function PersistentDrawerRight() {
         <AppRoutes />
       </Main>
       <Drawer
+        PaperProps={{
+          sx: {
+            backgroundColor: "#3d4146",
+          },
+        }}
         sx={{
           flexShrink: 0,
           "& .MuiDrawer-paper": {
@@ -154,15 +151,7 @@ function PersistentDrawerRight() {
         anchor="left"
         open={open}
       >
-        <DrawerHeader>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === "rtl" ? (
-              <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
-          </IconButton>
-        </DrawerHeader>
+        <DrawerHeader />
         <List>
           {(session
             ? [
@@ -171,24 +160,34 @@ function PersistentDrawerRight() {
                   link: "/",
                 },
                 {
-                  text: "OA Configs",
-                  link: "/oa-configs",
+                  text: "Configuration",
+                  groups: [
+                    {
+                      text: "Online Authorisation",
+                      link: "/oa-configs",
+                    },
+                    {
+                      text: "Integrators",
+                      link: "/integrator-configs",
+                    },
+                  ],
                 },
                 {
-                  text: "Integrator Configs",
-                  link: "/integrator-configs",
+                  text: "Transactions",
+                  groups: [
+                    {
+                      text: "Online Authorisation",
+                      link: "/oa-transactions",
+                    },
+                    {
+                      text: "Integrators",
+                      link: "/integrator-transactions",
+                    },
+                  ],
                 },
                 {
                   text: "Logs",
                   link: "/logs",
-                },
-                {
-                  text: "Online Authorisation Transactions",
-                  link: "/oa-transactions",
-                },
-                {
-                  text: "Integrator Transactions",
-                  link: "/integrator-transactions",
                 },
               ]
             : [
@@ -197,23 +196,62 @@ function PersistentDrawerRight() {
                   link: "/",
                 },
                 {
+                  text: "Transactions",
+                  groups: [
+                    {
+                      text: "Online Authorisation Transactions",
+                      link: "/oa-transactions",
+                    },
+                    {
+                      text: "Integrator Transactions",
+                      link: "/integrator-transactions",
+                    },
+                  ],
+                },
+                {
                   text: "Logs",
                   link: "/logs",
                 },
-                {
-                  text: "Online Authorisation Transactions",
-                  link: "/oa-transactions",
-                },
-                {
-                  text: "Integrator Transactions",
-                  link: "/integrator-transactions",
-                },
               ]
-          ).map(({ text, link }, index) => (
+          ).map(({ text, link, groups }, index) => (
             <ListItem key={link} disablePadding>
-              <ListItemButton onClick={() => navigation(link)}>
-                <ListItemText primary={text} />
-              </ListItemButton>
+              {groups ? (
+                <Accordion
+                  className="w-full"
+                  elevation={0}
+                  sx={{
+                    backgroundColor: "#3d4146",
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1a-content"
+                    id="panel1a-header"
+                  >
+                    <Typography style={{ color: "#FFFFFF" }}>{text}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ backgroundColor: "#9399a1" }}>
+                    {groups.map(({ text, link }, index) => (
+                      <ListItemButton
+                        onClick={() => navigation(link)}
+                        color="white"
+                      >
+                        <ListItemText
+                          primary={text}
+                          style={{ color: "#FFFFFF" }}
+                        />
+                      </ListItemButton>
+                    ))}
+                  </AccordionDetails>
+                </Accordion>
+              ) : (
+                <ListItemButton
+                  onClick={() => navigation(link)}
+                  sx={{ backgroundColor: "#3d4146" }}
+                >
+                  <ListItemText primary={text} style={{ color: "#FFFFFF" }} />
+                </ListItemButton>
+              )}
             </ListItem>
           ))}
         </List>
