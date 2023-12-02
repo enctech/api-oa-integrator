@@ -88,7 +88,7 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 function PersistentDrawerRight() {
   const navigation = useNavigate();
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
 
   const handleDrawerOpen = () => {
     setOpen(!open);
@@ -114,7 +114,7 @@ function PersistentDrawerRight() {
           <Typography
             variant="h6"
             noWrap
-            sx={{ flexGrow: 1 }}
+            sx={{ flexGrow: 1, textTransform: "uppercase" }}
             component="div"
             style={{ color: "#141617" }}
           >
