@@ -3,3 +3,7 @@ start_docker:
 
 start_podman:
 	podman-compose up -d
+
+copy_cert:
+	cp -r ./cert ./backend/
+	cp -r ./cert ./web/

@@ -4,6 +4,8 @@ FROM node:20
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
+RUN mkdir cert
+
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
@@ -26,4 +28,4 @@ RUN pnpm run build
 EXPOSE 3000
 
 # Define the command to run the app
-CMD ["npx","serve", "-s", "build"]
+CMD ["npx","serve", "--ssl-cert", "cert/certificate.pem", "--ssl-key", "cert/private-key.pem","-s", "build"]

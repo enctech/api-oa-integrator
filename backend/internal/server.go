@@ -6,11 +6,13 @@ import (
 	"api-oa-integrator/internal/modules/health"
 	"api-oa-integrator/internal/modules/oa"
 	"api-oa-integrator/internal/modules/transactions"
+	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"os"
 )
 
 func InitServer() {
@@ -24,5 +26,10 @@ func InitServer() {
 	auth.InitController(e)
 	config.InitController(e)
 	transactions.InitController(e)
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
+	if _, err := os.Stat("./cert/certificate.pem"); errors.Is(err, os.ErrNotExist) {
+		e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
+	} else {
+		e.Logger.Fatal(e.StartTLS(fmt.Sprintf(":%v", viper.GetString("app.port")), "./cert/certificate.pem", "./cert/private-key.pem"))
+	}
+
 }
