@@ -21,9 +21,10 @@ create table snb_config
 create table users
 (
     id         uuid primary key,
+    name       varchar,
     username   varchar,
     password   varchar,
-    permission varchar
+    permissions varchar[]
 );
 
 create table integrator_config

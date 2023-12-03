@@ -13,3 +13,4 @@ sql:
         package: "database"
         out: "internal/database"
         emit_prepared_queries: true
+        emit_empty_slices: true

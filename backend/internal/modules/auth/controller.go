@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strings"
 )
 
 type controller struct {
@@ -20,6 +21,7 @@ func InitController(e *echo.Echo) {
 	g.Use(middlewares.GuardSomePathJWT([]string{"/login", "/user"}))
 	g.POST("/login", c.login)
 	g.POST("/user", c.register)
+	g.GET("/users", c.users)
 	g.DELETE("/user/:id", c.deleteUser, middlewares.AdminOnlyMiddleware())
 	g.POST("/refresh", c.register)
 }
@@ -48,6 +50,23 @@ func (con controller) login(c echo.Context) error {
 	return c.JSON(http.StatusCreated, user)
 }
 
+// users godoc
+//
+//	@Summary		get list of users
+//	@Description	For admin to see the list of users registered
+//	@Security		Bearer
+//	@Tags			auth
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/auth/users [get]
+func (con controller) users(c echo.Context) error {
+	res, err := getUsers(c.Request().Context())
+	if err != nil {
+		return c.String(http.StatusBadRequest, "")
+	}
+	return c.JSON(http.StatusCreated, res)
+}
+
 // register godoc
 //
 //	@Summary		create new user
@@ -66,7 +85,10 @@ func (con controller) register(c echo.Context) error {
 	}
 	res, err := registerUser(c.Request().Context(), *req)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "")
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			return c.String(http.StatusBadRequest, "Username already exist")
+		}
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusCreated, res)
 }

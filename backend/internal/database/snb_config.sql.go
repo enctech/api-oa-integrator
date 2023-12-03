@@ -71,7 +71,7 @@ func (q *Queries) GetAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []SnbConfig
+	items := []SnbConfig{}
 	for rows.Next() {
 		var i SnbConfig
 		if err := rows.Scan(

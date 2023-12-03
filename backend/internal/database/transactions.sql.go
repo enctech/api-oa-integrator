@@ -192,7 +192,7 @@ func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegrat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetIntegratorTransactionsRow
+	items := []GetIntegratorTransactionsRow{}
 	for rows.Next() {
 		var i GetIntegratorTransactionsRow
 		if err := rows.Scan(
@@ -316,7 +316,7 @@ func (q *Queries) GetOATransactions(ctx context.Context, arg GetOATransactionsPa
 		return nil, err
 	}
 	defer rows.Close()
-	var items []OaTransaction
+	items := []OaTransaction{}
 	for rows.Next() {
 		var i OaTransaction
 		if err := rows.Scan(

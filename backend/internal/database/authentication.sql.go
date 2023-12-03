@@ -10,28 +10,36 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createUser = `-- name: CreateUser :one
-insert into users (username, password, permission)
-values ($1, $2, $3)
-returning id, username, password, permission
+insert into users (name, username, password, permissions)
+values ($1, $2, $3, $4)
+returning id, name, username, password, permissions
 `
 
 type CreateUserParams struct {
-	Username   sql.NullString
-	Password   sql.NullString
-	Permission sql.NullString
+	Name        sql.NullString
+	Username    sql.NullString
+	Password    sql.NullString
+	Permissions []string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Username, arg.Password, arg.Permission)
+	row := q.queryRow(ctx, q.createUserStmt, createUser,
+		arg.Name,
+		arg.Username,
+		arg.Password,
+		pq.Array(arg.Permissions),
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Username,
 		&i.Password,
-		&i.Permission,
+		pq.Array(&i.Permissions),
 	)
 	return i, err
 }
@@ -47,7 +55,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (sql.Result, err
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, password, permission
+select id, name, username, password, permissions
 from users
 where username = $1
 `
@@ -57,9 +65,44 @@ func (q *Queries) GetUser(ctx context.Context, username sql.NullString) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Username,
 		&i.Password,
-		&i.Permission,
+		pq.Array(&i.Permissions),
 	)
 	return i, err
+}
+
+const getUsers = `-- name: GetUsers :many
+select id, name, username, password, permissions
+from users
+`
+
+func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.query(ctx, q.getUsersStmt, getUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.Password,
+			pq.Array(&i.Permissions),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

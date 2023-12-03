@@ -155,7 +155,7 @@ func (q *Queries) GetIntegratorConfigs(ctx context.Context) ([]IntegratorConfig,
 		return nil, err
 	}
 	defer rows.Close()
-	var items []IntegratorConfig
+	items := []IntegratorConfig{}
 	for rows.Next() {
 		var i IntegratorConfig
 		if err := rows.Scan(

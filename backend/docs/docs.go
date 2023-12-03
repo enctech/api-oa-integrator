@@ -105,6 +105,27 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/auth/users": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "For admin to see the list of users registered",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "get list of users",
+                "responses": {}
+            }
+        },
         "/config/integrator-config": {
             "get": {
                 "security": [
@@ -892,11 +913,17 @@ const docTemplate = `{
         "auth.CreateUserRequest": {
             "type": "object",
             "properties": {
+                "name": {
+                    "type": "string"
+                },
                 "password": {
                     "type": "string"
                 },
-                "permission": {
-                    "type": "string"
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "username": {
                     "type": "string"

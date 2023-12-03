@@ -96,6 +96,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
+	if q.getUsersStmt, err = db.PrepareContext(ctx, getUsers); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUsers: %w", err)
+	}
 	if q.updateIntegratorConfigStmt, err = db.PrepareContext(ctx, updateIntegratorConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateIntegratorConfig: %w", err)
 	}
@@ -230,6 +233,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
 		}
 	}
+	if q.getUsersStmt != nil {
+		if cerr := q.getUsersStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUsersStmt: %w", cerr)
+		}
+	}
 	if q.updateIntegratorConfigStmt != nil {
 		if cerr := q.updateIntegratorConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateIntegratorConfigStmt: %w", cerr)
@@ -308,6 +316,7 @@ type Queries struct {
 	getSnbConfigStmt                    *sql.Stmt
 	getSnbConfigByFacilityAndDeviceStmt *sql.Stmt
 	getUserStmt                         *sql.Stmt
+	getUsersStmt                        *sql.Stmt
 	updateIntegratorConfigStmt          *sql.Stmt
 	updateOATransactionStmt             *sql.Stmt
 	updateSnbConfigStmt                 *sql.Stmt
@@ -341,6 +350,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getSnbConfigStmt:                    q.getSnbConfigStmt,
 		getSnbConfigByFacilityAndDeviceStmt: q.getSnbConfigByFacilityAndDeviceStmt,
 		getUserStmt:                         q.getUserStmt,
+		getUsersStmt:                        q.getUsersStmt,
 		updateIntegratorConfigStmt:          q.updateIntegratorConfigStmt,
 		updateOATransactionStmt:             q.updateOATransactionStmt,
 		updateSnbConfigStmt:                 q.updateSnbConfigStmt,

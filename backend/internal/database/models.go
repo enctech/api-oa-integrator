@@ -73,8 +73,9 @@ type SnbConfig struct {
 }
 
 type User struct {
-	ID         uuid.UUID
-	Username   sql.NullString
-	Password   sql.NullString
-	Permission sql.NullString
+	ID          uuid.UUID
+	Name        sql.NullString
+	Username    sql.NullString
+	Password    sql.NullString
+	Permissions []string
 }

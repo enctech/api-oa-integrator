@@ -19,9 +19,10 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 	}
 
 	user, err := database.New(database.D()).CreateUser(ctx, database.CreateUserParams{
-		Username:   sql.NullString{String: in.Username, Valid: true},
-		Password:   sql.NullString{String: hp, Valid: true},
-		Permission: sql.NullString{String: in.Permission, Valid: true},
+		Name:        sql.NullString{String: in.Name, Valid: true},
+		Username:    sql.NullString{String: in.Username, Valid: true},
+		Password:    sql.NullString{String: hp, Valid: true},
+		Permissions: in.Permissions,
 	})
 	if err != nil {
 		zap.L().Sugar().Errorf("Error create user %v", err)
@@ -31,7 +32,7 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user.Username.String
-	claims["permission"] = user.Permission.String
+	claims["permission"] = user.Permissions
 	claims["exp"] = time.Now().Add(time.Hour * 24 * 30).Unix()
 
 	userToken, err := token.SignedString([]byte(viper.GetString("app.secret")))
@@ -59,7 +60,7 @@ func login(ctx context.Context, in LoginRequest) (LoginResponse, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user.Username.String
-	claims["permission"] = user.Permission.String
+	claims["permission"] = user.Permissions
 	claims["exp"] = time.Now().Add(time.Hour * 24 * 30).Unix()
 
 	userToken, err := token.SignedString([]byte(viper.GetString("app.secret")))
@@ -75,11 +76,29 @@ func login(ctx context.Context, in LoginRequest) (LoginResponse, error) {
 		Username:     user.Username.String,
 		Token:        userToken,
 		RefreshToken: refreshToken,
-		Permission:   user.Permission.String,
+		Permissions:  user.Permissions,
 	}, nil
 }
 
 func deleteUser(ctx context.Context, in uuid.UUID) error {
 	_, err := database.New(database.D()).DeleteUser(ctx, in)
 	return err
+}
+
+func getUsers(ctx context.Context) ([]UsersResponse, error) {
+	users, err := database.New(database.D()).GetUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []UsersResponse
+	for _, user := range users {
+		res = append(res, UsersResponse{
+			UserId:      user.ID.String(),
+			Username:    user.Username.String,
+			Permissions: user.Permissions,
+		})
+	}
+
+	return res, nil
 }

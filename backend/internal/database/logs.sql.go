@@ -96,7 +96,7 @@ func (q *Queries) GetLogs(ctx context.Context, arg GetLogsParams) ([]Log, error)
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Log
+	items := []Log{}
 	for rows.Next() {
 		var i Log
 		if err := rows.Scan(
