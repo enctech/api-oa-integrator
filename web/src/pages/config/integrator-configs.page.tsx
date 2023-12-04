@@ -49,7 +49,18 @@ const IntegratorConfigsPage = () => {
 
   return (
     <div>
-      <Button variant="contained" color="primary" onClick={createNewConfig}>
+      <Button
+        variant="contained"
+        sx={{
+          backgroundColor: "#3f3100",
+          color: "#fff0bf",
+          "&:hover": {
+            backgroundColor: "#fff0bf",
+            color: "#3f3100",
+          },
+        }}
+        onClick={createNewConfig}
+      >
         New
       </Button>
       <TableContainer component={Paper} className="mt-4">

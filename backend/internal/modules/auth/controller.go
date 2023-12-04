@@ -23,7 +23,6 @@ func InitController(e *echo.Echo) {
 	g.POST("/user", c.register)
 	g.GET("/users", c.users)
 	g.DELETE("/user/:id", c.deleteUser, middlewares.AdminOnlyMiddleware())
-	g.POST("/refresh", c.register)
 }
 
 // login godoc
@@ -62,7 +61,7 @@ func (con controller) login(c echo.Context) error {
 func (con controller) users(c echo.Context) error {
 	res, err := getUsers(c.Request().Context())
 	if err != nil {
-		return c.String(http.StatusBadRequest, "")
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusCreated, res)
 }

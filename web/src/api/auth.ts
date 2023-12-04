@@ -33,6 +33,19 @@ export const users = async () => {
     .then((res) => res.data as typeof usersResponse);
 };
 
+const createUserRequest = {
+  name: "string",
+  password: "string",
+  permissions: ["string"],
+  username: "string",
+};
+
+export const createUser = async (req: typeof createUserRequest) => {
+  return axios
+    .post("/auth/user", req)
+    .then((res) => res.data as typeof usersResponse);
+};
+
 export const deleteUser = async (id: string) => {
   return axios.delete(`/auth/user/${id}`);
 };

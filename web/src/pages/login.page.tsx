@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Container, Paper, TextField, Typography } from "@mui/material";
+import { Button, Container, Paper, TextField } from "@mui/material";
 import { login } from "../api/auth";
 import { useMutation } from "react-query";
 import { useNavigate } from "react-router-dom";
@@ -28,10 +28,24 @@ const LoginPage = () => {
 
   return (
     <Container maxWidth="xs">
-      <Paper elevation={3} style={{ padding: "20px", marginTop: "50px" }}>
-        <Typography variant="h5" component="h2">
-          Login
-        </Typography>
+      <Paper
+        elevation={3}
+        style={{
+          padding: "20px",
+          marginTop: "50px",
+        }}
+        className="items-center justify-center"
+      >
+        <div className="flex">
+          <div className="flex-grow" />
+          <img
+            src={"images/logo_enctech.svg"}
+            alt="Description"
+            width="100"
+            height="100"
+          />
+          <div className="flex-grow" />
+        </div>
         <form>
           <TextField
             fullWidth

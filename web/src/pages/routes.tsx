@@ -36,7 +36,7 @@ import {
   Button,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import UsersPage from "./users.page";
+import UsersPage from "./users/users.page";
 
 const drawerWidth = 240;
 
