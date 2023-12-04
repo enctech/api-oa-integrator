@@ -31,6 +31,7 @@ import {
   Button,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import UsersPage from "./users.page";
 
 const drawerWidth = 240;
 
@@ -189,6 +190,10 @@ function PersistentDrawerRight() {
                   text: "Logs",
                   link: "/logs",
                 },
+                {
+                  text: "Users",
+                  link: "/users",
+                },
               ]
             : [
                 {
@@ -301,6 +306,7 @@ function AppRoutes() {
         element={<IntegratorConfigsDetailsPage />}
       />
       <Route path="/oa-transactions" element={<OATransactionPage />} />
+      <Route path="/users" element={<UsersPage />} />
       <Route
         path="/integrator-transactions"
         element={<IntegratorTransactionsPage />}

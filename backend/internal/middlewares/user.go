@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -43,8 +44,7 @@ func AdminOnlyMiddleware() echo.MiddlewareFunc {
 			}
 
 			claims := token.Claims.(jwt.MapClaims)
-
-			if claims["permission"] != "admin" {
+			if !slices.Contains(claims["permissions"].([]interface{}), "admin") {
 				return c.JSON(http.StatusUnauthorized, "Unauthorized")
 			}
 			c.Set("username", claims["username"])

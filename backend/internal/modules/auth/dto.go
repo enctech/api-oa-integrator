@@ -14,6 +14,7 @@ type LoginResponse struct {
 }
 
 type UsersResponse struct {
+	Name        string   `json:"name"`
 	Username    string   `json:"username"`
 	UserId      string   `json:"userId"`
 	Permissions []string `json:"permissions,omitempty"`

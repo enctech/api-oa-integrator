@@ -32,7 +32,7 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user.Username.String
-	claims["permission"] = user.Permissions
+	claims["permissions"] = user.Permissions
 	claims["exp"] = time.Now().Add(time.Hour * 24 * 30).Unix()
 
 	userToken, err := token.SignedString([]byte(viper.GetString("app.secret")))
@@ -60,7 +60,7 @@ func login(ctx context.Context, in LoginRequest) (LoginResponse, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user.Username.String
-	claims["permission"] = user.Permissions
+	claims["permissions"] = user.Permissions
 	claims["exp"] = time.Now().Add(time.Hour * 24 * 30).Unix()
 
 	userToken, err := token.SignedString([]byte(viper.GetString("app.secret")))
@@ -94,6 +94,7 @@ func getUsers(ctx context.Context) ([]UsersResponse, error) {
 	var res []UsersResponse
 	for _, user := range users {
 		res = append(res, UsersResponse{
+			Name:        user.Name.String,
 			UserId:      user.ID.String(),
 			Username:    user.Username.String,
 			Permissions: user.Permissions,

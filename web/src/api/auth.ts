@@ -10,11 +10,29 @@ export const login = async ({ username, password }: LoginRequest) => {
     username,
     password,
   });
-  console.log(response.data);
   sessionStorage.setItem("userData", JSON.stringify(response.data));
   return response.data;
 };
 
 export const logout = () => {
   sessionStorage.removeItem("userData");
+};
+
+const usersResponse = [
+  {
+    username: "string",
+    name: "TEST",
+    userId: "23224a79-7ff0-4432-bee4-f918259e764d",
+    permissions: ["admin"],
+  },
+];
+
+export const users = async () => {
+  return axios
+    .get("/auth/users")
+    .then((res) => res.data as typeof usersResponse);
+};
+
+export const deleteUser = async (id: string) => {
+  return axios.delete(`/auth/user/${id}`);
 };
