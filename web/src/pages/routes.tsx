@@ -278,6 +278,7 @@ function PersistentDrawerRight() {
             key="logout"
             onClick={() => {
               logout();
+              navigation("/");
               setShowLogoutDialog(false);
             }}
             color="primary"

@@ -37,6 +37,7 @@ export const SessionProvider = ({ children }: any) => {
 
   const logout = () => {
     // Simulating a logout process, clear the session data
+    sessionStorage.removeItem("userData");
     setSession(null);
   };
 
