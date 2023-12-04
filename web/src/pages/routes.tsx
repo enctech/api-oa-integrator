@@ -24,6 +24,11 @@ import OATransactionPage from "./oa-transactions.page";
 import IntegratorTransactionsPage from "./integrators-transactions.page";
 import { useSession } from "../context/session-context";
 import AlertDialog from "../components/dialog";
+import SettingsIcon from "@mui/icons-material/Settings";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import GroupIcon from "@mui/icons-material/Group";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import {
   Accordion,
   AccordionDetails,
@@ -159,9 +164,11 @@ function PersistentDrawerRight() {
                 {
                   text: "Home",
                   link: "/",
+                  icon: <DashboardIcon style={{ color: "white" }} />,
                 },
                 {
                   text: "Configuration",
+                  icon: <SettingsIcon style={{ color: "white" }} />,
                   groups: [
                     {
                       text: "Online Authorisation",
@@ -175,6 +182,7 @@ function PersistentDrawerRight() {
                 },
                 {
                   text: "Transactions",
+                  icon: <ReceiptIcon style={{ color: "white" }} />,
                   groups: [
                     {
                       text: "Online Authorisation",
@@ -188,9 +196,11 @@ function PersistentDrawerRight() {
                 },
                 {
                   text: "Logs",
+                  icon: <ReceiptLongIcon style={{ color: "white" }} />,
                   link: "/logs",
                 },
                 {
+                  icon: <GroupIcon style={{ color: "white" }} />,
                   text: "Users",
                   link: "/users",
                 },
@@ -199,9 +209,11 @@ function PersistentDrawerRight() {
                 {
                   text: "Home",
                   link: "/",
+                  icon: <DashboardIcon style={{ color: "white" }} />,
                 },
                 {
                   text: "Transactions",
+                  icon: <ReceiptIcon style={{ color: "white" }} />,
                   groups: [
                     {
                       text: "Online Authorisation Transactions",
@@ -215,10 +227,11 @@ function PersistentDrawerRight() {
                 },
                 {
                   text: "Logs",
+                  icon: <ReceiptLongIcon style={{ color: "white" }} />,
                   link: "/logs",
                 },
               ]
-          ).map(({ text, link, groups }, index) => (
+          ).map(({ text, link, icon, groups }, index) => (
             <ListItem key={link} disablePadding>
               {groups ? (
                 <Accordion
@@ -229,11 +242,17 @@ function PersistentDrawerRight() {
                   }}
                 >
                   <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
+                    expandIcon={<ExpandMoreIcon style={{ color: "white" }} />}
                     aria-controls="panel1a-content"
                     id="panel1a-header"
                   >
-                    <Typography style={{ color: "#FFFFFF" }}>{text}</Typography>
+                    {icon && (
+                      <>
+                        {icon}
+                        <div className="w-2" />
+                      </>
+                    )}
+                    <Typography style={{ color: "white" }}>{text}</Typography>
                   </AccordionSummary>
                   <AccordionDetails sx={{ backgroundColor: "#9399a1" }}>
                     {groups.map(({ text, link }, index) => (
@@ -254,6 +273,12 @@ function PersistentDrawerRight() {
                   onClick={() => navigation(link)}
                   sx={{ backgroundColor: "#3d4146" }}
                 >
+                  {icon && (
+                    <>
+                      {icon}
+                      <div className="w-2" />
+                    </>
+                  )}
                   <ListItemText primary={text} style={{ color: "#FFFFFF" }} />
                 </ListItemButton>
               )}
