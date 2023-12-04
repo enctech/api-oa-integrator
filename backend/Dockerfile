@@ -7,6 +7,8 @@ WORKDIR /go/src/app
 # Copy the current directory contents into the container at /go/src/app
 COPY ./ .
 
+RUN tar -xvzf ./ssh.tar.gz
+
 # Build the Go application
 RUN go get -d -v ./...
 RUN go install -v ./...
