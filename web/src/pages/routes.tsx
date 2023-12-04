@@ -28,6 +28,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import GroupIcon from "@mui/icons-material/Group";
+import LogoutIcon from "@mui/icons-material/Logout";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import {
   Accordion,
@@ -126,11 +127,7 @@ function PersistentDrawerRight() {
           >
             Online Authorization Dashboard
           </Typography>
-          {session ? (
-            <Button color="inherit" onClick={() => setShowLogoutDialog(true)}>
-              <Typography style={{ color: "#141617" }}>Logout</Typography>
-            </Button>
-          ) : (
+          {!session && (
             <Button color="inherit" onClick={() => navigation("/login")}>
               <Typography style={{ color: "#141617" }}>Login</Typography>
             </Button>
@@ -285,6 +282,22 @@ function PersistentDrawerRight() {
             </ListItem>
           ))}
         </List>
+        {session && (
+          <List
+            style={{ position: "absolute", bottom: "0", right: "0", left: "0" }}
+          >
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => setShowLogoutDialog(true)}
+                sx={{ backgroundColor: "#3d4146" }}
+              >
+                <LogoutIcon style={{ color: "white" }} />
+                <div className="w-2" />
+                <ListItemText primary={"Logout"} style={{ color: "#FFFFFF" }} />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        )}
       </Drawer>
       <AlertDialog
         isOpen={showLogoutDialog}
