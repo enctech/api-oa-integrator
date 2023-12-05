@@ -465,6 +465,22 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/misc/": {
+            "get": {
+                "description": "Get all misc data used in homepage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "misc"
+                ],
+                "summary": "Get all misc data used in homepage",
+                "responses": {}
+            }
+        },
         "/oa/{vendor}/AuthorizationService3rdParty/version": {
             "put": {
                 "description": "get the version and configuration available",

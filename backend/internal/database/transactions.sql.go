@@ -253,6 +253,46 @@ func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetInt
 	return count, err
 }
 
+const getOAEntryTransactions = `-- name: GetOAEntryTransactions :one
+select count(*)
+from oa_transactions
+where entry_lane is not null
+  and created_at >= $1
+  and created_at <= $2
+`
+
+type GetOAEntryTransactionsParams struct {
+	StartAt time.Time
+	EndAt   time.Time
+}
+
+func (q *Queries) GetOAEntryTransactions(ctx context.Context, arg GetOAEntryTransactionsParams) (int64, error) {
+	row := q.queryRow(ctx, q.getOAEntryTransactionsStmt, getOAEntryTransactions, arg.StartAt, arg.EndAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getOAExitTransactions = `-- name: GetOAExitTransactions :one
+select count(*)
+from oa_transactions
+where exit_lane is not null
+  and created_at >= $1
+  and created_at <= $2
+`
+
+type GetOAExitTransactionsParams struct {
+	StartAt time.Time
+	EndAt   time.Time
+}
+
+func (q *Queries) GetOAExitTransactions(ctx context.Context, arg GetOAExitTransactionsParams) (int64, error) {
+	row := q.queryRow(ctx, q.getOAExitTransactionsStmt, getOAExitTransactions, arg.StartAt, arg.EndAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getOATransaction = `-- name: GetOATransaction :one
 select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions

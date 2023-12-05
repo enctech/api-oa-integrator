@@ -1,0 +1,153 @@
+package misc
+
+import (
+	"api-oa-integrator/internal/database"
+	"api-oa-integrator/internal/modules/oa"
+	"context"
+	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
+	"time"
+)
+
+type controller struct {
+}
+
+func InitController(e *echo.Echo) {
+	g := e.Group("misc")
+	c := controller{}
+	g.GET("/", c.getData)
+}
+
+// getData godoc
+//
+//	@Summary		Get all misc data used in homepage
+//	@Description	Get all misc data used in homepage
+//	@Tags		 misc
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/misc/ [get]
+func (con controller) getData(c echo.Context) error {
+	snbStatus := getAllSnBStatus(c.Request().Context())
+	integratorsStatus := getAllIntegratorStatus(c.Request().Context())
+
+	now := time.Now()
+	totalIn, _ := database.New(database.D()).GetOAEntryTransactions(c.Request().Context(), database.GetOAEntryTransactionsParams{
+		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
+		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
+	})
+	totalOut, _ := database.New(database.D()).GetOAExitTransactions(c.Request().Context(), database.GetOAExitTransactionsParams{
+		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
+		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
+	})
+
+	totalPayment := getTotalPayment(c.Request().Context())
+	out := map[string]any{
+		"snb":          snbStatus,
+		"integrators":  integratorsStatus,
+		"totalPayment": totalPayment,
+		"totalIn":      totalIn,
+		"totalOut":     totalOut,
+	}
+
+	return c.JSON(http.StatusOK, out)
+}
+
+func getAllSnBStatus(ctx context.Context) []map[string]any {
+	var out []map[string]any
+	configs, err := database.New(database.D()).GetAllSnbConfig(ctx)
+	if err != nil {
+		return out
+	}
+
+	for _, config := range configs {
+		if config.Facility == nil || len(config.Facility) == 0 || config.Device == nil || len(config.Device) == 0 {
+			continue
+		}
+		oaStatus := "up"
+		err := oa.CheckSystemAvailability(config.Facility[0], config.Device[0])
+
+		if err != nil {
+			oaStatus = "down"
+		}
+
+		for _, facility := range config.Facility {
+			out = append(out, map[string]any{
+				"facility": facility,
+				"status":   oaStatus,
+			})
+		}
+	}
+
+	return out
+}
+
+func getAllIntegratorStatus(ctx context.Context) []map[string]any {
+	var out []map[string]any
+	configs, err := database.New(database.D()).GetIntegratorConfigs(ctx)
+	if err != nil {
+		return out
+	}
+
+	for _, config := range configs {
+		if config.Url.String == "" {
+			continue
+		}
+		integratorStatus := "up"
+		err := ping(config.Url.String)
+
+		if err != nil {
+			integratorStatus = "down"
+		}
+
+		out = append(out, map[string]any{
+			"integrator": config.Name.String,
+			"status":     integratorStatus,
+		})
+	}
+
+	return out
+}
+
+func ping(domain string) error {
+	var client = http.Client{
+		Timeout:   time.Second * 10,
+		Transport: &http.Transport{},
+	}
+
+	req, err := http.NewRequest("HEAD", domain, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
+func getTotalPayment(ctx context.Context) map[string]float64 {
+	now := time.Now()
+	txns, err := database.New(database.D()).GetIntegratorTransactions(ctx, database.GetIntegratorTransactionsParams{
+		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
+		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
+		Status:  "success",
+	})
+
+	if err != nil {
+		return nil
+	}
+
+	out := map[string]float64{}
+
+	for _, txn := range txns {
+		a, err := strconv.ParseFloat(txn.Amount.String, 64)
+		if err != nil {
+			continue
+		}
+		out[txn.IntegratorName.String] += a
+	}
+
+	return out
+}

@@ -78,6 +78,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getLogsStmt, err = db.PrepareContext(ctx, getLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLogs: %w", err)
 	}
+	if q.getOAEntryTransactionsStmt, err = db.PrepareContext(ctx, getOAEntryTransactions); err != nil {
+		return nil, fmt.Errorf("error preparing query GetOAEntryTransactions: %w", err)
+	}
+	if q.getOAExitTransactionsStmt, err = db.PrepareContext(ctx, getOAExitTransactions); err != nil {
+		return nil, fmt.Errorf("error preparing query GetOAExitTransactions: %w", err)
+	}
 	if q.getOATransactionStmt, err = db.PrepareContext(ctx, getOATransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query GetOATransaction: %w", err)
 	}
@@ -203,6 +209,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getLogsStmt: %w", cerr)
 		}
 	}
+	if q.getOAEntryTransactionsStmt != nil {
+		if cerr := q.getOAEntryTransactionsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getOAEntryTransactionsStmt: %w", cerr)
+		}
+	}
+	if q.getOAExitTransactionsStmt != nil {
+		if cerr := q.getOAExitTransactionsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getOAExitTransactionsStmt: %w", cerr)
+		}
+	}
 	if q.getOATransactionStmt != nil {
 		if cerr := q.getOATransactionStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getOATransactionStmt: %w", cerr)
@@ -310,6 +326,8 @@ type Queries struct {
 	getIntegratorTransactionsStmt       *sql.Stmt
 	getIntegratorTransactionsCountStmt  *sql.Stmt
 	getLogsStmt                         *sql.Stmt
+	getOAEntryTransactionsStmt          *sql.Stmt
+	getOAExitTransactionsStmt           *sql.Stmt
 	getOATransactionStmt                *sql.Stmt
 	getOATransactionsStmt               *sql.Stmt
 	getOATransactionsCountStmt          *sql.Stmt
@@ -344,6 +362,8 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorTransactionsStmt:       q.getIntegratorTransactionsStmt,
 		getIntegratorTransactionsCountStmt:  q.getIntegratorTransactionsCountStmt,
 		getLogsStmt:                         q.getLogsStmt,
+		getOAEntryTransactionsStmt:          q.getOAEntryTransactionsStmt,
+		getOAExitTransactionsStmt:           q.getOAExitTransactionsStmt,
 		getOATransactionStmt:                q.getOATransactionStmt,
 		getOATransactionsStmt:               q.getOATransactionsStmt,
 		getOATransactionsCountStmt:          q.getOATransactionsCountStmt,

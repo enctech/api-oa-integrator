@@ -1,0 +1,13 @@
+import axios from "./axios";
+
+interface MiscResponse {
+  integrators: { integrator: string; status: string }[];
+  snb: { facility: string; status: string }[];
+  totalIn: number;
+  totalOut: number;
+  totalPayment: Map<string, string>;
+}
+
+export const misc = async () => {
+  return axios.get("/misc/").then((res) => res.data as MiscResponse);
+};

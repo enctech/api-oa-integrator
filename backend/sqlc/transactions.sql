@@ -21,6 +21,20 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
+-- name: GetOAEntryTransactions :one
+select count(*)
+from oa_transactions
+where entry_lane is not null
+  and created_at >= sqlc.arg(start_at)
+  and created_at <= sqlc.arg(end_at);
+
+-- name: GetOAExitTransactions :one
+select count(*)
+from oa_transactions
+where exit_lane is not null
+  and created_at >= sqlc.arg(start_at)
+  and created_at <= sqlc.arg(end_at);
+
 -- name: GetOATransactionsCount :one
 select count(*)
 from oa_transactions

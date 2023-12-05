@@ -14,7 +14,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
-import HomePage from "./home/home.page";
+import HomePage from "./home.page";
 import LogsPage from "./logs.page";
 import OAConfigsPage from "./config/oa-configs.page";
 import OaConfigsDetailsPage from "./config/oa-configs-details.page";
@@ -137,7 +137,7 @@ function PersistentDrawerRight() {
           )}
         </Toolbar>
       </AppBar>
-      <Main open={open}>
+      <Main open={open} className="h-max">
         <DrawerHeader />
         <AppRoutes />
       </Main>

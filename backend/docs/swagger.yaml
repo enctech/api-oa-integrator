@@ -524,6 +524,17 @@ paths:
       summary: check system health
       tags:
       - health
+  /misc/:
+    get:
+      consumes:
+      - application/json
+      description: Get all misc data used in homepage
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all misc data used in homepage
+      tags:
+      - misc
   /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}:
     post:
       consumes:

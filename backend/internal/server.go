@@ -4,6 +4,7 @@ import (
 	"api-oa-integrator/internal/modules/auth"
 	"api-oa-integrator/internal/modules/config"
 	"api-oa-integrator/internal/modules/health"
+	"api-oa-integrator/internal/modules/misc"
 	"api-oa-integrator/internal/modules/oa"
 	"api-oa-integrator/internal/modules/transactions"
 	"errors"
@@ -21,6 +22,7 @@ func InitServer() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
+	misc.InitController(e)
 	health.InitController(e)
 	oa.InitController(e)
 	auth.InitController(e)
