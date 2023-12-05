@@ -29,6 +29,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import GroupIcon from "@mui/icons-material/Group";
 import LogoutIcon from "@mui/icons-material/Logout";
+import LoginIcon from "@mui/icons-material/Login";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import {
   Accordion,
@@ -129,6 +130,8 @@ function PersistentDrawerRight() {
           </Typography>
           {!session && (
             <Button color="inherit" onClick={() => navigation("/login")}>
+              <LoginIcon style={{ color: "#141617" }} />
+              <div className="w-2" />
               <Typography style={{ color: "#141617" }}>Login</Typography>
             </Button>
           )}
