@@ -5,15 +5,10 @@ import (
 	"api-oa-integrator/internal"
 	"api-oa-integrator/internal/database"
 	"api-oa-integrator/logger"
-	"context"
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"github.com/spf13/viper"
-	"github.com/sqlc-dev/pqtype"
 	"go.uber.org/zap"
 	"strings"
-	"time"
 )
 
 func init() {
@@ -54,13 +49,6 @@ func main() {
 	zap.ReplaceGlobals(log)
 	err := database.InitDatabase()
 
-	jsonString, _ := json.Marshal(map[string]any{})
-	_, err = database.New(database.D()).CreateLog(context.Background(), database.CreateLogParams{
-		Level:     sql.NullString{String: "info", Valid: true},
-		Message:   sql.NullString{String: "TEST", Valid: true},
-		Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
-		CreatedAt: time.Now().UTC().Round(time.Microsecond),
-	})
 	if err != nil {
 		panic(fmt.Sprintf("init database error %v", err))
 		return
