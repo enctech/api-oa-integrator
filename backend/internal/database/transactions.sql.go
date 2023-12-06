@@ -151,17 +151,14 @@ const getIntegratorTransactions = `-- name: GetIntegratorTransactions :many
 select it.business_transaction_id, it.lpn, it.integrator_id, it.status, it.amount, it.error, it.extra, it.tax_data, it.created_at, it.updated_at, ic.name as integrator_name
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
-where lpn like concat('%', $3::text, '%')
-  and integrator_name::text like concat('%', $4::text, '%')
-  and status::text like concat('%', $5::text, '%')
-  and it.created_at >= $6
-  and it.created_at <= $7
-limit $1 offset $2
+where lpn like concat('%', $1::text, '%')
+  and integrator_name::text like concat('%', $2::text, '%')
+  and status::text like concat('%', $3::text, '%')
+  and it.created_at >= $4
+  and it.created_at <= $5
 `
 
 type GetIntegratorTransactionsParams struct {
-	Limit          int32
-	Offset         int32
 	Lpn            string
 	IntegratorName string
 	Status         string
@@ -185,8 +182,6 @@ type GetIntegratorTransactionsRow struct {
 
 func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegratorTransactionsParams) ([]GetIntegratorTransactionsRow, error) {
 	rows, err := q.query(ctx, q.getIntegratorTransactionsStmt, getIntegratorTransactions,
-		arg.Limit,
-		arg.Offset,
 		arg.Lpn,
 		arg.IntegratorName,
 		arg.Status,
