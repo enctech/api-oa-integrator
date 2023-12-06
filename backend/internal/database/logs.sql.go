@@ -32,7 +32,7 @@ func (q *Queries) CountLogs(ctx context.Context, arg CountLogsParams) (int64, er
 	return count, err
 }
 
-const createLog = `-- name: CreateLog :one
+const createLog = `-- name: CreateLog :execresult
 insert into logs (level, message, fields, created_at)
 values ($1, $2, $3, $4)
 returning id, level, message, fields, created_at
@@ -45,22 +45,13 @@ type CreateLogParams struct {
 	CreatedAt time.Time
 }
 
-func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
-	row := q.queryRow(ctx, q.createLogStmt, createLog,
+func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (sql.Result, error) {
+	return q.exec(ctx, q.createLogStmt, createLog,
 		arg.Level,
 		arg.Message,
 		arg.Fields,
 		arg.CreatedAt,
 	)
-	var i Log
-	err := row.Scan(
-		&i.ID,
-		&i.Level,
-		&i.Message,
-		&i.Fields,
-		&i.CreatedAt,
-	)
-	return i, err
 }
 
 const getLogs = `-- name: GetLogs :many

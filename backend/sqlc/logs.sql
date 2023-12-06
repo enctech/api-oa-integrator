@@ -4,7 +4,7 @@ from logs
 where created_at >= sqlc.arg(after)
   and created_at <= sqlc.arg(before);
 
--- name: CreateLog :one
+-- name: CreateLog :execresult
 insert into logs (level, message, fields, created_at)
 values ($1, $2, $3, $4)
 returning *;

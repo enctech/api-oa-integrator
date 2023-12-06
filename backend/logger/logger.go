@@ -57,7 +57,7 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 		db := database.D()
 		if db != nil {
 			fmt.Println("INSERTING LOG")
-			_, err = database.New(db).CreateLog(context.Background(), database.CreateLogParams{
+			result, err := database.New(db).CreateLog(context.Background(), database.CreateLogParams{
 				Level:     sql.NullString{String: output["level"].(string), Valid: true},
 				Message:   sql.NullString{String: output["msg"].(string), Valid: true},
 				Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
@@ -66,7 +66,8 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Error while creating log: %s", err.Error()))
 			} else {
-				fmt.Println("INSERTING LOG DONE NO ERROR")
+				id, _ := result.LastInsertId()
+				fmt.Println(fmt.Sprintf("INSERTING LOG DONE NO ERROR %v", id))
 			}
 		}
 	}()
