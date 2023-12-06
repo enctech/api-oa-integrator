@@ -333,8 +333,8 @@ func (con controller) getIntegratorTransactions(c echo.Context) error {
 		Status:         c.QueryParam("status"),
 		IntegratorName: c.QueryParam("integratorName"),
 		Lpn:            c.QueryParam("lpn"),
-		Limit:          int32(page),
-		Offset:         int32(perPage * page),
+		//Limit:          int32(page),
+		//Offset:         int32(perPage * page),
 	})
 
 	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
