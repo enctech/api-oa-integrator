@@ -66,7 +66,7 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 			if err != nil {
 				fmt.Println(fmt.Sprintf("Error while creating log: %s", err.Error()))
 			} else {
-				id, _ := result.LastInsertId()
+				id, _ := result.RowsAffected()
 				fmt.Println(fmt.Sprintf("INSERTING LOG DONE NO ERROR %v", id))
 			}
 		}
