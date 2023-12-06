@@ -56,7 +56,7 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 		createdAt, _ := time.Parse("2006-01-02T15:04:05.999-0700", output["timestamp"].(string))
 		db := database.D()
 		if db != nil {
-			fmt.Println("INSERTING LOG")
+			fmt.Println(fmt.Sprintf("INSERTING LOG %v", output["msg"].(string)))
 			result, err := database.New(db).CreateLog(context.Background(), database.CreateLogParams{
 				Level:     sql.NullString{String: output["level"].(string), Valid: true},
 				Message:   sql.NullString{String: output["msg"].(string), Valid: true},
