@@ -51,21 +51,25 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 		outputCopy[k] = v
 	}
 
-	jsonString, _ := json.Marshal(outputCopy)
-	createdAt, _ := time.Parse("2006-01-02T15:04:05.999-0700", output["timestamp"].(string))
-	db := database.D()
-	if db != nil {
-		fmt.Println("INSERTING LOG")
-		_, err = database.New(db).CreateLog(context.Background(), database.CreateLogParams{
-			Level:     sql.NullString{String: output["level"].(string), Valid: true},
-			Message:   sql.NullString{String: output["msg"].(string), Valid: true},
-			Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
-			CreatedAt: createdAt.UTC().Round(time.Microsecond),
-		})
-		if err != nil {
-			fmt.Println(fmt.Sprintf("Error while creating log: %s", err.Error()))
+	go func() {
+		jsonString, _ := json.Marshal(outputCopy)
+		createdAt, _ := time.Parse("2006-01-02T15:04:05.999-0700", output["timestamp"].(string))
+		db := database.D()
+		if db != nil {
+			fmt.Println("INSERTING LOG")
+			_, err = database.New(db).CreateLog(context.Background(), database.CreateLogParams{
+				Level:     sql.NullString{String: output["level"].(string), Valid: true},
+				Message:   sql.NullString{String: output["msg"].(string), Valid: true},
+				Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
+				CreatedAt: createdAt.UTC().Round(time.Microsecond),
+			})
+			if err != nil {
+				fmt.Println(fmt.Sprintf("Error while creating log: %s", err.Error()))
+			} else {
+				fmt.Println("INSERTING LOG DONE NO ERROR")
+			}
 		}
-	}
+	}()
 
 	return len(p), nil
 }
