@@ -12,8 +12,8 @@ returning *;
 -- name: GetLogs :many
 select *
 from logs
-where message like sqlc.arg(message)::text
-  and fields::text like sqlc.arg(fields)::text
+where message like concat('%', sqlc.arg(message)::text, '%')
+  and fields::text like concat('%', sqlc.arg(fields)::text, '%')
   and created_at >= sqlc.arg(after)
   and created_at <= sqlc.arg(before)
 order by created_at desc

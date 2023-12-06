@@ -4,7 +4,6 @@ import (
 	"api-oa-integrator/internal/database"
 	"api-oa-integrator/utils"
 	"encoding/json"
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"math"
 	"net/http"
@@ -64,10 +63,10 @@ func (con controller) getLogs(c echo.Context) error {
 	}
 
 	logs, err := database.New(database.D()).GetLogs(c.Request().Context(), database.GetLogsParams{
-		After:   after.UTC().Round(time.Microsecond),
-		Before:  before.UTC().Round(time.Microsecond),
-		Message: fmt.Sprintf("%%%v%%", c.QueryParam("message")),
-		Fields:  fmt.Sprintf("%%%v%%", c.QueryParam("fields")),
+		After:   after.Round(time.Microsecond),
+		Before:  before.Round(time.Microsecond),
+		Message: c.QueryParam("message"),
+		Fields:  c.QueryParam("fields"),
 		Limit:   int32(perPage),
 		Offset:  int32(page * perPage),
 	})

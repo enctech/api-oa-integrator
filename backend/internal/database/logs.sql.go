@@ -66,8 +66,8 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 const getLogs = `-- name: GetLogs :many
 select id, level, message, fields, created_at
 from logs
-where message like $3::text
-  and fields::text like $4::text
+where message like concat('%', $3::text, '%')
+  and fields::text like concat('%', $4::text, '%')
   and created_at >= $5
   and created_at <= $6
 order by created_at desc
