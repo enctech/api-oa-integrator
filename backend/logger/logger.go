@@ -62,7 +62,7 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 			CreatedAt: createdAt.UTC().Round(time.Microsecond),
 		})
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(fmt.Sprintf("Error while creating log: %s", err.Error()))
 		}
 	}
 

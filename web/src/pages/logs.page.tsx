@@ -207,6 +207,7 @@ const LogsPage = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Created At</TableCell>
               <TableCell>Level</TableCell>
               <TableCell>Message</TableCell>
               <TableCell>Fields</TableCell>
@@ -215,6 +216,11 @@ const LogsPage = () => {
           <TableBody>
             {data?.data?.map((row) => (
               <TableRow key={row.id}>
+                <TableCell>
+                  {moment(row.createdAt)
+                    .local()
+                    .format("DD/MM/yyyy hh:mm:ss A")}
+                </TableCell>
                 <TableCell>{row.level}</TableCell>
                 <TableCell>{row.message}</TableCell>
                 <TableCell>
