@@ -339,7 +339,7 @@ const OATransactionsPage: React.FC = () => {
         <TablePagination
           rowsPerPageOptions={perPagesDefault.current}
           component="div"
-          count={data?.data?.length || 0}
+          count={data?.metadata.totalData || 0}
           rowsPerPage={parseInt(
             currentQueryParameters.get("perPage") || "0",
             10,

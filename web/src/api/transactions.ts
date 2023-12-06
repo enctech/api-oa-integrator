@@ -1,5 +1,4 @@
 import axios from "./axios";
-import moment from "moment";
 
 const sample = {
   data: [
@@ -22,25 +21,17 @@ const sample = {
 };
 
 export interface OALogsQuery {
-  before: Date;
-  after: Date;
-  message: string | null;
-  field: string | null;
-  page: number;
-  perPage: number;
+  endAt?: Date;
+  startAt?: Date;
+  message?: string;
+  field?: string;
+  page?: number;
+  perPage?: number;
 }
 
 export const getOALogs = async (query: OALogsQuery) => {
   return axios
-    .get(
-      `/transactions/logs?before=${moment
-        .utc(query.before)
-        .toISOString()}&after=${moment
-        .utc(query.after)
-        .toISOString()}&message=${query.message}&fields=${query.field}&page=${
-        query.page
-      }&perPage=${query.perPage}`,
-    )
+    .get(`/transactions/logs`, { params: { ...query } })
     .then((response) => response.data as typeof sample);
 };
 

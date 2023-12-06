@@ -32,8 +32,8 @@ type Response struct {
 //
 //	@Summary		get all logs
 //	@Description	To check overall system health
-//	@Param			before	query	string	true	"Before"	Format(dateTime)
-//	@Param			after	query	string	false	"After"		Format(dateTime)
+//	@Param			endAt	query	string	true	"Before"	Format(dateTime)
+//	@Param			startAt	query	string	false	"After"		Format(dateTime)
 //	@Param			message	query	string	false	"Message"
 //	@Param			fields	query	string	false	"Fields"
 //	@Param			perPage	query	int		false	"PerPage"
