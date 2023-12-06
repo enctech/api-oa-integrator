@@ -75,6 +75,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getIntegratorTransactionsCountStmt, err = db.PrepareContext(ctx, getIntegratorTransactionsCount); err != nil {
 		return nil, fmt.Errorf("error preparing query GetIntegratorTransactionsCount: %w", err)
 	}
+	if q.getLatestOATransactionsStmt, err = db.PrepareContext(ctx, getLatestOATransactions); err != nil {
+		return nil, fmt.Errorf("error preparing query GetLatestOATransactions: %w", err)
+	}
 	if q.getLogsStmt, err = db.PrepareContext(ctx, getLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLogs: %w", err)
 	}
@@ -204,6 +207,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getIntegratorTransactionsCountStmt: %w", cerr)
 		}
 	}
+	if q.getLatestOATransactionsStmt != nil {
+		if cerr := q.getLatestOATransactionsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getLatestOATransactionsStmt: %w", cerr)
+		}
+	}
 	if q.getLogsStmt != nil {
 		if cerr := q.getLogsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getLogsStmt: %w", cerr)
@@ -325,6 +333,7 @@ type Queries struct {
 	getIntegratorConfigsStmt            *sql.Stmt
 	getIntegratorTransactionsStmt       *sql.Stmt
 	getIntegratorTransactionsCountStmt  *sql.Stmt
+	getLatestOATransactionsStmt         *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOAEntryTransactionsStmt          *sql.Stmt
 	getOAExitTransactionsStmt           *sql.Stmt
@@ -361,6 +370,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorConfigsStmt:            q.getIntegratorConfigsStmt,
 		getIntegratorTransactionsStmt:       q.getIntegratorTransactionsStmt,
 		getIntegratorTransactionsCountStmt:  q.getIntegratorTransactionsCountStmt,
+		getLatestOATransactionsStmt:         q.getLatestOATransactionsStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOAEntryTransactionsStmt:          q.getOAEntryTransactionsStmt,
 		getOAExitTransactionsStmt:           q.getOAExitTransactionsStmt,

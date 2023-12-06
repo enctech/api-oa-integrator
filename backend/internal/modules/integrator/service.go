@@ -95,5 +95,5 @@ func PerformTransaction(arg TransactionArg) error {
 		Status:                sql.NullString{String: status, Valid: true},
 	})
 
-	return err
+	return txnErr
 }

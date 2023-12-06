@@ -27,7 +27,7 @@ import moment from "moment";
 import dayjs, { Dayjs } from "dayjs";
 import IconButton from "@mui/material/IconButton";
 
-const statusMapper: Map<string, string> = new Map([
+export const statusMapper: Map<string, string> = new Map([
   ["identification_entry_start", "User entry verification"],
   ["identification_entry_done", "User entry verification done"],
   ["identification_entry_error", "User entry verification failed"],

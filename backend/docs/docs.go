@@ -923,6 +923,51 @@ const docTemplate = `{
                 ],
                 "responses": {}
             }
+        },
+        "/transactions/oa-latest": {
+            "get": {
+                "description": "To get all latest update transactions made through OA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "get latest update on OA logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "Start At",
+                        "name": "startAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "End At",
+                        "name": "endAt",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PerPage",
+                        "name": "perPage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            }
         }
     },
     "definitions": {

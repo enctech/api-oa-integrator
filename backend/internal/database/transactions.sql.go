@@ -151,14 +151,17 @@ const getIntegratorTransactions = `-- name: GetIntegratorTransactions :many
 select it.business_transaction_id, it.lpn, it.integrator_id, it.status, it.amount, it.error, it.extra, it.tax_data, it.created_at, it.updated_at, ic.name as integrator_name
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
-where lpn like concat('%', $1::text, '%')
-  and integrator_name::text like concat('%', $2::text, '%')
-  and status::text like concat('%', $3::text, '%')
-  and it.created_at >= $4
-  and it.created_at <= $5
+where lpn like concat('%', $3::text, '%')
+  and integrator_name::text like concat('%', $4::text, '%')
+  and status::text like concat('%', $5::text, '%')
+  and it.created_at >= $6
+  and it.created_at <= $7
+limit $1 offset $2
 `
 
 type GetIntegratorTransactionsParams struct {
+	Limit          int32
+	Offset         int32
 	Lpn            string
 	IntegratorName string
 	Status         string
@@ -182,6 +185,8 @@ type GetIntegratorTransactionsRow struct {
 
 func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegratorTransactionsParams) ([]GetIntegratorTransactionsRow, error) {
 	rows, err := q.query(ctx, q.getIntegratorTransactionsStmt, getIntegratorTransactions,
+		arg.Limit,
+		arg.Offset,
 		arg.Lpn,
 		arg.IntegratorName,
 		arg.Status,
@@ -253,6 +258,62 @@ func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetInt
 	return count, err
 }
 
+const getLatestOATransactions = `-- name: GetLatestOATransactions :many
+select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+from oa_transactions
+where updated_at >= $3
+  and updated_at <= $4
+limit $1 offset $2
+`
+
+type GetLatestOATransactionsParams struct {
+	Limit   int32
+	Offset  int32
+	StartAt time.Time
+	EndAt   time.Time
+}
+
+func (q *Queries) GetLatestOATransactions(ctx context.Context, arg GetLatestOATransactionsParams) ([]OaTransaction, error) {
+	rows, err := q.query(ctx, q.getLatestOATransactionsStmt, getLatestOATransactions,
+		arg.Limit,
+		arg.Offset,
+		arg.StartAt,
+		arg.EndAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []OaTransaction{}
+	for rows.Next() {
+		var i OaTransaction
+		if err := rows.Scan(
+			&i.ID,
+			&i.Businesstransactionid,
+			&i.Lpn,
+			&i.Customerid,
+			&i.Jobid,
+			&i.Facility,
+			&i.Device,
+			&i.Extra,
+			&i.EntryLane,
+			&i.ExitLane,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOAEntryTransactions = `-- name: GetOAEntryTransactions :one
 select count(*)
 from oa_transactions
@@ -322,17 +383,20 @@ func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid st
 const getOATransactions = `-- name: GetOATransactions :many
 select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
-where lpn like concat('%', $1::text, '%')
-  and jobid::text like concat('%', $2::text, '%')
-  and facility::text like concat('%', $3::text, '%')
-  and entry_lane::text like concat('%', $4::text, '%')
-  and (exit_lane::text LIKE concat('%', $5::text, '%') or
-       (exit_lane is null and ($5::text) = ''))
-  and created_at >= $6
-  and created_at <= $7
+where lpn like concat('%', $3::text, '%')
+  and jobid::text like concat('%', $4::text, '%')
+  and facility::text like concat('%', $5::text, '%')
+  and entry_lane::text like concat('%', $6::text, '%')
+  and (exit_lane::text LIKE concat('%', $7::text, '%') or
+       (exit_lane is null and ($7::text) = ''))
+  and created_at >= $8
+  and created_at <= $9
+limit $1 offset $2
 `
 
 type GetOATransactionsParams struct {
+	Limit     int32
+	Offset    int32
 	Lpn       string
 	Jobid     string
 	Facility  string
@@ -344,6 +408,8 @@ type GetOATransactionsParams struct {
 
 func (q *Queries) GetOATransactions(ctx context.Context, arg GetOATransactionsParams) ([]OaTransaction, error) {
 	rows, err := q.query(ctx, q.getOATransactionsStmt, getOATransactions,
+		arg.Limit,
+		arg.Offset,
 		arg.Lpn,
 		arg.Jobid,
 		arg.Facility,

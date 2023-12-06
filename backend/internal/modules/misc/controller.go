@@ -128,7 +128,7 @@ func ping(domain string) error {
 }
 
 func getTotalPayment(ctx context.Context) map[string]float64 {
-	now := time.Now()
+	now := time.Now().UTC()
 	txns, err := database.New(database.D()).GetIntegratorTransactions(ctx, database.GetIntegratorTransactionsParams{
 		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
 		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),

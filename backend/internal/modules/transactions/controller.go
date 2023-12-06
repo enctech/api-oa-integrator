@@ -20,6 +20,7 @@ func InitController(e *echo.Echo) {
 	c := controller{}
 	g.GET("/logs", c.getLogs)
 	g.GET("/oa", c.getOATransaction)
+	g.GET("/oa-latest", c.getLatestOATransaction)
 	g.GET("/integrator", c.getIntegratorTransactions)
 }
 
@@ -154,6 +155,8 @@ func (con controller) getOATransaction(c echo.Context) error {
 		Lpn:       c.QueryParam("lpn"),
 		Facility:  c.QueryParam("facility"),
 		Jobid:     c.QueryParam("jobid"),
+		Limit:     int32(page),
+		Offset:    int32(perPage * page),
 	})
 
 	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
@@ -167,6 +170,92 @@ func (con controller) getOATransaction(c echo.Context) error {
 	})
 
 	var txnData []OATransaction
+
+	for _, log := range txns {
+		var extra map[string]any
+		if log.Extra.Valid {
+			err = json.Unmarshal(log.Extra.RawMessage, &extra)
+		}
+		txnData = append(txnData, OATransaction{
+			ID:                    log.ID.String(),
+			BusinessTransactionID: log.Businesstransactionid,
+			Lpn:                   log.Lpn.String,
+			Customerid:            log.Customerid.String,
+			Jobid:                 log.Jobid.String,
+			Facility:              log.Facility.String,
+			Device:                log.Device.String,
+			Extra:                 extra,
+			EntryLane:             log.EntryLane.String,
+			ExitLane:              log.ExitLane.String,
+			UpdatedAt:             log.UpdatedAt,
+			CreatedAt:             log.CreatedAt,
+		})
+	}
+
+	out := utils.PaginationResponse[OATransaction]{
+		Data: txnData,
+		Metadata: utils.PaginationMetadata{
+			TotalData: totalData,
+			Page:      int64(page),
+			PerPage:   int64(perPage),
+			TotalPage: int64(math.Ceil(float64(totalData) / float64(perPage))),
+		},
+	}
+
+	return c.JSON(http.StatusCreated, out)
+}
+
+// getLatestOATransaction godoc
+//
+//	@Summary		get latest update on OA logs
+//	@Description	To get all latest update transactions made through OA
+//	@Param			startAt	query	string	false	"Start At"	Format(dateTime)
+//	@Param			endAt	query	string	true	"End At"	Format(dateTime)
+//	@Param			perPage	query	int		false	"PerPage"
+//	@Param			page	query	int		false	"Page"
+//	@Tags			transactions
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/transactions/oa-latest [get]
+func (con controller) getLatestOATransaction(c echo.Context) error {
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
+	if err != nil {
+		before = time.Now()
+	}
+	perPage := 50
+	if c.QueryParam("perPage") != "" {
+		perPage, err = strconv.Atoi(c.QueryParam("perPage"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid perPage")
+		}
+	}
+	page := 0
+	if c.QueryParam("page") != "" {
+		page, err = strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid page")
+		}
+	}
+
+	txns, err := database.New(database.D()).GetLatestOATransactions(c.Request().Context(), database.GetLatestOATransactionsParams{
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
+		Limit:   int32(perPage),
+		Offset:  int32(page * perPage),
+	})
+
+	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
+		StartAt:   after.UTC().Round(time.Microsecond),
+		EndAt:     before.UTC().Round(time.Microsecond),
+		ExitLane:  c.QueryParam("exitLane"),
+		EntryLane: c.QueryParam("entryLane"),
+		Lpn:       c.QueryParam("lpn"),
+		Facility:  c.QueryParam("facility"),
+		Jobid:     c.QueryParam("jobid"),
+	})
+
+	txnData := make([]OATransaction, 0)
 
 	for _, log := range txns {
 		var extra map[string]any
@@ -244,6 +333,8 @@ func (con controller) getIntegratorTransactions(c echo.Context) error {
 		Status:         c.QueryParam("status"),
 		IntegratorName: c.QueryParam("integratorName"),
 		Lpn:            c.QueryParam("lpn"),
+		Limit:          int32(page),
+		Offset:         int32(perPage * page),
 	})
 
 	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{

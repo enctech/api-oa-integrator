@@ -4,10 +4,20 @@ import {
   CardContent,
   Container,
   Divider,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import { useQuery } from "react-query";
 import { misc } from "../api/misc";
+import { getLatestOATransactions } from "../api/transactions";
+import moment from "moment";
+import { statusMapper } from "./oa-transactions.page";
 
 const HomePage = () => {
   const { data, refetch } = useQuery("misc", misc, {
@@ -88,7 +98,70 @@ const HomePage = () => {
       <div className="h-8" />
       <Typography variant="h4">Last 10 Transaction</Typography>
       <div className="h-2" />
+      <LatestTransactions />
     </Container>
+  );
+};
+
+const LatestTransactions = () => {
+  const { data } = useQuery(
+    ["getLatestOATransactions"],
+    () =>
+      getLatestOATransactions({
+        startAt: moment().startOf("day").utc().toDate(),
+        endAt: moment().endOf("day").utc().toDate(),
+        page: 1,
+        perPage: 10,
+      }),
+    {
+      refetchInterval: 5000,
+    },
+  );
+  return (
+    <TableContainer component={Paper} className="mt-4">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Created At</TableCell>
+            <TableCell>License Plate Number</TableCell>
+            <TableCell>Entry Lane</TableCell>
+            <TableCell>Exit Lane</TableCell>
+            <TableCell>
+              <div className="w-32">Status</div>
+            </TableCell>
+            <TableCell>
+              <div className="w-96">Error</div>
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data?.data?.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell>
+                {moment(row.createdAt).local().format("DD/MM/yyyy hh:mm:ss A")}
+              </TableCell>
+              <TableCell>{row.lpn}</TableCell>
+              <TableCell>{row.entryLane}</TableCell>
+              <TableCell>{row.exitLane || "-"}</TableCell>
+              <TableCell>
+                <div className="w-32">
+                  {statusMapper.get(row.extra.steps) || row.extra.steps}
+                </div>
+              </TableCell>
+              <TableCell
+                style={{
+                  width: "30px",
+                  whiteSpace: "normal",
+                  wordWrap: "break-word",
+                }}
+              >
+                <div className="w-[40rem]">{row.extra.error}</div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

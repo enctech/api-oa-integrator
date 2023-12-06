@@ -19,7 +19,15 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and (exit_lane::text LIKE concat('%', sqlc.arg(exit_lane)::text, '%') or
        (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
   and created_at >= sqlc.arg(start_at)
-  and created_at <= sqlc.arg(end_at);
+  and created_at <= sqlc.arg(end_at)
+limit $1 offset $2;
+
+-- name: GetLatestOATransactions :many
+select *
+from oa_transactions
+where updated_at >= sqlc.arg(start_at)
+  and updated_at <= sqlc.arg(end_at)
+limit $1 offset $2;
 
 -- name: GetOAEntryTransactions :one
 select count(*)
@@ -77,7 +85,8 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and integrator_name::text like concat('%', sqlc.arg(integrator_name)::text, '%')
   and status::text like concat('%', sqlc.arg(status)::text, '%')
   and it.created_at >= sqlc.arg(start_at)
-  and it.created_at <= sqlc.arg(end_at);
+  and it.created_at <= sqlc.arg(end_at)
+limit $1 offset $2;
 
 -- name: GetIntegratorTransactionsCount :one
 select count(*)

@@ -841,6 +841,37 @@ paths:
       summary: get all OA logs
       tags:
       - transactions
+  /transactions/oa-latest:
+    get:
+      consumes:
+      - application/json
+      description: To get all latest update transactions made through OA
+      parameters:
+      - description: Start At
+        format: dateTime
+        in: query
+        name: startAt
+        type: string
+      - description: End At
+        format: dateTime
+        in: query
+        name: endAt
+        required: true
+        type: string
+      - description: PerPage
+        in: query
+        name: perPage
+        type: integer
+      - description: Page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: get latest update on OA logs
+      tags:
+      - transactions
 securityDefinitions:
   Bearer:
     description: Type "Bearer" followed by a space and JWT token.
