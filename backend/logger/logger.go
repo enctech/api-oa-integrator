@@ -61,6 +61,9 @@ func (c *CustomDatabaseCore) Write(p []byte) (n int, err error) {
 			Fields:    pqtype.NullRawMessage{RawMessage: jsonString, Valid: true},
 			CreatedAt: createdAt.UTC().Round(time.Microsecond),
 		})
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return len(p), nil

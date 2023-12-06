@@ -760,13 +760,13 @@ paths:
       - description: Before
         format: dateTime
         in: query
-        name: before
+        name: endAt
         required: true
         type: string
       - description: After
         format: dateTime
         in: query
-        name: after
+        name: startAt
         type: string
       - description: Message
         in: query

@@ -810,7 +810,7 @@ const docTemplate = `{
                         "type": "string",
                         "format": "dateTime",
                         "description": "Before",
-                        "name": "before",
+                        "name": "endAt",
                         "in": "query",
                         "required": true
                     },
@@ -818,7 +818,7 @@ const docTemplate = `{
                         "type": "string",
                         "format": "dateTime",
                         "description": "After",
-                        "name": "after",
+                        "name": "startAt",
                         "in": "query"
                     },
                     {
