@@ -43,13 +43,10 @@ type Response struct {
 //	@Produce		application/json
 //	@Router			/transactions/logs [get]
 func (con controller) getLogs(c echo.Context) error {
-	after, err := time.Parse(time.RFC3339, c.QueryParam("after"))
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid after date")
-	}
-	before, err := time.Parse(time.RFC3339, c.QueryParam("before"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "invalid before date")
+		before = time.Now()
 	}
 	perPage := 50
 	if c.QueryParam("perPage") != "" {
@@ -155,7 +152,7 @@ func (con controller) getOATransaction(c echo.Context) error {
 		Lpn:       c.QueryParam("lpn"),
 		Facility:  c.QueryParam("facility"),
 		Jobid:     c.QueryParam("jobid"),
-		Limit:     int32(page),
+		Limit:     int32(perPage),
 		Offset:    int32(perPage * page),
 	})
 
@@ -333,8 +330,8 @@ func (con controller) getIntegratorTransactions(c echo.Context) error {
 		Status:         c.QueryParam("status"),
 		IntegratorName: c.QueryParam("integratorName"),
 		Lpn:            c.QueryParam("lpn"),
-		//Limit:          int32(page),
-		//Offset:         int32(perPage * page),
+		Limit:          int32(perPage),
+		Offset:         int32(perPage * page),
 	})
 
 	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
