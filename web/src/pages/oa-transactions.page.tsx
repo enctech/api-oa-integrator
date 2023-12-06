@@ -341,7 +341,8 @@ const OATransactionsPage: React.FC = () => {
           component="div"
           count={data?.metadata.totalData || 0}
           rowsPerPage={parseInt(
-            currentQueryParameters.get("perPage") || "0",
+            currentQueryParameters.get("perPage") ||
+              `${perPagesDefault.current[0]}`,
             10,
           )}
           page={parseInt(currentQueryParameters.get("page") || "0", 10)}
