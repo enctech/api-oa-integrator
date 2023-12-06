@@ -11,6 +11,6 @@ sql:
     gen:
       go:
         package: "database"
-        out: "internal/database"
+        out: "database"
         emit_prepared_queries: true
         emit_empty_slices: true

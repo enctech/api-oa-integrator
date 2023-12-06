@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 )
@@ -79,7 +78,6 @@ func (con controller) users(c echo.Context) error {
 func (con controller) register(c echo.Context) error {
 	req := new(CreateUserRequest)
 	err := c.Bind(req)
-	zap.L().Info("create user", zap.Any("user", req))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, struct {
 		}{})

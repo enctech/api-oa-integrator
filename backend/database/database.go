@@ -7,12 +7,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
-	"github.com/rs/zerolog"
-	sqldblogger "github.com/simukti/sqldb-logger"
-	"github.com/simukti/sqldb-logger/logadapter/zerologadapter"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"os"
 	"sync"
 )
 
@@ -29,8 +25,6 @@ func InitDatabase() error {
 				zap.L().Sugar().Errorf("failed open db %v", err)
 				return err
 			}
-			loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
-			db = sqldblogger.OpenDriver(viper.GetString("database.url"), db.Driver(), loggerAdapter)
 			err = db.Ping()
 			if err != nil {
 				zap.L().Sugar().With("URL", viper.GetString("database.url")).Errorf("failed ping db %v", err)
@@ -42,7 +36,7 @@ func InitDatabase() error {
 				return err
 			}
 			m, err := migrate.NewWithDatabaseInstance(
-				"file://./internal/database/migrations",
+				"file://./database/migrations",
 				"postgres", driver)
 			if err != nil {
 				zap.L().Sugar().Errorf("failed NewWithDatabaseInstance up %v", err)

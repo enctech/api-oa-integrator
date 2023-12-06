@@ -1,7 +1,8 @@
 package integrator
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
+	"api-oa-integrator/logger"
 	"api-oa-integrator/tng"
 	"context"
 	"database/sql"
@@ -10,7 +11,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -66,7 +66,7 @@ type TransactionArg struct {
 }
 
 func PerformTransaction(arg TransactionArg) error {
-	zap.L().Sugar().With("plateNumber", arg.LPN).Info("PerformTransaction")
+	logger.LogData("info", "PerformTransaction", map[string]interface{}{"plateNumber": arg.LPN})
 	if arg.LPN == "" {
 		return errors.New("empty plate number")
 	}

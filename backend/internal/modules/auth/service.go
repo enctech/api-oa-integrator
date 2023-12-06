@@ -1,14 +1,15 @@
 package auth
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
+	"api-oa-integrator/logger"
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -25,7 +26,7 @@ func registerUser(ctx context.Context, in CreateUserRequest) (LoginResponse, err
 		Permissions: in.Permissions,
 	})
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("Error register user %v", err), nil)
 		return LoginResponse{}, err
 	}
 

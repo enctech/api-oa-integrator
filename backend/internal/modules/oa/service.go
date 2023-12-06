@@ -1,8 +1,9 @@
 package oa
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
 	"api-oa-integrator/internal/modules/integrator"
+	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
 	"context"
@@ -15,7 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"github.com/sqlc-dev/pqtype"
-	"go.uber.org/zap"
 	"maps"
 	"net/http"
 	"strconv"
@@ -35,7 +35,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		"steps": "identification_entry_start",
 	})
 	if err != nil {
-		zap.L().Sugar().Info("Error Marshal ", err)
+		logger.LogData("error", fmt.Sprintf("Error Marshal %v", err), nil)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
@@ -51,20 +51,21 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	})
 
 	if err != nil {
-		zap.L().Sugar().Info("Error create oa transaction ", err)
+		logger.LogData("error", fmt.Sprintf("Error create oa transaction %v", err), nil)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
 	err = integrator.VerifyVehicle(metadata.vendor, metadata.facility, lpn, lane)
 	if err != nil {
-		zap.L().Sugar().Info("Error integrator.VerifyVehicle ", err)
+		logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), nil)
+
 		jsonStr, err := json.Marshal(map[string]any{
 			"steps": "identification_entry_error",
 			"error": err.Error(),
 		})
 		if err != nil {
-			zap.L().Sugar().Info("Error Marshal ", err)
+			logger.LogData("error", fmt.Sprintf("Error marshal %v", err), nil)
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
@@ -73,7 +74,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		})
 		if err != nil {
-			zap.L().Sugar().Info("Error UpdateOATransaction ", err)
+			logger.LogData("error", fmt.Sprintf("Error UpdateOATransaction %v", err), nil)
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
@@ -90,7 +91,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			"steps": "identification_entry_done",
 		})
 		if err != nil {
-			zap.L().Sugar().Info("Error Marshal ", err)
+			logger.LogData("error", fmt.Sprintf("Error Marshal %v", err), nil)
 			go sendEmptyFinalMessage(metadata)
 			return
 		}

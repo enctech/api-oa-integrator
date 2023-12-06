@@ -1,13 +1,14 @@
 package config
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
+	"api-oa-integrator/logger"
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
-	"go.uber.org/zap"
 )
 
 func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
@@ -20,7 +21,7 @@ func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
 		Password: sql.NullString{String: in.Password, Valid: true},
 	})
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("Error create snb config %v", err), nil)
 		return SnbConfig{}, err
 	}
 	return SnbConfig{
@@ -41,7 +42,8 @@ func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig
 		Password: sql.NullString{String: in.Password, Valid: in.Password != ""},
 	})
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("Error update snb config: %v", err), nil)
+
 		return SnbConfig{}, err
 	}
 	return SnbConfig{
@@ -57,7 +59,7 @@ func updateSnbConfig(ctx context.Context, id uuid.UUID, in SnbConfig) (SnbConfig
 func getAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 	configs, err := database.New(database.D()).GetAllSnbConfig(ctx)
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error get all snb config %v", err), nil)
 		return []SnbConfig{}, err
 	}
 
@@ -77,7 +79,7 @@ func getAllSnbConfig(ctx context.Context) ([]SnbConfig, error) {
 func getSnbConfig(ctx context.Context, in uuid.UUID) (SnbConfig, error) {
 	config, err := database.New(database.D()).GetSnbConfig(ctx, in)
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error get snb config %v", err), nil)
 		return SnbConfig{}, err
 	}
 	return SnbConfig{
@@ -93,7 +95,7 @@ func getSnbConfig(ctx context.Context, in uuid.UUID) (SnbConfig, error) {
 func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 	_, err := database.New(database.D()).DeleteSnbConfig(ctx, in)
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error delete snb config %v", err), nil)
 		return err
 	}
 	return nil
@@ -112,7 +114,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 	})
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error create integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
 
@@ -136,7 +138,7 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 
 	var out []IntegratorConfig
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error get integrator configs %v", err), nil)
 		return out, err
 	}
 	for _, config := range configs {
@@ -162,7 +164,7 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 	config, err := database.New(database.D()).GetIntegratorConfig(ctx, id)
 
 	if err != nil {
-		zap.L().Sugar().Errorf("Error create user %v", err)
+		logger.LogData("error", fmt.Sprintf("error get integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
 	var plazaId map[string]string
@@ -194,7 +196,7 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 	})
 	if err != nil {
-		zap.L().Sugar().Errorf("Error update integrator %v", err)
+		logger.LogData("error", fmt.Sprintf("error update integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
 	return IntegratorConfig{
@@ -213,7 +215,7 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
 	_, err := database.New(database.D()).DeleteIntegratorConfig(ctx, id)
 	if err != nil {
-		zap.L().Sugar().Errorf("Error update integrator %v", err)
+		logger.LogData("error", fmt.Sprintf("error delete integrator config %v", err), nil)
 		return err
 	}
 	return nil

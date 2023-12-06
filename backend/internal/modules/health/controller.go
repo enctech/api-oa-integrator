@@ -1,7 +1,7 @@
 package health
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
 	"api-oa-integrator/internal/modules/oa"
 	"github.com/labstack/echo/v4"
 	"net/http"

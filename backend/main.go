@@ -1,9 +1,9 @@
 package main
 
 import (
+	"api-oa-integrator/database"
 	_ "api-oa-integrator/docs"
 	"api-oa-integrator/internal"
-	"api-oa-integrator/internal/database"
 	"api-oa-integrator/logger"
 	"fmt"
 	"github.com/spf13/viper"

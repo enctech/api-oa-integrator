@@ -1,7 +1,7 @@
 package transactions
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
 	"api-oa-integrator/utils"
 	"encoding/json"
 	"github.com/labstack/echo/v4"

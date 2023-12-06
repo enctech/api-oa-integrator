@@ -1,7 +1,8 @@
 package tng
 
 import (
-	"api-oa-integrator/internal/database"
+	"api-oa-integrator/database"
+	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
 	"crypto/tls"
@@ -10,7 +11,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"maps"
 	"net/http"
 	"time"
@@ -22,7 +22,8 @@ type Config struct {
 }
 
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
+	logger.LogData("info", "VerifyVehicle", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+
 	if plateNumber == "" {
 		return errors.New("empty plate number")
 	}
@@ -61,12 +62,12 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error marshaling data to JSON: %v", err)
+		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/device/status", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error creating request: %v", err)
+		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return err
 	}
 
@@ -102,7 +103,7 @@ type TransactionArg struct {
 }
 
 func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
-	zap.L().Sugar().With("plateNumber", plateNumber).Info("VerifyVehicle")
+	logger.LogData("error", "PerformTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 	if plateNumber == "" {
 		return nil, nil, errors.New("empty plate number")
 	}
@@ -161,12 +162,12 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error marshaling data to JSON: %v", err)
+		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return body, taxData, err
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
-		zap.L().Sugar().With("plateNumber", plateNumber).Errorf("Error creating request: %v", err)
+		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return body, taxData, err
 	}
 

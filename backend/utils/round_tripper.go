@@ -1,8 +1,8 @@
 package utils
 
 import (
+	"api-oa-integrator/logger"
 	"bytes"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 )
@@ -13,34 +13,35 @@ type LoggingRoundTripper struct {
 
 func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Capture the request body
-	requestLogger := zap.L().Sugar().
-		With("method", req.Method).
-		With("url", req.URL.String())
+	reqInfo := map[string]interface{}{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}
 	var requestBody bytes.Buffer
 	if req.Body != nil {
 		_, _ = io.Copy(&requestBody, req.Body)
 		req.Body = io.NopCloser(bytes.NewReader(requestBody.Bytes()))
-		requestLogger = requestLogger.With("body", requestBody.String())
+		reqInfo["body"] = requestBody.String()
 	}
 
-	requestLogger.Info("HTTP Request")
+	logger.LogData("info", "HTTP Request", reqInfo)
 
 	// Perform the actual HTTP request
 	resp, err := lrt.Transport.RoundTrip(req)
-	responseLogger := zap.L().Sugar().
-		With("method", req.Method).
-		With("url", req.URL.String())
+	resInfo := map[string]interface{}{
+		"method": req.Method,
+		"url":    req.URL.String(),
+	}
 	if req.Body != nil {
-		responseLogger = responseLogger.With("body", requestBody.String())
+		resInfo["request-body"] = requestBody.String()
 	}
 	if err != nil {
-		responseLogger.With("error", err).
-			Info("HTTP Response")
+		resInfo["error"] = err
+		logger.LogData("info", "HTTP Response", resInfo)
 		return nil, err
 	}
 
-	responseLogger = responseLogger.
-		With("status", resp.Status)
+	resInfo["status"] = resp.Status
 
 	// Capture the response body
 	responseBody, err := io.ReadAll(resp.Body)
@@ -48,10 +49,10 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		return nil, err
 	}
 	if resp.Body != nil {
-		responseLogger = responseLogger.With("body", string(responseBody))
+		resInfo["response-body"] = string(responseBody)
 	}
 
-	responseLogger.Info("HTTP Response")
+	logger.LogData("info", "HTTP Response", resInfo)
 
 	// Create a new response object with the same status, headers, and body
 	newResponse := &http.Response{

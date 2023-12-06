@@ -1,11 +1,11 @@
 package oa
 
 import (
+	"api-oa-integrator/logger"
 	"encoding/xml"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 )
@@ -42,11 +42,11 @@ func (con controller) version(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		zap.L().Sugar().
-			With("module", "OK").
-			With("requestBody", string(body)).
-			With("vendor", c.Param("vendor")).
-			Info("version")
+		logger.LogData("info", "version", map[string]interface{}{
+			"module":      "OK",
+			"requestBody": string(body),
+			"vendor":      c.Param("vendor"),
+		})
 		if err != nil {
 			return
 		}
@@ -76,13 +76,13 @@ func (con controller) cancel(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		zap.L().Sugar().
-			With("facility", c.Param("facility")).
-			With("device", c.Param("device")).
-			With("jobId", c.Param("jobId")).
-			With("vendor", c.Param("vendor")).
-			With("requestBody", fmt.Sprintf("%v", string(body))).
-			Info("cancel")
+		logger.LogData("info", "cancel", map[string]interface{}{
+			"facility":    c.Param("facility"),
+			"device":      c.Param("device"),
+			"jobId":       c.Param("jobId"),
+			"vendor":      c.Param("vendor"),
+			"requestBody": fmt.Sprintf("%v", string(body)),
+		})
 	}()
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "CANCEL_ACCEPTED",
@@ -109,13 +109,13 @@ func (con controller) finalMessage(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		zap.L().Sugar().
-			With("facility", c.Param("facility")).
-			With("device", c.Param("device")).
-			With("jobId", c.Param("jobId")).
-			With("vendor", c.Param("vendor")).
-			With("requestBody", fmt.Sprintf("%v", string(body))).
-			Info("finalMessage")
+		logger.LogData("info", "finalMessage", map[string]interface{}{
+			"facility":    c.Param("facility"),
+			"device":      c.Param("device"),
+			"jobId":       c.Param("jobId"),
+			"vendor":      c.Param("vendor"),
+			"requestBody": fmt.Sprintf("%v", string(body)),
+		})
 	}()
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "FINALMESSAGESB_RECEIVED",
@@ -143,13 +143,13 @@ func (con controller) mediaList(c echo.Context) error {
 		if err != nil {
 			return
 		}
-		zap.L().Sugar().
-			With("facility", c.Param("facility")).
-			With("device", c.Param("device")).
-			With("jobId", c.Param("jobId")).
-			With("vendor", c.Param("vendor")).
-			With("requestBody", fmt.Sprintf("%v", string(body))).
-			Info("mediaList")
+		logger.LogData("info", "mediaList", map[string]interface{}{
+			"facility":    c.Param("facility"),
+			"device":      c.Param("device"),
+			"jobId":       c.Param("jobId"),
+			"vendor":      c.Param("vendor"),
+			"requestBody": fmt.Sprintf("%v", string(body)),
+		})
 	}()
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "MEDIA_DATA_RECEIVED",
@@ -182,13 +182,13 @@ func (con controller) createJob(c echo.Context) error {
 		go sendEmptyFinalMessage(rm)
 		return nil
 	}
-	zap.L().Sugar().
-		With("facility", c.Param("facility")).
-		With("device", c.Param("device")).
-		With("jobId", c.Param("jobId")).
-		With("vendor", c.Param("vendor")).
-		With("requestBody", fmt.Sprintf("%v", string(body))).
-		Info("createJob")
+	logger.LogData("info", "createJob", map[string]interface{}{
+		"facility":    c.Param("facility"),
+		"device":      c.Param("device"),
+		"jobId":       c.Param("jobId"),
+		"vendor":      c.Param("vendor"),
+		"requestBody": fmt.Sprintf("%v", string(body)),
+	})
 
 	req := new(Job)
 	err = xml.Unmarshal(body, &req)
