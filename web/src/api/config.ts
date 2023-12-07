@@ -124,7 +124,7 @@ export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
   return axios
     .post(`/config/integrator-config`, {
       clientId: data.clientId,
-      providerId: data.providerId,
+      providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
       integratorName: data.integratorName,
@@ -133,6 +133,7 @@ export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
       plazaIdMap: JSON.parse(
         JSON.stringify(Object.fromEntries(arg.plazaIdMap)),
       ),
+      extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
     })
     .then((response) => response.data as IntegratorConfigs);
 };

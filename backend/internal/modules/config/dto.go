@@ -18,7 +18,7 @@ type IntegratorConfig struct {
 	Name               string            `json:"name,omitempty"`
 	IntegratorName     string            `json:"integratorName,omitempty"`
 	Url                string            `json:"url,omitempty"`
-	InsecureSkipVerify *bool             `json:"insecureSkipVerify,omitempty"`
+	InsecureSkipVerify bool              `json:"insecureSkipVerify,omitempty"`
 	PlazaIdMap         map[string]string `json:"plazaIdMap,omitempty"`
 	Extra              map[string]string `json:"extra,omitempty"`
 }

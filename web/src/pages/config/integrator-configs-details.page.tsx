@@ -12,7 +12,7 @@ import {
   tooltipClasses,
   TooltipProps,
 } from "@mui/material";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
 import {
   createIntegratorConfig,
@@ -38,13 +38,8 @@ interface FormData {
 }
 
 const IntegratorConfigsDetails = () => {
-  const {
-    control,
-    handleSubmit,
-    register,
-    setValue,
-    formState: { errors },
-  } = useForm<FormData>({
+  const navigate = useNavigate();
+  const { control, handleSubmit, register, setValue } = useForm<FormData>({
     defaultValues: {
       url: "",
       name: "",
@@ -76,8 +71,18 @@ const IntegratorConfigsDetails = () => {
   const [integrator, setIntegrator] = useState<string>(
     data?.integratorName || "",
   );
-  const { data: integrators } = useQuery(["getIntegrators"], () =>
-    getIntegrators(),
+  const { data: integrators } = useQuery(
+    ["getIntegrators"],
+    () => getIntegrators(),
+    {
+      onSuccess: (data) => {
+        if (!data) return;
+        if (!data.includes(integrator)) {
+          setValue("integratorName", data[0]);
+          setIntegrator(data[0]);
+        }
+      },
+    },
   );
   const { mutate, data: updatedData } = useMutation(
     "updateIntegratorConfig",
@@ -93,8 +98,8 @@ const IntegratorConfigsDetails = () => {
     "createIntegratorConfig",
     createIntegratorConfig,
     {
-      onSettled: () => {
-        setIsEditing(false);
+      onSuccess: (_) => {
+        navigate(-1);
       },
     },
   );
@@ -260,6 +265,7 @@ const IntegratorConfigsDetails = () => {
               fullWidth={true}
               variant="outlined"
               disabled={!isEditing}
+              type={"number"}
               sx={{
                 "& .MuiInputBase-input.Mui-disabled": {
                   WebkitTextFillColor: "#000000",
@@ -395,7 +401,7 @@ const IntegratorConfigsDetails = () => {
               fullWidth={true}
               variant="outlined"
               multiline={true}
-              minRows={6}
+              rows={10}
               disabled={!isEditing}
               sx={{
                 "& .MuiInputBase-input.Mui-disabled": {

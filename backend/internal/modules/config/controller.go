@@ -194,6 +194,9 @@ func (con controller) getIntegratorConfig(c echo.Context) error {
 func (con controller) createIntegratorConfig(c echo.Context) error {
 	req := new(IntegratorConfig)
 	err := c.Bind(req)
+	if err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
 	configs, err := createIntegratorConfig(c.Request().Context(), *req)
 	if err != nil {
 		if strings.Contains(err.Error(), "violates unique constraint \"integrator_config_provider_id_key\"") {
