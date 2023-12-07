@@ -478,6 +478,23 @@ const docTemplate = `{
                     "misc"
                 ],
                 "summary": "Get all misc data used in homepage",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "Start At",
+                        "name": "startAt",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "dateTime",
+                        "description": "End At",
+                        "name": "endAt",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {}
             }
         },

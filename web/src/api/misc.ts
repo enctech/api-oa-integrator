@@ -1,4 +1,5 @@
 import axios from "./axios";
+import moment from "moment/moment";
 
 interface MiscResponse {
   integrators: { integrator: string; status: string }[];
@@ -9,5 +10,12 @@ interface MiscResponse {
 }
 
 export const misc = async () => {
-  return axios.get("/misc/").then((res) => res.data as MiscResponse);
+  return axios
+    .get("/misc/", {
+      params: {
+        startAt: moment().startOf("day").utc().toDate(),
+        endAt: moment().endOf("day").utc().toDate(),
+      },
+    })
+    .then((res) => res.data as MiscResponse);
 };

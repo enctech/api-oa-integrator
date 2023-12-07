@@ -26,19 +26,25 @@ func InitController(e *echo.Echo) {
 //	@Tags		 misc
 //	@Accept			application/json
 //	@Produce		application/json
+//	@Param			startAt	query	string	false	"Start At"	Format(dateTime)
+//	@Param			endAt	query	string	true	"End At"	Format(dateTime)
 //	@Router			/misc/ [get]
 func (con controller) getData(c echo.Context) error {
+	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
+	if err != nil {
+		before = time.Now()
+	}
 	snbStatus := getAllSnBStatus(c.Request().Context())
 	integratorsStatus := getAllIntegratorStatus(c.Request().Context())
 
-	now := time.Now()
 	totalIn, _ := database.New(database.D()).GetOAEntryTransactions(c.Request().Context(), database.GetOAEntryTransactionsParams{
-		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
-		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
 	})
 	totalOut, _ := database.New(database.D()).GetOAExitTransactions(c.Request().Context(), database.GetOAExitTransactionsParams{
-		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
-		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
 	})
 
 	totalPayment := getTotalPayment(c.Request().Context())

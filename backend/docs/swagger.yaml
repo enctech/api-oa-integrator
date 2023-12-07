@@ -529,6 +529,18 @@ paths:
       consumes:
       - application/json
       description: Get all misc data used in homepage
+      parameters:
+      - description: Start At
+        format: dateTime
+        in: query
+        name: startAt
+        type: string
+      - description: End At
+        format: dateTime
+        in: query
+        name: endAt
+        required: true
+        type: string
       produces:
       - application/json
       responses: {}
