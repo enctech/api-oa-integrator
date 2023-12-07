@@ -20,6 +20,7 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
        (exit_lane is null and (sqlc.arg(exit_lane)::text) = ''))
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at)
+order by created_at desc
 limit $1 offset $2;
 
 -- name: GetLatestOATransactions :many
@@ -27,6 +28,7 @@ select *
 from oa_transactions
 where updated_at >= sqlc.arg(start_at)
   and updated_at <= sqlc.arg(end_at)
+order by updated_at desc
 limit $1 offset $2;
 
 -- name: GetOAEntryTransactions :one
@@ -86,6 +88,7 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and status::text like concat('%', sqlc.arg(status)::text, '%')
   and it.created_at >= sqlc.arg(start_at)
   and it.created_at <= sqlc.arg(end_at)
+order by it.created_at desc
 limit $1 offset $2;
 
 -- name: GetIntegratorTransactionsCount :one

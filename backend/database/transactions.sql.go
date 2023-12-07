@@ -156,6 +156,7 @@ where lpn like concat('%', $3::text, '%')
   and status::text like concat('%', $5::text, '%')
   and it.created_at >= $6
   and it.created_at <= $7
+order by it.created_at desc
 limit $1 offset $2
 `
 
@@ -263,6 +264,7 @@ select id, businesstransactionid, lpn, customerid, jobid, facility, device, extr
 from oa_transactions
 where updated_at >= $3
   and updated_at <= $4
+order by updated_at desc
 limit $1 offset $2
 `
 
@@ -391,6 +393,7 @@ where lpn like concat('%', $3::text, '%')
        (exit_lane is null and ($7::text) = ''))
   and created_at >= $8
   and created_at <= $9
+order by created_at desc
 limit $1 offset $2
 `
 
