@@ -84,7 +84,7 @@ const IntegratorConfigsDetails = () => {
     updateIntegratorConfig,
     {
       onSettled: () => {
-        // setIsEditing(false);
+        setIsEditing(false);
       },
     },
   );
@@ -94,7 +94,7 @@ const IntegratorConfigsDetails = () => {
     createIntegratorConfig,
     {
       onSettled: () => {
-        // setIsEditing(false);
+        setIsEditing(false);
       },
     },
   );
