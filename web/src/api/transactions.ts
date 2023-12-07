@@ -83,7 +83,6 @@ export const getOATransactions = async (query: OATransactionsQuery) => {
 };
 
 export const getLatestOATransactions = async (query: OATransactionsQuery) => {
-  console.log("TEST");
   return axios
     .get(`/transactions/oa-latest`, { params: { ...query } })
     .then((response) => response.data as typeof sampleOATransactionResponse);

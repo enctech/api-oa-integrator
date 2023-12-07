@@ -110,7 +110,7 @@ const LatestTransactions = () => {
       getLatestOATransactions({
         startAt: moment().startOf("day").utc().toDate(),
         endAt: moment().endOf("day").utc().toDate(),
-        page: 1,
+        page: 0,
         perPage: 10,
       }),
     {
