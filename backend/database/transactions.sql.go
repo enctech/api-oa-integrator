@@ -20,7 +20,7 @@ with inserted_transaction as (
                                          extra)
         values ($1, $2, $3, $4, $5, $6, $7, $8)
         returning business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, created_at, updated_at)
-select business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, url, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
+select business_transaction_id, lpn, integrator_id, status, amount, error, inserted_transaction.extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, integrator_config.extra, url, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3
 `
@@ -54,6 +54,7 @@ type CreateIntegratorTransactionRow struct {
 	IntegratorName        sql.NullString
 	SpID                  sql.NullString
 	PlazaIDMap            pqtype.NullRawMessage
+	Extra_2               pqtype.NullRawMessage
 	Url                   sql.NullString
 	InsecureSkipVerify    sql.NullBool
 	CreatedAt_2           time.Time
@@ -90,6 +91,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.IntegratorName,
 		&i.SpID,
 		&i.PlazaIDMap,
+		&i.Extra_2,
 		&i.Url,
 		&i.InsecureSkipVerify,
 		&i.CreatedAt_2,

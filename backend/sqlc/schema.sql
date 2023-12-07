@@ -20,10 +20,10 @@ create table snb_config
 
 create table users
 (
-    id         uuid primary key,
-    name       varchar,
-    username   varchar,
-    password   varchar,
+    id          uuid primary key,
+    name        varchar,
+    username    varchar,
+    password    varchar,
     permissions varchar[]
 );
 
@@ -36,6 +36,7 @@ create table integrator_config
     integrator_name      varchar,
     sp_id                varchar,
     plaza_id_map         json,
+    extra                json,
     url                  varchar,
     insecure_skip_verify boolean            default false,
     created_at           timestamp not null default NOW(),

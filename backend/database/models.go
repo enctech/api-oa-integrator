@@ -20,6 +20,7 @@ type IntegratorConfig struct {
 	IntegratorName     sql.NullString
 	SpID               sql.NullString
 	PlazaIDMap         pqtype.NullRawMessage
+	Extra              pqtype.NullRawMessage
 	Url                sql.NullString
 	InsecureSkipVerify sql.NullBool
 	CreatedAt          time.Time

@@ -232,7 +232,7 @@ function PersistentDrawerRight() {
                 },
               ]
           ).map(({ text, link, icon, groups }, index) => (
-            <ListItem key={link} disablePadding>
+            <ListItem key={`${text}${link}`} disablePadding>
               {groups ? (
                 <Accordion
                   className="w-full"
@@ -257,6 +257,7 @@ function PersistentDrawerRight() {
                   <AccordionDetails sx={{ backgroundColor: "#9399a1" }}>
                     {groups.map(({ text, link }, index) => (
                       <ListItemButton
+                        key={`${text}${link}`}
                         onClick={() => navigation(link)}
                         color="white"
                       >

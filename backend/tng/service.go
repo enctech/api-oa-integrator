@@ -28,7 +28,9 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		return errors.New("empty plate number")
 	}
 
-	signature := createSignature("ssh/id_rsa.pub")
+	var extra map[string]string
+	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
+	signature := createSignature(extra["sshKey"])
 	if signature == "" {
 		return errors.New("empty signature")
 	}
@@ -108,7 +110,9 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		return nil, nil, errors.New("empty plate number")
 	}
 
-	signature := createSignature("ssh/id_rsa.pub")
+	var extra map[string]string
+	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
+	signature := createSignature(extra["sshKey"])
 	if signature == "" {
 		return nil, nil, errors.New("empty signature")
 	}

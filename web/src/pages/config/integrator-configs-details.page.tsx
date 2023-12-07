@@ -34,6 +34,7 @@ interface FormData {
   providerId: number;
   isInsecure: boolean;
   plazaIdMappers: { field1: string; field2: string }[];
+  extra: any[];
 }
 
 const IntegratorConfigsDetails = () => {
@@ -52,6 +53,7 @@ const IntegratorConfigsDetails = () => {
       providerId: 0,
       isInsecure: false,
       plazaIdMappers: [],
+      extra: [],
     },
   });
   let { id } = useParams();
@@ -60,8 +62,19 @@ const IntegratorConfigsDetails = () => {
     name: "plazaIdMappers",
   });
 
-  const { data, isLoading } = useQuery(["getIntegratorConfig", id], () =>
-    getIntegratorConfig(id || ""),
+  const { data, isLoading } = useQuery(
+    ["getIntegratorConfig", id],
+    () => getIntegratorConfig(id || ""),
+    {
+      onSuccess: (data) => {
+        if (data.integratorName) {
+          setIntegrator(data.integratorName);
+        }
+      },
+    },
+  );
+  const [integrator, setIntegrator] = useState<string>(
+    data?.integratorName || "",
   );
   const { data: integrators } = useQuery(["getIntegrators"], () =>
     getIntegrators(),
@@ -69,11 +82,21 @@ const IntegratorConfigsDetails = () => {
   const { mutate, data: updatedData } = useMutation(
     "updateIntegratorConfig",
     updateIntegratorConfig,
+    {
+      onSettled: () => {
+        // setIsEditing(false);
+      },
+    },
   );
 
   const { mutate: create, data: newData } = useMutation(
     "createIntegratorConfig",
     createIntegratorConfig,
+    {
+      onSettled: () => {
+        // setIsEditing(false);
+      },
+    },
   );
 
   const [isEditing, setIsEditing] = useState(id === "new");
@@ -100,6 +123,17 @@ const IntegratorConfigsDetails = () => {
     } else {
       update(0, { field1: "", field2: "" });
     }
+
+    if (data.extra) {
+      const extraDataForm = buildExtraDataForForm(
+        data.integratorName || "",
+        data.extra,
+      );
+
+      extraDataForm.forEach((value, key) => {
+        setValue(key as any, value);
+      });
+    }
   };
 
   useEffect(reset, [data]);
@@ -122,6 +156,7 @@ const IntegratorConfigsDetails = () => {
         insecureSkipVerify: data.isInsecure,
         plazaIdMap: plazaIdMap,
         integratorName: data.integratorName,
+        extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
       } satisfies IntegratorConfigs);
       return;
     }
@@ -136,6 +171,7 @@ const IntegratorConfigsDetails = () => {
       insecureSkipVerify: data.isInsecure,
       plazaIdMap: plazaIdMap,
       integratorName: data.integratorName,
+      extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
     } satisfies IntegratorConfigs);
   };
 
@@ -155,7 +191,7 @@ const IntegratorConfigsDetails = () => {
               reset();
             }}
           >
-            Edit
+            {isEditing && "Cancel"} Edit
           </Button>
         )}
       </div>
@@ -207,6 +243,12 @@ const IntegratorConfigsDetails = () => {
             <FormControlLabel
               {...register("isInsecure")}
               control={<Checkbox />}
+              disabled={!isEditing}
+              sx={{
+                "& .MuiTypography-root": {
+                  WebkitTextFillColor: "#000000",
+                },
+              }}
               label="Insecure endpoint"
             />
           </div>
@@ -270,9 +312,13 @@ const IntegratorConfigsDetails = () => {
 
         {data && data?.integratorName ? (
           <RadioGroup
-            value={data?.integratorName}
+            defaultValue={data?.integratorName}
             className="mb-8"
-            {...register(`integratorName` as const)}
+            {...register(`integratorName` as const, {
+              onChange: (e) => {
+                setIntegrator(e.target.value);
+              },
+            })}
           >
             <div>
               Integrator type
@@ -285,18 +331,29 @@ const IntegratorConfigsDetails = () => {
             </div>
             {integrators?.map((value) => (
               <FormControlLabel
+                disabled={!isEditing}
                 key={value}
                 value={value}
                 control={<Radio />}
                 label={value.toUpperCase()}
+                sx={{
+                  "& .MuiTypography-root": {
+                    WebkitTextFillColor: "#000000",
+                  },
+                }}
               />
             ))}
           </RadioGroup>
         ) : (
           <RadioGroup
             key={"new"}
+            defaultValue={integrators && integrators[0]}
             className="mb-8"
-            {...register(`integratorName` as const)}
+            {...register(`integratorName` as const, {
+              onChange: (e) => {
+                setIntegrator(e.target.value);
+              },
+            })}
           >
             <div>
               Integrator type
@@ -309,13 +366,48 @@ const IntegratorConfigsDetails = () => {
             </div>
             {integrators?.map((value) => (
               <FormControlLabel
+                disabled={!isEditing}
                 key={value}
                 value={value}
                 control={<Radio />}
                 label={value.toUpperCase()}
+                sx={{
+                  "& .MuiTypography-root": {
+                    WebkitTextFillColor: "#000000",
+                  },
+                }}
               />
             ))}
           </RadioGroup>
+        )}
+        {integrator === "tng" && (
+          <div className="mb-8">
+            <div>
+              SSH Key
+              <Tooltip
+                className="ml-2"
+                title="TNG Use this for server legibility"
+              >
+                <InfoIcon />
+              </Tooltip>
+            </div>
+            <TextField
+              fullWidth={true}
+              variant="outlined"
+              multiline={true}
+              minRows={6}
+              disabled={!isEditing}
+              sx={{
+                "& .MuiInputBase-input.Mui-disabled": {
+                  WebkitTextFillColor: "#000000",
+                },
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: isEditing ? "white" : "#d2d5d8",
+                },
+              }}
+              {...register("extra.0")}
+            />
+          </div>
         )}
 
         <div>
@@ -378,6 +470,28 @@ const IntegratorConfigsDetails = () => {
       </form>
     </Container>
   );
+};
+
+const buildExtraDataForVendor = (
+  vendor: string,
+  input: any[],
+): Map<string, string> => {
+  const out = new Map<string, any>();
+  if (vendor == "tng") {
+    out.set("sshKey", input[0]);
+  }
+  return out;
+};
+
+const buildExtraDataForForm = (
+  vendor: string,
+  data: { [key: string]: any },
+): Map<string, string> => {
+  const out = new Map<string, any>();
+  if (vendor == "tng") {
+    out.set("extra.0", data["sshKey"]);
+  }
+  return out;
 };
 
 const NoMaxWidthTooltip = styled(({ className, ...props }: TooltipProps) => (

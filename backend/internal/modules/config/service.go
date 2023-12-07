@@ -103,6 +103,7 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 
 func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
 	jsonString, err := json.Marshal(in.PlazaIdMap)
+	extraData, err := json.Marshal(in.Extra)
 	config, err := database.New(database.D()).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
 		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
@@ -112,6 +113,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: jsonString != nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
+		Extra:              pqtype.NullRawMessage{RawMessage: extraData, Valid: extraData != nil || len(extraData) > 0},
 	})
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("error create integrator config %v", err), nil)
@@ -120,6 +122,8 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 
 	var plazaId map[string]string
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+	var extra map[string]string
+	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
@@ -130,6 +134,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
 		PlazaIdMap:         plazaId,
 		Url:                config.Url.String,
+		Extra:              extra,
 	}, nil
 }
 
@@ -144,6 +149,9 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 	for _, config := range configs {
 		var plazaId map[string]string
 		_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+
+		var extra map[string]string
+		_ = json.Unmarshal(config.Extra.RawMessage, &plazaId)
 		out = append(out, IntegratorConfig{
 			IntegratorName:     config.IntegratorName.String,
 			Id:                 config.ID.String(),
@@ -154,6 +162,7 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 			InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
 			PlazaIdMap:         plazaId,
 			Url:                config.Url.String,
+			Extra:              extra,
 		})
 	}
 
@@ -169,6 +178,9 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 	}
 	var plazaId map[string]string
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+
+	var extra map[string]string
+	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
@@ -179,11 +191,13 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
 		PlazaIdMap:         plazaId,
 		Url:                config.Url.String,
+		Extra:              extra,
 	}, nil
 }
 
 func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConfig) (IntegratorConfig, error) {
 	jsonString, err := json.Marshal(in.PlazaIdMap)
+	extraData, err := json.Marshal(in.Extra)
 	config, err := database.New(database.D()).UpdateIntegratorConfig(ctx, database.UpdateIntegratorConfigParams{
 		ID:                 id,
 		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
@@ -194,11 +208,15 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: err == nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
+		Extra:              pqtype.NullRawMessage{RawMessage: extraData, Valid: extraData != nil || len(extraData) > 0},
 	})
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("error update integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
+
+	var extra map[string]string
+	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
@@ -209,6 +227,7 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		InsecureSkipVerify: &(config.InsecureSkipVerify.Bool),
 		PlazaIdMap:         in.PlazaIdMap,
 		Url:                config.Url.String,
+		Extra:              extra,
 	}, nil
 }
 

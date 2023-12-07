@@ -76,6 +76,7 @@ export interface IntegratorConfigs {
   url: string;
   insecureSkipVerify: boolean;
   plazaIdMap: Map<string, string>;
+  extra: Map<string, string>;
 }
 
 export const getIntegratorConfigs = async () => {
@@ -100,7 +101,6 @@ export const getIntegratorConfig = async (id: string) => {
 export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
   const data = { ...arg };
   delete data["id"];
-  console.log(data);
   return axios
     .put(`/config/integrator-config/${arg.id}`, {
       clientId: data.clientId,
@@ -111,8 +111,9 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
       url: data.url,
       insecureSkipVerify: data.insecureSkipVerify,
       plazaIdMap: JSON.parse(
-        JSON.stringify(Object.fromEntries(arg.plazaIdMap)),
+        JSON.stringify(Object.fromEntries(data.plazaIdMap)),
       ),
+      extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
     })
     .then((response) => response.data as IntegratorConfigs);
 };

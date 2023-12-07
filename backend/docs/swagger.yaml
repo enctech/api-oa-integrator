@@ -23,6 +23,10 @@ definitions:
     properties:
       clientId:
         type: string
+      extra:
+        additionalProperties:
+          type: string
+        type: object
       id:
         type: string
       insecureSkipVerify:

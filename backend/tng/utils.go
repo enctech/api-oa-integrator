@@ -3,24 +3,11 @@ package tng
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
-	"os"
 )
 
-func createSignature(filePath string) string {
-	getwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	fileData, err := os.ReadFile(fmt.Sprintf("%s/%s", getwd, filePath))
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return ""
-	}
-
-	// Calculate the SHA-256 hash
+func createSignature(in string) string {
 	hasher := sha256.New()
-	hasher.Write(fileData)
+	hasher.Write([]byte(in))
 	hashBytes := hasher.Sum(nil)
 
 	// Encode the hash in base64

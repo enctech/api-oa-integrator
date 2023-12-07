@@ -19,8 +19,8 @@ where name = $1;
 
 -- name: CreateIntegratorConfig :one
 insert into integrator_config (client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify,
-                               integrator_name)
-values ($1, $2, $3, $4, $5, $6, $7, $8)
+                               integrator_name, extra)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 returning *;
 
 -- name: UpdateIntegratorConfig :one
@@ -32,7 +32,8 @@ set provider_id          = coalesce($2, provider_id),
     plaza_id_map         = coalesce($6, plaza_id_map),
     url                  = coalesce($7, url),
     insecure_skip_verify = coalesce($8, insecure_skip_verify),
-    integrator_name      = coalesce($9, integrator_name)
+    integrator_name      = coalesce($9, integrator_name),
+    extra                = coalesce($10, extra)
 where id = $1
 returning *;
 
