@@ -263,9 +263,10 @@ const IntegratorTransactionsPage: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Created At</TableCell>
-              <TableCell>License Plate Number</TableCell>
+              <TableCell>Plate Number</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Integrator</TableCell>
+              <TableCell>3rd party</TableCell>
+              <TableCell>Amount (RM)</TableCell>
               <TableCell>Tax Info</TableCell>
               <TableCell>Error</TableCell>
             </TableRow>
@@ -273,29 +274,43 @@ const IntegratorTransactionsPage: React.FC = () => {
           <TableBody>
             {data?.data?.map((row) => (
               <TableRow key={row.businessTransactionId}>
-                <TableCell>
+                <TableCell className="w-[10rem]">
                   {moment(row.createdAt)
                     .local()
                     .format("DD/MM/yyyy hh:mm:ss A")}
                 </TableCell>
-                <TableCell>{row.lpn}</TableCell>
-                <TableCell>{row.status}</TableCell>
-                <TableCell>{row.integratorName || "-"}</TableCell>
-                <TableCell>
+                <TableCell className="w-[5rem]">{row.lpn}</TableCell>
+                <TableCell className="w-[5rem]">
+                  <Typography
+                    sx={{
+                      color: row.status === "success" ? "#00afaa" : "#e4002b",
+                    }}
+                  >
+                    {row.status}
+                  </Typography>
+                </TableCell>
+                <TableCell className="w-[5rem]">
+                  {row.integratorName || "-"}
+                </TableCell>
+                <TableCell className="w-[5rem]">{row.amount || "-"}</TableCell>
+                <TableCell className="w-[15rem]">
                   <JsonViewer
+                    rootName={false}
+                    displayDataTypes={false}
                     value={row.taxData}
                     defaultInspectControl={(_, __) => false}
                     collapseStringsAfterLength={false}
                   />
                 </TableCell>
                 <TableCell
+                  className="w-[30rem]"
                   style={{
                     width: "30px",
                     whiteSpace: "normal",
                     wordWrap: "break-word",
                   }}
                 >
-                  <div className="w-[40rem]">{row.error}</div>
+                  {row.error}
                 </TableCell>
               </TableRow>
             ))}

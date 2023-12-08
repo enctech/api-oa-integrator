@@ -175,7 +175,7 @@ function PersistentDrawerRight() {
                       link: "/oa-configs",
                     },
                     {
-                      text: "Integrators",
+                      text: "3rd parties",
                       link: "/integrator-configs",
                     },
                   ],
@@ -189,7 +189,7 @@ function PersistentDrawerRight() {
                       link: "/oa-transactions",
                     },
                     {
-                      text: "Integrators",
+                      text: "3rd parties",
                       link: "/integrator-transactions",
                     },
                   ],

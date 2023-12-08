@@ -13,6 +13,9 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import TimeToLeaveIcon from "@mui/icons-material/TimeToLeave";
+import NoCrashIcon from "@mui/icons-material/NoCrash";
+import PaidIcon from "@mui/icons-material/Paid";
 import { useQuery } from "react-query";
 import { misc } from "../api/misc";
 import { getLatestOATransactions } from "../api/transactions";
@@ -26,77 +29,101 @@ const HomePage = () => {
   return (
     <Container>
       <div className="flex">
-        <Card className="flex-1" sx={{ borderRadius: 10 }}>
+        <Card
+          sx={{
+            borderRadius: 4,
+            flex: 1,
+            backgroundColor: "#fff0bf80",
+            display: "flex",
+            alignItems: "center",
+          }}
+          elevation={10}
+        >
           <CardContent>
-            <Typography className="p-4" variant="h4">
-              Total Entry
-            </Typography>
-            <Typography className="px-4" variant="h2">
+            <TimeToLeaveIcon
+              sx={{
+                fontSize: 40,
+              }}
+            />
+            <div className="h-2" />
+            <Typography variant="h5" fontWeight="bold">
               {data?.totalIn}
             </Typography>
+            <Typography variant="body1">Total Entry</Typography>
           </CardContent>
         </Card>
         <div className="w-8" />
-        <Card className="flex-1" sx={{ borderRadius: 10 }}>
+        <Card
+          sx={{
+            borderRadius: 4,
+            flex: 1,
+            backgroundColor: "#ffe27f80",
+            display: "flex",
+            alignItems: "center",
+          }}
+          elevation={10}
+        >
           <CardContent>
-            <Typography className="p-4" variant="h4">
-              Total Exit
-            </Typography>
-            <Typography className="px-4" variant="h2">
-              {data?.totalOut}
-            </Typography>
+            <NoCrashIcon
+              sx={{
+                fontSize: 40,
+              }}
+            />
+            <div className="h-2" />
+            <Typography variant="h5">{data?.totalOut}</Typography>
+            <Typography variant="body1">Total Exit</Typography>
+          </CardContent>
+        </Card>
+        <div className="w-8" />
+        <Card
+          sx={{
+            borderRadius: 4,
+            flex: 1,
+            backgroundColor: "#00afaa80",
+            display: "flex",
+            alignItems: "center",
+          }}
+          elevation={10}
+        >
+          <CardContent>
+            <PaidIcon
+              sx={{
+                fontSize: 40,
+              }}
+            />
+            <div className="h-2" />
+            <Typography variant="h5">0</Typography>
+            <Typography variant="body1">Total Payment</Typography>
           </CardContent>
         </Card>
       </div>
       <div className="h-8" />
-      <Typography variant="h4">Integrator Status</Typography>
-      <div className="h-2" />
       <div className="flex">
-        {data?.integrators.map((integrator) => (
-          <Card className="mr-8 flex">
-            <Typography className="p-4" variant="h5">
-              {integrator.integrator}
-            </Typography>
-            <Divider />
-            <Typography
-              className="p-4"
-              style={{
-                color: "white",
-                backgroundColor:
-                  integrator.status == "up" ? "#00afaa" : "#e4002b",
-              }}
-              variant="h5"
-            >
-              {integrator.status == "up" ? "Available" : "Error"}
-            </Typography>
-          </Card>
-        ))}
+        <Status
+          title="3rd parties Status"
+          data={
+            data?.integrators.map((x) => ({
+              info: x.integrator,
+              status: x.status,
+            })) || []
+          }
+          partialAvailableMessage="Partial 3rd parties available"
+          fullyAvailableMessage="All 3rd parties available"
+          noAvailableMessage="All 3rd parties unavailable"
+        />
+        <div className="w-4" />
+        <Status
+          title="Snb Status"
+          data={
+            data?.snb.map((x) => ({ info: x.facility, status: x.status })) || []
+          }
+          partialAvailableMessage="Partial SnB system available"
+          fullyAvailableMessage="All SnB system available"
+          noAvailableMessage="All SnB system unavailable"
+        />
       </div>
       <div className="h-8" />
-      <Typography variant="h4">Snb Status</Typography>
-      <div className="h-2" />
-      <div className="flex">
-        {data?.snb.map((snb) => (
-          <Card className="mr-8 flex">
-            <Typography className="p-4" variant="h5">
-              {snb.facility}
-            </Typography>
-            <Divider />
-            <Typography
-              className="p-4"
-              style={{
-                color: "white",
-                backgroundColor: snb.status == "up" ? "#00afaa" : "#e4002b",
-              }}
-              variant="h5"
-            >
-              {snb.status == "up" ? "Available" : "Error"}
-            </Typography>
-          </Card>
-        ))}
-      </div>
-      <div className="h-8" />
-      <Typography variant="h4">Last 10 Transaction</Typography>
+      <Typography variant="h5">Last 10 Transaction</Typography>
       <div className="h-2" />
       <LatestTransactions />
     </Container>
@@ -129,9 +156,6 @@ const LatestTransactions = () => {
             <TableCell>
               <div className="w-32">Status</div>
             </TableCell>
-            <TableCell>
-              <div className="w-96">Error</div>
-            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -148,20 +172,76 @@ const LatestTransactions = () => {
                   {statusMapper.get(row.extra.steps) || row.extra.steps}
                 </div>
               </TableCell>
-              <TableCell
-                style={{
-                  width: "30px",
-                  whiteSpace: "normal",
-                  wordWrap: "break-word",
-                }}
-              >
-                <div className="w-[40rem]">{row.extra.error}</div>
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </TableContainer>
+  );
+};
+
+const Status = (input: {
+  data: { info: string; status: string }[];
+  title: string;
+  partialAvailableMessage: string;
+  fullyAvailableMessage: string;
+  noAvailableMessage: string;
+}) => {
+  const message = () => {
+    if (input.data.every((i) => i.status === "up")) {
+      return input.fullyAvailableMessage;
+    }
+
+    if (input.data.every((i) => i.status !== "up")) {
+      return input.noAvailableMessage;
+    }
+
+    return input.partialAvailableMessage;
+  };
+  return (
+    <Card
+      elevation={10}
+      sx={{
+        flex: 1,
+        borderRadius: 4,
+      }}
+    >
+      <CardContent>
+        <Typography variant="h5">{input.title}</Typography>
+        <div className="h-2" />
+        <div>{message()}</div>
+        <div>
+          {input.data.map((snb) => (
+            <>
+              <div className="mt-2 flex items-center">
+                <Typography className="p-2 flex-1" variant="body1">
+                  {snb.info}
+                </Typography>
+                <Typography
+                  className="p-2"
+                  style={{
+                    width: 100,
+                    fontWeight: "bold",
+                    textAlign: "right",
+                    color: snb.status == "up" ? "#00afaa" : "#e4002b",
+                  }}
+                  variant="body1"
+                >
+                  {snb.status == "up" ? "UP" : "DOWN"}
+                </Typography>
+                <div className="w-2" />
+                {snb.status == "up" ? (
+                  <div className="w-5 h-5 rounded-full inline-flex items-center justify-center bg-[#00afaa]" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full inline-flex items-center justify-center bg-[#e4002b]" />
+                )}
+              </div>
+              <Divider />
+            </>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

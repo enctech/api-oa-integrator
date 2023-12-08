@@ -9,7 +9,7 @@
 }
 
 .MuiInputBase-input.Mui-disabled {
-    background: #d2d5d8;
+    background: #d2d5d81A;
     border-radius: 4px;
     -webkit-text-fill-color: black;
 }
@@ -21,7 +21,7 @@
 }
 
 .MuiTextField-root.Mui-disabled {
-    background: #d2d5d8;
+    background: #d2d5d81A;
     border-radius: 4px;
     -webkit-text-fill-color: black;
 }

@@ -277,7 +277,7 @@ const IntegratorConfigsDetails = () => {
         </div>
         <div>
           <div className="mb-8">
-            <div>Client ID (Defined by integrator)</div>
+            <div>Client ID (Defined by 3rd party)</div>
             <TextField
               fullWidth={true}
               variant="outlined"
@@ -294,10 +294,10 @@ const IntegratorConfigsDetails = () => {
         <div>
           <div className="mb-8">
             <div>
-              Service Provider ID (Defined by integrator)
+              Service Provider ID (Defined by 3rd party)
               <Tooltip
                 className="ml-2"
-                title="For any identifier integrator used to define OA system"
+                title="For any identifier 3rd party used to define OA system"
               >
                 <InfoIcon />
               </Tooltip>
@@ -327,10 +327,10 @@ const IntegratorConfigsDetails = () => {
             })}
           >
             <div>
-              Integrator type
+              3rd party
               <Tooltip
                 className="ml-2"
-                title="Which integrator is this configuration system is for?"
+                title="Which 3rd party is this configuration system is for?"
               >
                 <InfoIcon />
               </Tooltip>
@@ -362,10 +362,10 @@ const IntegratorConfigsDetails = () => {
             })}
           >
             <div>
-              Integrator type
+              3rd party
               <Tooltip
                 className="ml-2"
-                title="Which integrator is this configuration system is for?"
+                title="Which 3rd party is this configuration system is for?"
               >
                 <InfoIcon />
               </Tooltip>
@@ -408,7 +408,7 @@ const IntegratorConfigsDetails = () => {
                   WebkitTextFillColor: "#000000",
                 },
                 "& .MuiOutlinedInput-root": {
-                  backgroundColor: isEditing ? "white" : "#d2d5d8",
+                  backgroundColor: isEditing ? "white" : "#d2d5d81A",
                 },
               }}
               {...register("extra.0")}
