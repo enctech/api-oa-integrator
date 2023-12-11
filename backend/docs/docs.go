@@ -1055,6 +1055,15 @@ const docTemplate = `{
                 "serviceProviderId": {
                     "type": "string"
                 },
+                "surcharge": {
+                    "type": "number"
+                },
+                "surchargeType": {
+                    "$ref": "#/definitions/database.SurchargeType"
+                },
+                "taxRate": {
+                    "type": "number"
+                },
                 "url": {
                     "type": "string"
                 }
@@ -1091,6 +1100,17 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "database.SurchargeType": {
+            "type": "string",
+            "enum": [
+                "percentage",
+                "exact"
+            ],
+            "x-enum-varnames": [
+                "SurchargeTypePercentage",
+                "SurchargeTypeExact"
+            ]
         },
         "oa.BusinessTransaction": {
             "type": "object",

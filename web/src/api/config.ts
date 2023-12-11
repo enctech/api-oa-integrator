@@ -66,6 +66,8 @@ export const createOAConfig = async (req: UpdateOAConfigRequest) => {
     .then((response) => response.data as typeof sampleDetails);
 };
 
+export type SurchargeType = "percentage" | "exact";
+
 export interface IntegratorConfigs {
   id?: string;
   clientId: string;
@@ -77,6 +79,9 @@ export interface IntegratorConfigs {
   insecureSkipVerify: boolean;
   plazaIdMap: Map<string, string>;
   extra: Map<string, string>;
+  taxRate: number;
+  surcharge: number;
+  surchargeType: SurchargeType;
 }
 
 export const getIntegratorConfigs = async () => {
@@ -99,6 +104,7 @@ export const getIntegratorConfig = async (id: string) => {
 };
 
 export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
+  console.log("updateIntegratorConfig", arg);
   const data = { ...arg };
   delete data["id"];
   return axios
@@ -114,6 +120,9 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
         JSON.stringify(Object.fromEntries(data.plazaIdMap)),
       ),
       extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
+      taxRate: +arg.taxRate,
+      surcharge: +arg.surcharge,
+      surchargeType: arg.surchargeType,
     })
     .then((response) => response.data as IntegratorConfigs);
 };

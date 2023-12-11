@@ -1,6 +1,6 @@
-CREATE TYPE SURCHARGE_TYPE AS ENUM ('percentage', 'exact');
+create type SURCHARGE_TYPE as enum ('percentage', 'exact');
 
 alter table integrator_config
-    add column if not exists tax_rate       varchar(255)   default '0',
-    add column if not exists surcharge      varchar(255)   default '0',
+    add column if not exists tax_rate       numeric        default 0,
+    add column if not exists surcharge      numeric        default 0,
     add column if not exists surchange_type SURCHARGE_TYPE default 'exact';

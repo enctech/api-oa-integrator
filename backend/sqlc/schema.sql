@@ -27,6 +27,8 @@ create table users
     permissions varchar[]
 );
 
+CREATE TYPE SURCHARGE_TYPE AS ENUM ('percentage', 'exact');
+
 create table integrator_config
 (
     id                   uuid primary key,
@@ -38,6 +40,9 @@ create table integrator_config
     plaza_id_map         json,
     extra                json,
     url                  varchar,
+    tax_rate             numeric,
+    surcharge            numeric,
+    surchange_type       SURCHARGE_TYPE,
     insecure_skip_verify boolean            default false,
     created_at           timestamp not null default NOW(),
     updated_at           timestamp not null default NOW()

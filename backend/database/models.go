@@ -6,11 +6,55 @@ package database
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
+
+type SurchargeType string
+
+const (
+	SurchargeTypePercentage SurchargeType = "percentage"
+	SurchargeTypeExact      SurchargeType = "exact"
+)
+
+func (e *SurchargeType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SurchargeType(s)
+	case string:
+		*e = SurchargeType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SurchargeType: %T", src)
+	}
+	return nil
+}
+
+type NullSurchargeType struct {
+	SurchargeType SurchargeType
+	Valid         bool // Valid is true if SurchargeType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSurchargeType) Scan(value interface{}) error {
+	if value == nil {
+		ns.SurchargeType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SurchargeType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSurchargeType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SurchargeType), nil
+}
 
 type IntegratorConfig struct {
 	ID                 uuid.UUID
@@ -22,6 +66,9 @@ type IntegratorConfig struct {
 	PlazaIDMap         pqtype.NullRawMessage
 	Extra              pqtype.NullRawMessage
 	Url                sql.NullString
+	TaxRate            sql.NullString
+	Surcharge          sql.NullString
+	SurchangeType      NullSurchargeType
 	InsecureSkipVerify sql.NullBool
 	CreatedAt          time.Time
 	UpdatedAt          time.Time

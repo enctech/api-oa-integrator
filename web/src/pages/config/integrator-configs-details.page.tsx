@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
+import {
+  Controller,
+  SubmitHandler,
+  useFieldArray,
+  useForm,
+} from "react-hook-form";
 import {
   Button,
   Checkbox,
@@ -19,6 +24,7 @@ import {
   getIntegratorConfig,
   getIntegrators,
   IntegratorConfigs,
+  SurchargeType,
   updateIntegratorConfig,
 } from "../../api/config";
 import Typography from "@mui/material/Typography";
@@ -32,6 +38,9 @@ interface FormData {
   integratorName?: string;
   serviceProviderId: string;
   providerId: number;
+  taxRate: number;
+  surcharge: number;
+  surchargeType: SurchargeType;
   isInsecure: boolean;
   plazaIdMappers: { field1: string; field2: string }[];
   extra: any[];
@@ -49,6 +58,9 @@ const IntegratorConfigsDetails = () => {
       isInsecure: false,
       plazaIdMappers: [],
       extra: [],
+      taxRate: 5,
+      surcharge: 0,
+      surchargeType: "exact",
     },
   });
   let { id } = useParams();
@@ -117,6 +129,9 @@ const IntegratorConfigsDetails = () => {
     setValue("isInsecure", data.insecureSkipVerify);
     setValue("serviceProviderId", data.serviceProviderId);
     setValue("integratorName", data.integratorName);
+    setValue("taxRate", data.taxRate);
+    setValue("surcharge", data.surcharge);
+    setValue("surchargeType", data.surchargeType);
     if (data.plazaIdMap) {
       const keys = Object.keys(data.plazaIdMap);
       keys.forEach((key, index) => {
@@ -162,6 +177,9 @@ const IntegratorConfigsDetails = () => {
         plazaIdMap: plazaIdMap,
         integratorName: data.integratorName,
         extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
+        surcharge: data.surcharge,
+        taxRate: data.taxRate,
+        surchargeType: data.surchargeType,
       } satisfies IntegratorConfigs);
       return;
     }
@@ -177,6 +195,9 @@ const IntegratorConfigsDetails = () => {
       plazaIdMap: plazaIdMap,
       integratorName: data.integratorName,
       extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
+      surcharge: data.surcharge,
+      taxRate: data.taxRate,
+      surchargeType: data.surchargeType,
     } satisfies IntegratorConfigs);
   };
 
@@ -316,6 +337,80 @@ const IntegratorConfigsDetails = () => {
           </div>
         </div>
 
+        <div className="mb-8 flex-1">
+          <div>Tax rate</div>
+          <TextField
+            fullWidth={true}
+            variant="outlined"
+            type={"number"}
+            disabled={!isEditing}
+            sx={{
+              "& .MuiInputBase-input.Mui-disabled": {
+                WebkitTextFillColor: "#000000",
+              },
+            }}
+            {...register("taxRate")}
+          />
+        </div>
+        <div className="w-8" />
+
+        <div className="mb-8 flex-1">
+          <div>Surcharge</div>
+          <TextField
+            fullWidth={true}
+            variant="outlined"
+            type={"number"}
+            disabled={!isEditing}
+            sx={{
+              "& .MuiInputBase-input.Mui-disabled": {
+                WebkitTextFillColor: "#000000",
+              },
+            }}
+            {...register("surcharge")}
+          />
+        </div>
+        <div className="w-8" />
+
+        <div>
+          Surcharge Type
+          <Tooltip
+            className="ml-2"
+            title="The type of surcharge to be applied to the transaction"
+          >
+            <InfoIcon />
+          </Tooltip>
+        </div>
+        <Controller
+          control={control}
+          name={"surchargeType"}
+          render={({ field }) => {
+            return (
+              <RadioGroup
+                {...field}
+                key={data?.surchargeType}
+                defaultValue={data?.surchargeType}
+                row={true}
+                className="mb-8"
+              >
+                {["percentage", "exact"]?.map((value) => (
+                  <FormControlLabel
+                    disabled={!isEditing}
+                    key={value}
+                    value={value}
+                    control={<Radio />}
+                    label={value.toUpperCase()}
+                    sx={{
+                      "& .MuiTypography-root": {
+                        WebkitTextFillColor: "#000000",
+                      },
+                    }}
+                  />
+                ))}
+              </RadioGroup>
+            );
+          }}
+        />
+
         {data && data?.integratorName ? (
           <RadioGroup
             defaultValue={data?.integratorName}
@@ -417,7 +512,7 @@ const IntegratorConfigsDetails = () => {
         )}
 
         <div>
-          <h2>Plaza ID Mapper</h2>
+          <h2> Plaza ID Mapper</h2>
           {data &&
             fields.map((field, index) => (
               <div

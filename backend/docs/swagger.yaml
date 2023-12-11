@@ -43,6 +43,12 @@ definitions:
         type: integer
       serviceProviderId:
         type: string
+      surcharge:
+        type: number
+      surchargeType:
+        $ref: '#/definitions/database.SurchargeType'
+      taxRate:
+        type: number
       url:
         type: string
     type: object
@@ -67,6 +73,14 @@ definitions:
       username:
         type: string
     type: object
+  database.SurchargeType:
+    enum:
+    - percentage
+    - exact
+    type: string
+    x-enum-varnames:
+    - SurchargeTypePercentage
+    - SurchargeTypeExact
   oa.BusinessTransaction:
     properties:
       id:

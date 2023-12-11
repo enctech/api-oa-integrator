@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
+	"strconv"
 )
 
 func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
@@ -181,6 +182,16 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
+
+	surcharge := 0.0
+	if s, err := strconv.ParseFloat(config.Surcharge.String, 32); err == nil {
+		surcharge = s
+	}
+
+	taxRate := 0.0
+	if s, err := strconv.ParseFloat(config.TaxRate.String, 32); err == nil {
+		taxRate = s
+	}
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
@@ -192,6 +203,9 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 		PlazaIdMap:         plazaId,
 		Url:                config.Url.String,
 		Extra:              extra,
+		SurchargeType:      config.SurchangeType.SurchargeType,
+		Surcharge:          surcharge,
+		TaxRate:            taxRate,
 	}, nil
 }
 
@@ -209,6 +223,9 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 		Extra:              pqtype.NullRawMessage{RawMessage: extraData, Valid: extraData != nil || len(extraData) > 0},
+		Surcharge:          sql.NullString{String: fmt.Sprintf("%f", in.Surcharge), Valid: true},
+		TaxRate:            sql.NullString{String: fmt.Sprintf("%f", in.TaxRate), Valid: true},
+		SurchangeType:      database.NullSurchargeType{SurchargeType: in.SurchargeType, Valid: true},
 	})
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("error update integrator config %v", err), nil)
