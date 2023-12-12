@@ -66,7 +66,8 @@ create table oa_transactions
 
 create table integrator_transactions
 (
-    business_transaction_id uuid primary key,
+    id                      uuid primary key,
+    business_transaction_id uuid not null,
     lpn                     varchar,
     integrator_id           uuid,
     status                  varchar,

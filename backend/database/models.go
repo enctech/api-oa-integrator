@@ -75,6 +75,7 @@ type IntegratorConfig struct {
 }
 
 type IntegratorTransaction struct {
+	ID                    uuid.UUID
 	BusinessTransactionID uuid.UUID
 	Lpn                   sql.NullString
 	IntegratorID          uuid.NullUUID

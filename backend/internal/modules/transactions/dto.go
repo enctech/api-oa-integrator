@@ -28,6 +28,7 @@ type OATransaction struct {
 }
 
 type IntegratorTransactions struct {
+	Id                    string         `json:"id"`
 	BusinessTransactionID string         `json:"businessTransactionId"`
 	Lpn                   string         `json:"lpn"`
 	IntegratorID          string         `json:"integratorId"`

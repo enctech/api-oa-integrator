@@ -19,8 +19,8 @@ with inserted_transaction as (
     insert into integrator_transactions (business_transaction_id, lpn, integrator_id, status, amount, error, tax_data,
                                          extra)
         values ($1, $2, $3, $4, $5, $6, $7, $8)
-        returning business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, created_at, updated_at)
-select business_transaction_id, lpn, integrator_id, status, amount, error, inserted_transaction.extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, integrator_config.extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
+        returning id, business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, created_at, updated_at)
+select inserted_transaction.id, business_transaction_id, lpn, integrator_id, status, amount, error, inserted_transaction.extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, integrator_config.id, client_id, provider_id, name, integrator_name, sp_id, plaza_id_map, integrator_config.extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3
 `
@@ -37,6 +37,7 @@ type CreateIntegratorTransactionParams struct {
 }
 
 type CreateIntegratorTransactionRow struct {
+	ID                    uuid.UUID
 	BusinessTransactionID uuid.UUID
 	Lpn                   sql.NullString
 	IntegratorID          uuid.NullUUID
@@ -47,7 +48,7 @@ type CreateIntegratorTransactionRow struct {
 	TaxData               pqtype.NullRawMessage
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
-	ID                    uuid.UUID
+	ID_2                  uuid.UUID
 	ClientID              sql.NullString
 	ProviderID            sql.NullInt32
 	Name                  sql.NullString
@@ -77,6 +78,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 	)
 	var i CreateIntegratorTransactionRow
 	err := row.Scan(
+		&i.ID,
 		&i.BusinessTransactionID,
 		&i.Lpn,
 		&i.IntegratorID,
@@ -87,7 +89,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.TaxData,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ID,
+		&i.ID_2,
 		&i.ClientID,
 		&i.ProviderID,
 		&i.Name,
@@ -156,7 +158,7 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 }
 
 const getIntegratorTransactions = `-- name: GetIntegratorTransactions :many
-select it.business_transaction_id, it.lpn, it.integrator_id, it.status, it.amount, it.error, it.extra, it.tax_data, it.created_at, it.updated_at, ic.name as integrator_name
+select it.id, it.business_transaction_id, it.lpn, it.integrator_id, it.status, it.amount, it.error, it.extra, it.tax_data, it.created_at, it.updated_at, ic.name as integrator_name
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
 where lpn like concat('%', $3::text, '%')
@@ -179,6 +181,7 @@ type GetIntegratorTransactionsParams struct {
 }
 
 type GetIntegratorTransactionsRow struct {
+	ID                    uuid.UUID
 	BusinessTransactionID uuid.UUID
 	Lpn                   sql.NullString
 	IntegratorID          uuid.NullUUID
@@ -210,6 +213,7 @@ func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegrat
 	for rows.Next() {
 		var i GetIntegratorTransactionsRow
 		if err := rows.Scan(
+			&i.ID,
 			&i.BusinessTransactionID,
 			&i.Lpn,
 			&i.IntegratorID,
