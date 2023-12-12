@@ -12,7 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"maps"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -122,11 +124,14 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"vehicleType":    "Motorcar",
 	})
 
+	tax := c.calculateTax(amount)
+
 	taxData := map[string]any{
-		"surchargeAmt":    0.00,
-		"surchargeTaxAmt": 0.00,
-		"parkingAmt":      amount, // not sure what is this.
-		"parkingTaxAmt":   0.00,   // not sure what is this.
+		"surcharge":       tax.surcharge,
+		"surchargeAmt":    tax.surchargeAmt,
+		"surchargeTaxAmt": tax.surchargeTaxAmt,
+		"parkingAmt":      tax.parkingAmt,
+		"parkingTaxAmt":   tax.parkingTaxAmt,
 	}
 	now := time.Now()
 	body := map[string]any{
@@ -195,4 +200,54 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
 	}
 	return body, taxData, nil
+}
+
+type TaxCalculation struct {
+	surcharge       float64
+	surchargeAmt    float64
+	surchargeTaxAmt float64
+	parkingAmt      float64
+	parkingTaxAmt   float64
+}
+
+func (c Config) calculateTax(txn float64) TaxCalculation {
+	tax, _ := strconv.ParseFloat(c.TaxRate.String, 64)
+	surcharge, _ := strconv.ParseFloat(c.Surcharge.String, 64)
+	if c.SurchangeType.SurchargeType == database.SurchargeTypeExact {
+		return calculateExactSurchargeAmount(txn, tax, surcharge)
+	}
+
+	return calculatePercentSurchargeAmount(txn, tax, surcharge)
+}
+
+func calculateExactSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
+	surcF := surcharge
+	taxPerc := (tax / 100) * 100
+	surchargeAmt := surcF * (100 / (100 + taxPerc))
+	surchargeTaxAmt := surcF * (tax / (100 + taxPerc))
+	parkingAmt := (txn - surcF) * (100 / (100 + taxPerc))
+	parkingTaxAmt := (txn - surcF) * (tax / (100 + taxPerc))
+	return TaxCalculation{
+		surcharge:       math.Round(surcF*100) / 100,
+		surchargeAmt:    math.Round(surchargeAmt*100) / 100,
+		surchargeTaxAmt: math.Round(surchargeTaxAmt*100) / 100,
+		parkingAmt:      math.Round(parkingAmt*100) / 100,
+		parkingTaxAmt:   math.Round(parkingTaxAmt*100) / 100,
+	}
+}
+
+func calculatePercentSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
+
+	surchargeBasedOnTxn := txn * (surcharge / (100 + tax))
+	surchargeAmt := txn * (surcharge / (100 + tax)) * (100 / (100 + tax))
+	surchargeTaxAmt := (txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax))
+	parkingAmt := (txn - (txn * (surcharge / (100 + tax)))) * (100/100 + tax)
+	parkingTaxAmt := (txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax))
+	return TaxCalculation{
+		surcharge:       math.Round(surchargeBasedOnTxn*100) / 100,
+		surchargeAmt:    math.Round(surchargeAmt*100) / 100,
+		surchargeTaxAmt: math.Round(surchargeTaxAmt*100) / 100,
+		parkingAmt:      math.Round(parkingAmt*100) / 100,
+		parkingTaxAmt:   math.Round(parkingTaxAmt*100) / 100,
+	}
 }

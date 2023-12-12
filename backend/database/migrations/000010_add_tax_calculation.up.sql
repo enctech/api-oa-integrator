@@ -1,3 +1,4 @@
+drop type if exists SURCHARGE_TYPE;
 create type SURCHARGE_TYPE as enum ('percentage', 'exact');
 
 alter table integrator_config
