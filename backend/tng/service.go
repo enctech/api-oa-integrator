@@ -228,26 +228,43 @@ func calculateExactSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
 	parkingAmt := (txn - surcF) * (100 / (100 + taxPerc))
 	parkingTaxAmt := (txn - surcF) * (tax / (100 + taxPerc))
 	return TaxCalculation{
-		surcharge:       math.Round(surcF*100) / 100,
-		surchargeAmt:    math.Round(surchargeAmt*100) / 100,
-		surchargeTaxAmt: math.Round(surchargeTaxAmt*100) / 100,
-		parkingAmt:      math.Round(parkingAmt*100) / 100,
-		parkingTaxAmt:   math.Round(parkingTaxAmt*100) / 100,
+		surcharge:       roundMoney(surcF),
+		surchargeAmt:    roundMoney(surchargeAmt),
+		surchargeTaxAmt: roundMoney(surchargeTaxAmt),
+		parkingAmt:      roundMoney(parkingAmt),
+		parkingTaxAmt:   roundMoney(parkingTaxAmt),
 	}
 }
 
 func calculatePercentSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
+	_surcharge := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
 
-	surchargeBasedOnTxn := txn * (surcharge / (100 + tax))
-	surchargeAmt := txn * (surcharge / (100 + tax)) * (100 / (100 + tax))
-	surchargeTaxAmt := (txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax))
-	parkingAmt := (txn - (txn * (surcharge / (100 + tax)))) * (100/100 + tax)
-	parkingTaxAmt := (txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax))
+	surchargeAmt := roundMoney((txn * (surcharge / (100 + tax))) * (100 / (100 + tax)))
+
+	surchargeTaxAmt := roundMoney((txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax)))
+
+	parkingAmt := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (100 / (100 + tax)))
+
+	parkingTaxAmt := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
 	return TaxCalculation{
-		surcharge:       math.Round(surchargeBasedOnTxn*100) / 100,
-		surchargeAmt:    math.Round(surchargeAmt*100) / 100,
-		surchargeTaxAmt: math.Round(surchargeTaxAmt*100) / 100,
-		parkingAmt:      math.Round(parkingAmt*100) / 100,
-		parkingTaxAmt:   math.Round(parkingTaxAmt*100) / 100,
+		surcharge:       _surcharge,
+		surchargeAmt:    surchargeAmt,
+		surchargeTaxAmt: surchargeTaxAmt,
+		parkingAmt:      parkingAmt,
+		parkingTaxAmt:   parkingTaxAmt,
 	}
+}
+
+// Copy from https://stackoverflow.com/a/29786394
+func roundMoney(amount float64) float64 {
+	return toFixed(amount, 2)
+}
+
+func round(num float64) int {
+	return int(num + math.Copysign(0.5, num))
+}
+
+func toFixed(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return float64(round(num*output)) / output
 }
