@@ -66,7 +66,7 @@ func (con controller) getLogs(c echo.Context) error {
 		After:   after.Round(time.Microsecond),
 		Before:  before.Round(time.Microsecond),
 		Message: c.QueryParam("message"),
-		Fields:  c.QueryParam("fields"),
+		Fields:  c.QueryParam("field"),
 		Limit:   int32(perPage),
 		Offset:  int32(page * perPage),
 	})
