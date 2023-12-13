@@ -298,7 +298,9 @@ const IntegratorTransactionsPage: React.FC = () => {
                   <div className="w-[5rem]">{row.integratorName || "-"}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="w-[5rem]">{row.amount.toFixed(2) || "-"}</div>
+                  <div className="w-[5rem]">
+                    {row.amount?.toFixed(2) || "-"}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <JsonViewer
