@@ -274,14 +274,19 @@ const IntegratorTransactionsPage: React.FC = () => {
           <TableBody>
             {data?.data?.map((row) => (
               <TableRow key={row.businessTransactionId}>
-                <TableCell className="w-[10rem]">
-                  {moment(row.createdAt)
-                    .local()
-                    .format("DD/MM/yyyy hh:mm:ss A")}
+                <TableCell>
+                  <div className="w-[10rem]">
+                    {moment(row.createdAt)
+                      .local()
+                      .format("DD/MM/yyyy hh:mm:ss A")}
+                  </div>
                 </TableCell>
-                <TableCell className="w-[5rem]">{row.lpn}</TableCell>
-                <TableCell className="w-[5rem]">
+                <TableCell>
+                  <div className="w-[5rem]">{row.lpn}</div>
+                </TableCell>
+                <TableCell>
                   <Typography
+                    className="w-[5rem]"
                     sx={{
                       color: row.status === "success" ? "#00afaa" : "#e4002b",
                     }}
@@ -289,12 +294,15 @@ const IntegratorTransactionsPage: React.FC = () => {
                     {row.status}
                   </Typography>
                 </TableCell>
-                <TableCell className="w-[5rem]">
-                  {row.integratorName || "-"}
+                <TableCell>
+                  <div className="w-[5rem]">{row.integratorName || "-"}</div>
                 </TableCell>
-                <TableCell className="w-[5rem]">{row.amount || "-"}</TableCell>
-                <TableCell className="w-[15rem]">
+                <TableCell>
+                  <div className="w-[5rem]">{row.amount.toFixed(2) || "-"}</div>
+                </TableCell>
+                <TableCell>
                   <JsonViewer
+                    className="w-[15rem]"
                     rootName={false}
                     displayDataTypes={false}
                     value={row.taxData}
@@ -303,14 +311,13 @@ const IntegratorTransactionsPage: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell
-                  className="w-[30rem]"
                   style={{
                     width: "30px",
                     whiteSpace: "normal",
                     wordWrap: "break-word",
                   }}
                 >
-                  {row.error}
+                  <div className="w-[30rem]">{row.error}</div>
                 </TableCell>
               </TableRow>
             ))}

@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"maps"
-	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -228,24 +227,24 @@ func calculateExactSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
 	parkingAmt := (txn - surcF) * (100 / (100 + taxPerc))
 	parkingTaxAmt := (txn - surcF) * (tax / (100 + taxPerc))
 	return TaxCalculation{
-		surcharge:       roundMoney(surcF),
-		surchargeAmt:    roundMoney(surchargeAmt),
-		surchargeTaxAmt: roundMoney(surchargeTaxAmt),
-		parkingAmt:      roundMoney(parkingAmt),
-		parkingTaxAmt:   roundMoney(parkingTaxAmt),
+		surcharge:       utils.RoundMoney(surcF),
+		surchargeAmt:    utils.RoundMoney(surchargeAmt),
+		surchargeTaxAmt: utils.RoundMoney(surchargeTaxAmt),
+		parkingAmt:      utils.RoundMoney(parkingAmt),
+		parkingTaxAmt:   utils.RoundMoney(parkingTaxAmt),
 	}
 }
 
 func calculatePercentSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
-	_surcharge := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
+	_surcharge := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
 
-	surchargeAmt := roundMoney((txn * (surcharge / (100 + tax))) * (100 / (100 + tax)))
+	surchargeAmt := utils.RoundMoney((txn * (surcharge / (100 + tax))) * (100 / (100 + tax)))
 
-	surchargeTaxAmt := roundMoney((txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax)))
+	surchargeTaxAmt := utils.RoundMoney((txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax)))
 
-	parkingAmt := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (100 / (100 + tax)))
+	parkingAmt := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (100 / (100 + tax)))
 
-	parkingTaxAmt := roundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
+	parkingTaxAmt := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
 	return TaxCalculation{
 		surcharge:       _surcharge,
 		surchargeAmt:    surchargeAmt,
@@ -253,18 +252,4 @@ func calculatePercentSurchargeAmount(txn, tax, surcharge float64) TaxCalculation
 		parkingAmt:      parkingAmt,
 		parkingTaxAmt:   parkingTaxAmt,
 	}
-}
-
-// Copy from https://stackoverflow.com/a/29786394
-func roundMoney(amount float64) float64 {
-	return toFixed(amount, 2)
-}
-
-func round(num float64) int {
-	return int(num + math.Copysign(0.5, num))
-}
-
-func toFixed(num float64, precision int) float64 {
-	output := math.Pow(10, float64(precision))
-	return float64(round(num*output)) / output
 }

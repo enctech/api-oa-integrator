@@ -95,7 +95,7 @@ const sampleIntegratorTransactionResponse = {
       lpn: "UVW2345",
       integratorId: "",
       status: "success",
-      amount: "10",
+      amount: 10.0,
       error: "",
       integratorName: "TNG",
       extra: {},

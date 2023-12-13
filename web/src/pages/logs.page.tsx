@@ -217,14 +217,21 @@ const LogsPage = () => {
             {data?.data?.map((row) => (
               <TableRow key={row.id}>
                 <TableCell>
-                  {moment(row.createdAt)
-                    .local()
-                    .format("DD/MM/yyyy hh:mm:ss A")}
+                  <div className="w-[5rem]">
+                    {moment(row.createdAt)
+                      .local()
+                      .format("DD/MM/yyyy hh:mm:ss A")}
+                  </div>
                 </TableCell>
-                <TableCell>{row.level}</TableCell>
-                <TableCell>{row.message}</TableCell>
+                <TableCell>
+                  <div className="w-[5rem]">{row.level}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="w-[20rem]">{row.message}</div>
+                </TableCell>
                 <TableCell>
                   <JsonViewer
+                    className="w-[20rem]"
                     value={row.fields}
                     defaultInspectControl={(_, __) => false}
                     collapseStringsAfterLength={false}

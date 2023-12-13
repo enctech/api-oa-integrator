@@ -33,7 +33,7 @@ type IntegratorTransactions struct {
 	Lpn                   string         `json:"lpn"`
 	IntegratorID          string         `json:"integratorId"`
 	Status                string         `json:"status"`
-	Amount                string         `json:"amount"`
+	Amount                float64        `json:"amount"`
 	Error                 string         `json:"error"`
 	IntegratorName        string         `json:"integratorName"`
 	Extra                 map[string]any `json:"extra"`
