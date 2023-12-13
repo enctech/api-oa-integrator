@@ -19,6 +19,7 @@ import { useSearchParams } from "react-router-dom";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import moment from "moment/moment";
 import IconButton from "@mui/material/IconButton";
+import { useDebounce } from "@uidotdev/usehooks";
 
 interface FormData {
   startAt?: Dayjs | null;
@@ -31,6 +32,8 @@ const LogsPage = () => {
   const perPagesDefault = useRef([100, 500, 1000]);
   const [currentQueryParameters, setSearchParams] = useSearchParams();
   const newParams = useRef(new URLSearchParams());
+
+  const debouncedSearchTerm = useDebounce(currentQueryParameters, 300);
 
   const { control, register, handleSubmit, watch, setValue } =
     useForm<FormData>({
@@ -61,12 +64,12 @@ const LogsPage = () => {
     }
 
     newParams.current.set("message", formData.message || "");
-    newParams.current.set("filter", formData.filter || "");
+    newParams.current.set("field", formData.filter || "");
 
     setSearchParams(newParams.current);
   };
 
-  const { data } = useQuery(
+  const { data, refetch } = useQuery(
     "getOALogs",
     () =>
       getOALogs({
@@ -88,6 +91,12 @@ const LogsPage = () => {
       refetchInterval: 5000,
     },
   );
+
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      refetch();
+    }
+  }, [debouncedSearchTerm]);
 
   useEffect(() => {
     newParams.current.set("page", "0");
