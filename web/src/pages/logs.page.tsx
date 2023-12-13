@@ -25,7 +25,7 @@ interface FormData {
   startAt?: Dayjs | null;
   endAt?: Dayjs | null;
   message: string;
-  filter: string;
+  field: string;
 }
 
 const LogsPage = () => {
@@ -39,7 +39,7 @@ const LogsPage = () => {
     useForm<FormData>({
       defaultValues: {
         message: currentQueryParameters.get("message") || "",
-        filter: currentQueryParameters.get("filter") || "",
+        field: currentQueryParameters.get("field") || "",
         startAt: dayjs(
           moment(currentQueryParameters.get("startAt")).local().toDate(),
         ),
@@ -49,7 +49,7 @@ const LogsPage = () => {
       },
     });
 
-  watch(["startAt", "endAt", "message", "filter"]);
+  watch(["startAt", "endAt", "message", "field"]);
 
   const handleFieldChange = () => {
     handleSubmit(onSubmit)();
@@ -64,7 +64,7 @@ const LogsPage = () => {
     }
 
     newParams.current.set("message", formData.message || "");
-    newParams.current.set("field", formData.filter || "");
+    newParams.current.set("field", formData.field || "");
 
     setSearchParams(newParams.current);
   };
@@ -117,7 +117,7 @@ const LogsPage = () => {
       "message",
       currentQueryParameters.get("message") || "",
     );
-    newParams.current.set("filter", currentQueryParameters.get("filter") || "");
+    newParams.current.set("field", currentQueryParameters.get("field") || "");
 
     setSearchParams(newParams.current);
   }, []);
@@ -205,8 +205,8 @@ const LogsPage = () => {
         </div>
         <div className={"p-4"}>
           <TextField
-            label="Field filter"
-            {...register("filter", {
+            label="Field"
+            {...register("field", {
               onChange: (_) => handleFieldChange(),
             })}
           />
