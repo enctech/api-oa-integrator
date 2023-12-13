@@ -100,3 +100,10 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
   and status::text like concat('%', sqlc.arg(status)::text, '%')
   and it.created_at >= sqlc.arg(start_at)
   and it.created_at <= sqlc.arg(end_at);
+
+-- name: GetTotalTransactionAmount :one
+select sum(amount)::numeric
+from integrator_transactions
+where status::text like concat('%', sqlc.arg(status)::text, '%')
+  and created_at >= sqlc.arg(start_at)
+  and created_at <= sqlc.arg(end_at);

@@ -47,11 +47,16 @@ func (con controller) getData(c echo.Context) error {
 		EndAt:   before.UTC().Round(time.Microsecond),
 	})
 
-	totalPayment := getTotalPayment(c.Request().Context())
+	totalPayment, _ := database.New(database.D()).GetTotalTransactionAmount(c.Request().Context(), database.GetTotalTransactionAmountParams{
+		Status:  "success",
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
+	})
+	payment, err := strconv.ParseFloat(totalPayment, 64)
 	out := map[string]any{
 		"snb":          snbStatus,
 		"integrators":  integratorsStatus,
-		"totalPayment": totalPayment,
+		"totalPayment": payment,
 		"totalIn":      totalIn,
 		"totalOut":     totalOut,
 	}
@@ -131,29 +136,4 @@ func ping(domain string) error {
 	}
 	resp.Body.Close()
 	return nil
-}
-
-func getTotalPayment(ctx context.Context) map[string]float64 {
-	now := time.Now().UTC()
-	txns, err := database.New(database.D()).GetIntegratorTransactions(ctx, database.GetIntegratorTransactionsParams{
-		StartAt: time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).UTC(),
-		EndAt:   time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999, now.Location()).UTC(),
-		Status:  "success",
-	})
-
-	if err != nil {
-		return nil
-	}
-
-	out := map[string]float64{}
-
-	for _, txn := range txns {
-		a, err := strconv.ParseFloat(txn.Amount.String, 64)
-		if err != nil {
-			continue
-		}
-		out[txn.IntegratorName.String] += a
-	}
-
-	return out
 }

@@ -505,6 +505,27 @@ func (q *Queries) GetOATransactionsCount(ctx context.Context, arg GetOATransacti
 	return count, err
 }
 
+const getTotalTransactionAmount = `-- name: GetTotalTransactionAmount :one
+select sum(amount)::numeric
+from integrator_transactions
+where status::text like concat('%', $1::text, '%')
+  and created_at >= $2
+  and created_at <= $3
+`
+
+type GetTotalTransactionAmountParams struct {
+	Status  string
+	StartAt time.Time
+	EndAt   time.Time
+}
+
+func (q *Queries) GetTotalTransactionAmount(ctx context.Context, arg GetTotalTransactionAmountParams) (string, error) {
+	row := q.queryRow(ctx, q.getTotalTransactionAmountStmt, getTotalTransactionAmount, arg.Status, arg.StartAt, arg.EndAt)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const updateOATransaction = `-- name: UpdateOATransaction :one
 update oa_transactions
 set lpn        = coalesce($2, lpn),

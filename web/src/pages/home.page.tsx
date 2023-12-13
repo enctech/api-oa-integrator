@@ -23,7 +23,7 @@ import moment from "moment";
 import { statusMapper } from "./oa-transactions.page";
 
 const HomePage = () => {
-  const { data, refetch } = useQuery("misc", misc, {
+  const { data } = useQuery("misc", misc, {
     refetchInterval: 5000,
   });
   return (
@@ -92,7 +92,9 @@ const HomePage = () => {
               }}
             />
             <div className="h-2" />
-            <Typography variant="h5">0</Typography>
+            <Typography variant="h5">
+              RM {(data?.totalPayment || 0.0).toFixed(2)}
+            </Typography>
             <Typography variant="body1">Total Payment</Typography>
           </CardContent>
         </Card>

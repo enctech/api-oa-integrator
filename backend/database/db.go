@@ -102,6 +102,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getSnbConfigByFacilityAndDeviceStmt, err = db.PrepareContext(ctx, getSnbConfigByFacilityAndDevice); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSnbConfigByFacilityAndDevice: %w", err)
 	}
+	if q.getTotalTransactionAmountStmt, err = db.PrepareContext(ctx, getTotalTransactionAmount); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTotalTransactionAmount: %w", err)
+	}
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
@@ -252,6 +255,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getSnbConfigByFacilityAndDeviceStmt: %w", cerr)
 		}
 	}
+	if q.getTotalTransactionAmountStmt != nil {
+		if cerr := q.getTotalTransactionAmountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTotalTransactionAmountStmt: %w", cerr)
+		}
+	}
 	if q.getUserStmt != nil {
 		if cerr := q.getUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
@@ -342,6 +350,7 @@ type Queries struct {
 	getOATransactionsCountStmt          *sql.Stmt
 	getSnbConfigStmt                    *sql.Stmt
 	getSnbConfigByFacilityAndDeviceStmt *sql.Stmt
+	getTotalTransactionAmountStmt       *sql.Stmt
 	getUserStmt                         *sql.Stmt
 	getUsersStmt                        *sql.Stmt
 	updateIntegratorConfigStmt          *sql.Stmt
@@ -379,6 +388,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getOATransactionsCountStmt:          q.getOATransactionsCountStmt,
 		getSnbConfigStmt:                    q.getSnbConfigStmt,
 		getSnbConfigByFacilityAndDeviceStmt: q.getSnbConfigByFacilityAndDeviceStmt,
+		getTotalTransactionAmountStmt:       q.getTotalTransactionAmountStmt,
 		getUserStmt:                         q.getUserStmt,
 		getUsersStmt:                        q.getUsersStmt,
 		updateIntegratorConfigStmt:          q.updateIntegratorConfigStmt,

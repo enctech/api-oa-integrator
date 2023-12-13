@@ -6,7 +6,7 @@ interface MiscResponse {
   snb: { facility: string; status: string }[];
   totalIn: number;
   totalOut: number;
-  totalPayment: Map<string, string>;
+  totalPayment: number;
 }
 
 export const misc = async () => {
