@@ -65,6 +65,7 @@ const LogsPage = () => {
 
     newParams.current.set("message", formData.message || "");
     newParams.current.set("field", formData.field || "");
+    newParams.current.set("page", "0");
 
     setSearchParams(newParams.current);
   };
