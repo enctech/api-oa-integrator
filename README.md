@@ -33,6 +33,16 @@
 1. The application is served over HTTPS (currently using self-signed certificate).
 2. Backend and Frontend are served with same SSL certificate.
 
+### Database backup
+1. Database backup scripts is defined in [scripts](./scripts/db_backup.sh).
+2. Suggestion to use cronjob to run the script periodically.
+3. Run `chmod +x ./scripts/db_backup.sh` to make the script executable.
+4. Run `crontab -e` to edit the cronjob.
+5. Add the following line to the end of the file (This is for running cronjob every 12 hours).
+   ```bash
+   0 */12 * * * /path/to/script/db_backup.sh
+   ```
+
 ## Using the application
 > :information_source: By default, there is no need for login to view the data. However, there is a login page that can be used to login only to edit configuration.
 
