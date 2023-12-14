@@ -65,7 +65,7 @@ const UsersPage = () => {
               {data?.map((row) => (
                 <TableRow key={row.userId}>
                   <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.permissions.join(",")}</TableCell>
+                  <TableCell>{row.permissions?.join(",")}</TableCell>
                   {session?.userId !== row.userId ? (
                     <TableCell
                       onClick={() =>
