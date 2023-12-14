@@ -36,6 +36,7 @@ select count(*)
 from oa_transactions
 where entry_lane is not null
   and extra ->> 'steps' = 'leave_loop_entry_done'
+  or exit_lane is not null
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
