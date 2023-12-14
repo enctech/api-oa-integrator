@@ -35,6 +35,7 @@ limit $1 offset $2;
 select count(*)
 from oa_transactions
 where entry_lane is not null
+  and extra ->> 'steps' = 'leave_loop_entry_done'
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
