@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Set the current date and time to include in the backup filename
-timestamp=$(date +%Y%m%d%H%M%S)
-
 # Set your PostgreSQL container name, username, and database name
 container_name="postgres_db"
 username="postgres"
@@ -11,23 +8,24 @@ database="postgres"
 # Set the path where you want to store the backups on your host machine
 backup_path="${HOME}/dev"
 
-# Rename all current backups to .bak. This will be used to query old backups deletion.
-for f in $backup_path/backup_*.sql.tar.gz;
-do
-    if [ -f "$f" ]; then
-        echo "Moving old backup $f"
-        mv $f $f.bak
-    fi
-done
+# Set the maximum number of backups to keep
+max_backups=100
 
-# Use pg_dump to create a new backup
+# Create a backup timestamp
+timestamp=$(date +%Y%m%d%H%M%S)
+
+# Use pg_dump to create a backup
 docker exec $container_name pg_dump -U $username -d $database > $backup_path/backup_$timestamp.sql
 
 # Compress the backup file to save space
 tar -czvf backup_$timestamp.sql.tar.gz $backup_path/backup_$timestamp.sql
 
-# Remove uncompressed backup file
-rm -rf $backup_path/*.sql
+# Count the number of existing backups
+backup_count=$(ls -1 $backup_path | grep -c "^backup_.*\.sql$")
 
-# Remove old temp backups.
-rm -rf $backup_path/*.bak
+# Delete the oldest backup if the number exceeds the maximum
+if [ $backup_count -gt $max_backups ]; then
+    oldest_backup=$(ls -1t $backup_path | grep "^backup_.*\.sql$" | tail -n 1)
+    rm $backup_path/$oldest_backup
+fi
+
