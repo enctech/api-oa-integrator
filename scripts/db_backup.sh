@@ -11,9 +11,8 @@ database="postgres"
 # Set the path where you want to store the backups on your host machine
 backup_path="${HOME}/dev"
 
-rm -rf $backup_path/backup_*.sql.tar.gz && echo "Removed old backups"
-
-for f in $backup_path/backup_*.sql;
+# Rename all current backups to .bak. This will be used to query old backups deletion.
+for f in $backup_path/backup_*.sql.tar.gz;
 do
     if [ -f "$f" ]; then
         echo "Moving old backup $f"
@@ -21,11 +20,11 @@ do
     fi
 done
 
-# Use pg_dump to create a backup
+# Use pg_dump to create a new backup
 docker exec $container_name pg_dump -U $username -d $database > $backup_path/backup_$timestamp.sql
 
-# Optionally, you may want to compress the backup file to save space
+# Compress the backup file to save space
 tar -czvf backup_$timestamp.sql.tar.gz $backup_path/backup_$timestamp.sql
 
-rm -rf $backup_path/backup_$timestamp.sql
-rm -rf $backup_path/backup_*.sql
+# Remove old temp backups.
+rm -rf $backup_path/*.bak
