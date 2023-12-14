@@ -91,6 +91,7 @@ export const getLatestOATransactions = async (query: OATransactionsQuery) => {
 const sampleIntegratorTransactionResponse = {
   data: [
     {
+      id: "45525bff-59d1-4777-a47b-c158f09fc52b",
       businessTransactionId: "45525bff-59d1-4777-a47b-c158f09fc52b",
       lpn: "UVW2345",
       integratorId: "",

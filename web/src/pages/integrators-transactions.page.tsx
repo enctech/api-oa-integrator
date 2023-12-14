@@ -61,7 +61,7 @@ const IntegratorTransactionsPage: React.FC = () => {
   const debouncedSearchTerm = useDebounce(currentQueryParameters, 300);
 
   const { data, refetch } = useQuery(
-    "getOATransactions",
+    "getIntegratorTransactions",
     () =>
       getIntegratorTransactions({
         page: +(currentQueryParameters.get("page") || "0"),
@@ -115,6 +115,7 @@ const IntegratorTransactionsPage: React.FC = () => {
       currentQueryParameters.get("entryLane") || "",
     );
     newParams.current.set("lpn", currentQueryParameters.get("lpn") || "");
+    newParams.current.set("status", currentQueryParameters.get("status") || "");
     newParams.current.set(
       "facility",
       currentQueryParameters.get("facility") || "",
@@ -273,7 +274,7 @@ const IntegratorTransactionsPage: React.FC = () => {
           </TableHead>
           <TableBody>
             {data?.data?.map((row) => (
-              <TableRow key={row.businessTransactionId}>
+              <TableRow key={`${row.businessTransactionId}-${row.id}`}>
                 <TableCell>
                   <div className="w-[10rem]">
                     {moment(row.createdAt)
