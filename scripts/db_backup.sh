@@ -27,7 +27,7 @@ backup_count=$(ls -1 $backup_path | grep -c "^backup_.*\.sql.tar.gz$")
 
 # Delete the oldest backup if the number exceeds the maximum
 if [ $backup_count -gt $max_backups ]; then
-    oldest_backup=$(ls -1t $backup_path | grep "^backup_.*\.sql$" | tail -n 1)
-    rm $backup_path/$oldest_backup.tar.gz
+    oldest_backup=$(ls -1t $backup_path | grep "^backup_.*\.sql.tar.gz$" | tail -n 1)
+    rm "$backup_path/$oldest_backup"
 fi
 
