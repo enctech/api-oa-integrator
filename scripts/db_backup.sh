@@ -18,7 +18,7 @@ timestamp=$(date +%Y%m%d%H%M%S)
 docker exec $container_name pg_dump -U $username -d $database > $backup_path/backup_$timestamp.sql
 
 # Compress the backup file to save space
-tar -czvf backup_$timestamp.sql.tar.gz $backup_path/backup_$timestamp.sql
+tar -czvf $backup_path/backup_$timestamp.sql.tar.gz $backup_path/backup_$timestamp.sql
 
 rm -rf $backup_path/backup_*.sql
 
