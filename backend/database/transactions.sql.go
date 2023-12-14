@@ -162,7 +162,7 @@ select it.id, it.business_transaction_id, it.lpn, it.integrator_id, it.status, i
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
 where lpn like concat('%', $3::text, '%')
-  and integrator_name::text like concat('%', $4::text, '%')
+  and name::text like concat('%', $4::text, '%')
   and status::text like concat('%', $5::text, '%')
   and it.created_at >= $6
   and it.created_at <= $7
@@ -171,13 +171,13 @@ limit $1 offset $2
 `
 
 type GetIntegratorTransactionsParams struct {
-	Limit          int32
-	Offset         int32
-	Lpn            string
-	IntegratorName string
-	Status         string
-	StartAt        time.Time
-	EndAt          time.Time
+	Limit   int32
+	Offset  int32
+	Lpn     string
+	Name    string
+	Status  string
+	StartAt time.Time
+	EndAt   time.Time
 }
 
 type GetIntegratorTransactionsRow struct {
@@ -200,7 +200,7 @@ func (q *Queries) GetIntegratorTransactions(ctx context.Context, arg GetIntegrat
 		arg.Limit,
 		arg.Offset,
 		arg.Lpn,
-		arg.IntegratorName,
+		arg.Name,
 		arg.Status,
 		arg.StartAt,
 		arg.EndAt,
@@ -244,24 +244,24 @@ select count(*)
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
 where lpn like concat('%', $1::text, '%')
-  and integrator_name::text like concat('%', $2::text, '%')
+  and name::text like concat('%', $2::text, '%')
   and status::text like concat('%', $3::text, '%')
   and it.created_at >= $4
   and it.created_at <= $5
 `
 
 type GetIntegratorTransactionsCountParams struct {
-	Lpn            string
-	IntegratorName string
-	Status         string
-	StartAt        time.Time
-	EndAt          time.Time
+	Lpn     string
+	Name    string
+	Status  string
+	StartAt time.Time
+	EndAt   time.Time
 }
 
 func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetIntegratorTransactionsCountParams) (int64, error) {
 	row := q.queryRow(ctx, q.getIntegratorTransactionsCountStmt, getIntegratorTransactionsCount,
 		arg.Lpn,
-		arg.IntegratorName,
+		arg.Name,
 		arg.Status,
 		arg.StartAt,
 		arg.EndAt,

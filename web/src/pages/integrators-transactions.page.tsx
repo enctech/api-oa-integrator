@@ -55,6 +55,9 @@ const IntegratorTransactionsPage: React.FC = () => {
       },
     });
 
+  // Watch for changes in form fields
+  watch(["startAt", "endAt", "lpn", "status", "integratorName"]);
+
   const debouncedSearchTerm = useDebounce(currentQueryParameters, 300);
 
   const { data, refetch } = useQuery(
@@ -73,7 +76,7 @@ const IntegratorTransactionsPage: React.FC = () => {
           ? moment(currentQueryParameters.get("endAt")).utc().toDate()
           : undefined,
         lpn: currentQueryParameters.get("lpn") || undefined,
-        status: currentQueryParameters.get("lpn") || undefined,
+        status: currentQueryParameters.get("status") || undefined,
         integratorName:
           currentQueryParameters.get("integratorName") || undefined,
       }),
@@ -135,9 +138,6 @@ const IntegratorTransactionsPage: React.FC = () => {
 
     setSearchParams(newParams.current);
   };
-
-  // Watch for changes in form fields
-  watch(["startAt", "endAt", "lpn", "status", "integratorName"]);
 
   // Function to call API when there are changes in any field
   const handleFieldChange = () => {

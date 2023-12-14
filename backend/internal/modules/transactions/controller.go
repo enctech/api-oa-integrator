@@ -324,26 +324,24 @@ func (con controller) getIntegratorTransactions(c echo.Context) error {
 	}
 
 	txns, err := database.New(database.D()).GetIntegratorTransactions(c.Request().Context(), database.GetIntegratorTransactionsParams{
-		StartAt:        after.UTC().Round(time.Microsecond),
-		EndAt:          before.UTC().Round(time.Microsecond),
-		Status:         c.QueryParam("status"),
-		IntegratorName: c.QueryParam("integratorName"),
-		Lpn:            c.QueryParam("lpn"),
-		Limit:          int32(perPage),
-		Offset:         int32(perPage * page),
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
+		Status:  c.QueryParam("status"),
+		Name:    c.QueryParam("integratorName"),
+		Lpn:     c.QueryParam("lpn"),
+		Limit:   int32(perPage),
+		Offset:  int32(perPage * page),
 	})
 
-	totalData, err := database.New(database.D()).GetOATransactionsCount(c.Request().Context(), database.GetOATransactionsCountParams{
-		StartAt:   after.UTC().Round(time.Microsecond),
-		EndAt:     before.UTC().Round(time.Microsecond),
-		ExitLane:  c.QueryParam("exitLane"),
-		EntryLane: c.QueryParam("entryLane"),
-		Lpn:       c.QueryParam("lpn"),
-		Facility:  c.QueryParam("facility"),
-		Jobid:     c.QueryParam("jobid"),
+	totalData, err := database.New(database.D()).GetIntegratorTransactionsCount(c.Request().Context(), database.GetIntegratorTransactionsCountParams{
+		StartAt: after.UTC().Round(time.Microsecond),
+		EndAt:   before.UTC().Round(time.Microsecond),
+		Status:  c.QueryParam("status"),
+		Name:    c.QueryParam("integratorName"),
+		Lpn:     c.QueryParam("lpn"),
 	})
 
-	var txnData []IntegratorTransactions
+	txnData := []IntegratorTransactions{}
 
 	for _, txn := range txns {
 		var extra map[string]any

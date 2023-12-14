@@ -85,7 +85,7 @@ select it.*, ic.name as integrator_name
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
 where lpn like concat('%', sqlc.arg(lpn)::text, '%')
-  and integrator_name::text like concat('%', sqlc.arg(integrator_name)::text, '%')
+  and name::text like concat('%', sqlc.arg(name)::text, '%')
   and status::text like concat('%', sqlc.arg(status)::text, '%')
   and it.created_at >= sqlc.arg(start_at)
   and it.created_at <= sqlc.arg(end_at)
@@ -97,7 +97,7 @@ select count(*)
 from integrator_transactions it
          inner join public.integrator_config ic on ic.id = it.integrator_id
 where lpn like concat('%', sqlc.arg(lpn)::text, '%')
-  and integrator_name::text like concat('%', sqlc.arg(integrator_name)::text, '%')
+  and name::text like concat('%', sqlc.arg(name)::text, '%')
   and status::text like concat('%', sqlc.arg(status)::text, '%')
   and it.created_at >= sqlc.arg(start_at)
   and it.created_at <= sqlc.arg(end_at);
