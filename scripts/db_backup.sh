@@ -26,5 +26,8 @@ docker exec $container_name pg_dump -U $username -d $database > $backup_path/bac
 # Compress the backup file to save space
 tar -czvf backup_$timestamp.sql.tar.gz $backup_path/backup_$timestamp.sql
 
+# Remove uncompressed backup file
+rm -rf $backup_path/*.sql
+
 # Remove old temp backups.
 rm -rf $backup_path/*.bak
