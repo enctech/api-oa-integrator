@@ -332,8 +332,8 @@ const getOAEntryTransactions = `-- name: GetOAEntryTransactions :one
 select count(*)
 from oa_transactions
 where entry_lane is not null
-  and extra ->> 'steps' = 'leave_loop_entry_done'
-  or exit_lane is not null
+  and (extra ->> 'steps' = 'leave_loop_entry_done'
+    or exit_lane is not null)
   and created_at >= $1
   and created_at <= $2
 `
