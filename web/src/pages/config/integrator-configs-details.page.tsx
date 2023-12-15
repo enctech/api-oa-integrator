@@ -30,6 +30,7 @@ import {
 import Typography from "@mui/material/Typography";
 import InfoIcon from "@mui/icons-material/Info";
 import { styled } from "@mui/material/styles";
+import { AdminOnly } from "../../components/auth-guard";
 
 interface FormData {
   url: string;
@@ -208,18 +209,20 @@ const IntegratorConfigsDetails = () => {
           {data?.name} Config Details
         </Typography>
         <div className="flex-1" />
-        {id !== "new" && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              setIsEditing(!isEditing);
-              reset();
-            }}
-          >
-            {isEditing && "Cancel"} Edit
-          </Button>
-        )}
+        <AdminOnly>
+          {id !== "new" && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                setIsEditing(!isEditing);
+                reset();
+              }}
+            >
+              {isEditing && "Cancel"} Edit
+            </Button>
+          )}
+        </AdminOnly>
       </div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>

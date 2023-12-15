@@ -14,6 +14,7 @@ import { useQuery } from "react-query";
 import { getOAConfigs, OAConfigResponse } from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import { getOAHealth } from "../../api/health";
+import { AdminOnly } from "../../components/auth-guard";
 
 const OAConfigsPage = () => {
   const navigate = useNavigate();
@@ -48,20 +49,22 @@ const OAConfigsPage = () => {
 
   return (
     <div>
-      <Button
-        variant="contained"
-        sx={{
-          backgroundColor: "#3f3100",
-          color: "#fff0bf",
-          "&:hover": {
-            backgroundColor: "#fff0bf",
-            color: "#3f3100",
-          },
-        }}
-        onClick={createNewConfig}
-      >
-        New
-      </Button>
+      <AdminOnly>
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: "#3f3100",
+            color: "#fff0bf",
+            "&:hover": {
+              backgroundColor: "#fff0bf",
+              color: "#3f3100",
+            },
+          }}
+          onClick={createNewConfig}
+        >
+          New
+        </Button>
+      </AdminOnly>
       <TableContainer component={Paper} className="mt-4">
         <Table>
           <TableHead>

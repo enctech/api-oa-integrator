@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "react-query";
 import { createOAConfig, getOAConfig, updateOAConfig } from "../../api/config";
 import { useNavigate, useParams } from "react-router-dom";
 import { getOAHealth } from "../../api/health";
+import { AdminOnly } from "../../components/auth-guard";
 
 const OaConfigsDetailsPage = () => {
   const navigate = useNavigate();
@@ -113,18 +114,20 @@ const OaConfigsDetailsPage = () => {
           SnB Config Details
         </Typography>
         <div className="flex-1" />
-        {id !== "new" && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              setIsEditing(!isEditing);
-              reset();
-            }}
-          >
-            {isEditing ? "Cancel Edit" : "Edit"}
-          </Button>
-        )}
+        <AdminOnly>
+          {id !== "new" && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                setIsEditing(!isEditing);
+                reset();
+              }}
+            >
+              {isEditing ? "Cancel Edit" : "Edit"}
+            </Button>
+          )}
+        </AdminOnly>
       </div>
       <form>
         <div className="mb-8">

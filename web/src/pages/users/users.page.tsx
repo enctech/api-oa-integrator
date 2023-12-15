@@ -68,7 +68,8 @@ const UsersPage = () => {
                 <TableRow key={row.userId}>
                   <TableCell>{row.name}</TableCell>
                   <TableCell>{row.permissions?.join(",")}</TableCell>
-                  {session?.userId !== row.userId ? (
+                  {session?.permissions?.includes("admin") &&
+                  session?.userId !== row.userId ? (
                     <TableCell
                       onClick={() =>
                         setShowDeleteUserDialog([true, row.userId])
