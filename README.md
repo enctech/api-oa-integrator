@@ -43,6 +43,19 @@
    0 */12 * * * /path/to/script/db_backup.sh
    ```
 
+## Understanding the system
+1. This service act as middleware between the 3rd parties and SnB.
+2. All final data should be finalized in SnB or 3rd parties.
+
+### Entry flow
+![Entry Flow](./screenshots/oa-entry.png)
+1. As user entered. SnB will send request to this service with type `IDENTIFICATION`. This is the point where this service will call 3rd parties to verify the user.
+2. If user is confirmed belong to any 3rd parties, it will send finalMessageCustomer to SnB with all relevant data.
+3. If user is not confirmed belong to any 3rd parties, it will send empty message on finalMessageCustomer and the process will end here.
+4. Once user entered the premise, and users is verified belong to 3rd parties, SnB will send request to this service with type `LEAVE_LOOP` indicating that user is already entered. For users that is not marked under any 3rd parties, SnB will not send this request.
+
+### Exit flow
+
 ## Using the application
 > :information_source: By default, there is no need for login to view the data. However, there is a login page that can be used to login only to edit configuration.
 
@@ -57,6 +70,9 @@
 4. Total payment is total successful payment made to 3rd parties.
 5. 3rd parties status indicates the status of all the 3rd parties that are currently connected to the application.
 6. SnB status indicates the status of SnB locations.
-7. Last 10 transactions show 10 most recent transactions based on updated time, not creation time.
+
+## References
+1. [SNB Documentation](./backend/external-docs/oa-docs.PDF)
+2. [Touch n' Go Documentation](./backend/external-docs/tng-docs.pdf)
 
 

@@ -185,6 +185,11 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	btid := job.BusinessTransaction.ID
 	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
 
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
@@ -196,11 +201,6 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: lane, Valid: true},
 	})
-
-	if err != nil {
-		go sendEmptyFinalMessage(metadata)
-		return
-	}
 
 	go func() {
 		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
