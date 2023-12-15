@@ -487,7 +487,7 @@ const IntegratorConfigsDetails = () => {
         {integrator === "tng" && (
           <div className="mb-8">
             <div>
-              SSH Key
+              Private SSH Key
               <Tooltip
                 className="ml-2"
                 title="TNG Use this for server legibility"
@@ -511,6 +511,18 @@ const IntegratorConfigsDetails = () => {
               }}
               {...register("extra.0")}
             />
+            <Typography>
+              Please create using online tool here :&nbsp;
+              <a
+                target="_blank"
+                href="https://cryptotools.net/rsagen"
+                style={{ color: "blue" }}
+              >
+                https://cryptotools.net/rsagen
+              </a>
+              . Use 2048 key length. Please share only public key to TNG and use
+              private key to generate signature.
+            </Typography>
           </div>
         )}
 
