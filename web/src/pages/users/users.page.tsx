@@ -38,20 +38,22 @@ const UsersPage = () => {
   return (
     <>
       <div>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: "#3f3100",
-            color: "#fff0bf",
-            "&:hover": {
-              backgroundColor: "#fff0bf",
-              color: "#3f3100",
-            },
-          }}
-          onClick={() => setShowRegister(true)}
-        >
-          New
-        </Button>
+        {session?.permissions?.includes("admin") && (
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: "#3f3100",
+              color: "#fff0bf",
+              "&:hover": {
+                backgroundColor: "#fff0bf",
+                color: "#3f3100",
+              },
+            }}
+            onClick={() => setShowRegister(true)}
+          >
+            New
+          </Button>
+        )}
         <TableContainer component={Paper} className="mt-4">
           <Table>
             <TableHead>

@@ -6,11 +6,11 @@ interface User {
   userId: string;
   token: string;
   refreshToken: string;
-  permission: string;
+  permissions: string[];
 }
 
 interface SessionContextProps {
-  session: User | null;
+  session: Partial<User> | null;
   login: (user: User) => void;
   logout: () => void;
 }
