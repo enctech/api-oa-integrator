@@ -27,6 +27,17 @@ func Test_calculatePercentSurchargeAmount(t *testing.T) {
 				parkingTaxAmt:   0.22,
 			},
 		},
+		{
+			name: "Test 0 surchage with amount 5",
+			args: args{txn: 5, surcharge: 0, tax: 5},
+			want: TaxCalculation{
+				surcharge:       0.24,
+				surchargeAmt:    0.00,
+				surchargeTaxAmt: 0.00,
+				parkingAmt:      4.76,
+				parkingTaxAmt:   0.24,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -57,6 +68,17 @@ func Test_calculateExactSurchargeAmount(t *testing.T) {
 				surchargeTaxAmt: 0.00,
 				parkingAmt:      4.67,
 				parkingTaxAmt:   0.23,
+			},
+		},
+		{
+			name: "Test 0 surchage with amount 5",
+			args: args{txn: 5, surcharge: 0, tax: 5},
+			want: TaxCalculation{
+				surcharge:       0.00,
+				surchargeAmt:    0.00,
+				surchargeTaxAmt: 0.00,
+				parkingAmt:      4.76,
+				parkingTaxAmt:   0.24,
 			},
 		},
 	}

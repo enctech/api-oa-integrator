@@ -219,13 +219,13 @@ func (c Config) calculateTax(txn float64) TaxCalculation {
 	return calculatePercentSurchargeAmount(txn, tax, surcharge)
 }
 
-func calculateExactSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
+func calculateExactSurchargeAmount(txnAmt, tax, surcharge float64) TaxCalculation {
 	surcF := surcharge
 	taxPerc := (tax / 100) * 100
 	surchargeAmt := surcF * (100 / (100 + taxPerc))
 	surchargeTaxAmt := surcF * (tax / (100 + taxPerc))
-	parkingAmt := (txn - surcF) * (100 / (100 + taxPerc))
-	parkingTaxAmt := (txn - surcF) * (tax / (100 + taxPerc))
+	parkingAmt := (txnAmt - surcF) * (100 / (100 + taxPerc))
+	parkingTaxAmt := (txnAmt - surcF) * (tax / (100 + taxPerc))
 	return TaxCalculation{
 		surcharge:       utils.RoundMoney(surcF),
 		surchargeAmt:    utils.RoundMoney(surchargeAmt),
@@ -235,16 +235,27 @@ func calculateExactSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
 	}
 }
 
-func calculatePercentSurchargeAmount(txn, tax, surcharge float64) TaxCalculation {
-	_surcharge := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
+// Formula:
+//
+//	surcharge=(TranAmt-(TranAmt*(Surc%/(100+Tax%))))*(Tax%/(100+Tax%))
+//
+//	surchargeAmt=(TranAmt*(Surc%/(100+Tax%)))*(100/(100+Tax%))
+//
+//	surchargeTaxAmt=(TranAmt*(Surc%/(100+Tax%)))*(Surc%/(100+Tax%))
+//
+//	parkingAmt=(TranAmt-(TranAmt*(Surc%/(100+Tax%))))*(100/(100+Tax%))
+//
+//	parkingTaxAmt=(TranAmt-(TranAmt*(Surc%/(100+Tax%))))*(Tax%/(100+Tax%))
+func calculatePercentSurchargeAmount(txnAmt, tax, surc float64) TaxCalculation {
+	_surcharge := utils.RoundMoney((txnAmt - (txnAmt * (surc / (100 + tax)))) * (tax / (100 + tax)))
 
-	surchargeAmt := utils.RoundMoney((txn * (surcharge / (100 + tax))) * (100 / (100 + tax)))
+	surchargeAmt := utils.RoundMoney((txnAmt * (surc / (100 + tax))) * (100 / (100 + tax)))
 
-	surchargeTaxAmt := utils.RoundMoney((txn * (surcharge / (100 + tax))) * (surcharge / (100 + tax)))
+	surchargeTaxAmt := utils.RoundMoney((txnAmt * (surc / (100 + tax))) * (surc / (100 + tax)))
 
-	parkingAmt := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (100 / (100 + tax)))
+	parkingAmt := utils.RoundMoney((txnAmt - (txnAmt * (surc / (100 + tax)))) * (100 / (100 + tax)))
 
-	parkingTaxAmt := utils.RoundMoney((txn - (txn * (surcharge / (100 + tax)))) * (tax / (100 + tax)))
+	parkingTaxAmt := utils.RoundMoney((txnAmt - (txnAmt * (surc / (100 + tax)))) * (tax / (100 + tax)))
 	return TaxCalculation{
 		surcharge:       _surcharge,
 		surchargeAmt:    surchargeAmt,
