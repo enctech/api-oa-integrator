@@ -1,0 +1,1 @@
+ALTER TABLE oa_transactions DROP CONSTRAINT oa_transactions_businesstransactionid_key;

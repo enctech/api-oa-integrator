@@ -141,9 +141,18 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	_, _ = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-		Businesstransactionid: job.BusinessTransaction.ID,
+	btid := job.BusinessTransaction.ID
+	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
+
+	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 	})
 	go sendEmptyFinalMessage(metadata)
 }
@@ -173,9 +182,18 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	}
 
 	lane := job.TimeAndPlace.Device.DeviceNumber
-	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-		Businesstransactionid: job.BusinessTransaction.ID,
+	btid := job.BusinessTransaction.ID
+	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
+
+	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: lane, Valid: true},
 	})
 
@@ -224,9 +242,18 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 
 	lpn := job.MediaDataList.Identifier.Name
 
-	oaTxn, err := database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
+
+	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 	})
 
 	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
@@ -272,9 +299,16 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 			"error": err.Error(),
 		})
 		go sendZeroAmount()
-		oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+		_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 			Businesstransactionid: btid,
+			Device:                sql.NullString{String: metadata.device, Valid: true},
+			Facility:              sql.NullString{String: metadata.facility, Valid: true},
+			Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+			Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+			Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+			EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+			ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 		})
 		return
 	}
@@ -288,9 +322,16 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	oaTxn, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 	})
 
 	go sendFinalMessageCustomer(metadata, FMCReq{
@@ -320,7 +361,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 
 	btid := job.BusinessTransaction.ID
 
-	oaTxn, err := database.New(database.D()).GetOATransaction(context.Background(), btid)
+	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
 
 	var extra map[string]any
 
@@ -349,17 +390,24 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		"leaveAt": time.Now().UTC(),
 	}
 
-	maps.Copy(newExtra, extra)
+	maps.Copy(extra, newExtra)
 
-	jsonStr, err := json.Marshal(newExtra)
+	jsonStr, err := json.Marshal(extra)
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
-	oaTxn, _ = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
+		Device:                sql.NullString{String: metadata.device, Valid: true},
+		Facility:              sql.NullString{String: metadata.facility, Valid: true},
+		Jobid:                 sql.NullString{String: metadata.jobId, Valid: true},
+		Lpn:                   sql.NullString{String: oaTxn.Lpn.String, Valid: true},
+		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 	})
 
 	go sendEmptyFinalMessage(metadata)

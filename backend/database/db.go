@@ -75,6 +75,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getIntegratorTransactionsCountStmt, err = db.PrepareContext(ctx, getIntegratorTransactionsCount); err != nil {
 		return nil, fmt.Errorf("error preparing query GetIntegratorTransactionsCount: %w", err)
 	}
+	if q.getLatestOATransactionStmt, err = db.PrepareContext(ctx, getLatestOATransaction); err != nil {
+		return nil, fmt.Errorf("error preparing query GetLatestOATransaction: %w", err)
+	}
 	if q.getLatestOATransactionsStmt, err = db.PrepareContext(ctx, getLatestOATransactions); err != nil {
 		return nil, fmt.Errorf("error preparing query GetLatestOATransactions: %w", err)
 	}
@@ -210,6 +213,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getIntegratorTransactionsCountStmt: %w", cerr)
 		}
 	}
+	if q.getLatestOATransactionStmt != nil {
+		if cerr := q.getLatestOATransactionStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getLatestOATransactionStmt: %w", cerr)
+		}
+	}
 	if q.getLatestOATransactionsStmt != nil {
 		if cerr := q.getLatestOATransactionsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getLatestOATransactionsStmt: %w", cerr)
@@ -341,6 +349,7 @@ type Queries struct {
 	getIntegratorConfigsStmt            *sql.Stmt
 	getIntegratorTransactionsStmt       *sql.Stmt
 	getIntegratorTransactionsCountStmt  *sql.Stmt
+	getLatestOATransactionStmt          *sql.Stmt
 	getLatestOATransactionsStmt         *sql.Stmt
 	getLogsStmt                         *sql.Stmt
 	getOAEntryTransactionsStmt          *sql.Stmt
@@ -379,6 +388,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getIntegratorConfigsStmt:            q.getIntegratorConfigsStmt,
 		getIntegratorTransactionsStmt:       q.getIntegratorTransactionsStmt,
 		getIntegratorTransactionsCountStmt:  q.getIntegratorTransactionsCountStmt,
+		getLatestOATransactionStmt:          q.getLatestOATransactionStmt,
 		getLatestOATransactionsStmt:         q.getLatestOATransactionsStmt,
 		getLogsStmt:                         q.getLogsStmt,
 		getOAEntryTransactionsStmt:          q.getOAEntryTransactionsStmt,

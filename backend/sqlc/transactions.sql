@@ -9,6 +9,13 @@ select *
 from oa_transactions
 where businesstransactionid = $1;
 
+-- name: GetLatestOATransaction :one
+select *
+from oa_transactions
+where businesstransactionid = $1
+order by created_at desc
+limit 1;
+
 -- name: GetOATransactions :many
 select *
 from oa_transactions

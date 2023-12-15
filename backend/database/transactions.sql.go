@@ -271,6 +271,34 @@ func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetInt
 	return count, err
 }
 
+const getLatestOATransaction = `-- name: GetLatestOATransaction :one
+select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+from oa_transactions
+where businesstransactionid = $1
+order by created_at desc
+limit 1
+`
+
+func (q *Queries) GetLatestOATransaction(ctx context.Context, businesstransactionid string) (OaTransaction, error) {
+	row := q.queryRow(ctx, q.getLatestOATransactionStmt, getLatestOATransaction, businesstransactionid)
+	var i OaTransaction
+	err := row.Scan(
+		&i.ID,
+		&i.Businesstransactionid,
+		&i.Lpn,
+		&i.Customerid,
+		&i.Jobid,
+		&i.Facility,
+		&i.Device,
+		&i.Extra,
+		&i.EntryLane,
+		&i.ExitLane,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getLatestOATransactions = `-- name: GetLatestOATransactions :many
 select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
