@@ -3,6 +3,7 @@ package utils
 import (
 	"api-oa-integrator/logger"
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -24,7 +25,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		reqInfo["body"] = requestBody.String()
 	}
 
-	logger.LogData("info", "HTTP Request", reqInfo)
+	logger.LogData("info", fmt.Sprintf("HTTP Request %v", req.URL.String()), reqInfo)
 
 	// Perform the actual HTTP request
 	resp, err := lrt.Transport.RoundTrip(req)
@@ -52,7 +53,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		resInfo["response-body"] = string(responseBody)
 	}
 
-	logger.LogData("info", "HTTP Response", resInfo)
+	logger.LogData("info", fmt.Sprintf("HTTP Response %v", req.URL.String()), resInfo)
 
 	// Create a new response object with the same status, headers, and body
 	newResponse := &http.Response{
