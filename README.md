@@ -2,18 +2,30 @@
 
 - [Table of Content](#online-authorisation-integrator-application)
   - [Pre-requisites](#pre-requisites)
+  - [Deployment](#deployment)
   - [Application Architecture](#application-architecture)
     - [Backend](#backend)
     - [Frontend](#frontend)
     - [SSL/TLS](#ssltls)
+    - [Database backup](#database-backup)
+  - [Understanding the system](#understanding-the-system)
+    - [Entry flow](#entry-flow)
+    - [Exit flow](#exit-flow)
   - [Using the application](#using-the-application)
+    - [Home Page](#home-page)
+  - [References](#references)
 
 ## Pre-requisites
 1. [Docker](https://docs.docker.com/engine/install/ubuntu/)
 2. [Docker compose](https://docs.docker.com/compose/install/linux/)
-3. Run `make run_application` to start the application. This can be used as restarting the application for updates as well.
-4. Head over to [dashboard](https://localhost:3000) to view the application.
-5. API documentation is done through [swagger](https://localhost:1323/swagger/index.html#/) and can be viewed here.
+
+### Deployment
+1. Clone this repo (https://github.com/enctech/api-oa-integrator) or download from releases (https://github.com/enctech/api-oa-integrator/releases).
+2. Update SSL certificate in [cert](./cert) folder. Create one if there's none.
+3. Run `make copy_cert`. This will copy the certificate to backend and frontend folder.
+4. Run `make run_application` to start the application. This can be used as restarting the application for updates as well.
+5. Head over to [dashboard](https://localhost:3000) to view the application.
+6. API documentation is done through [swagger](https://localhost:1323/swagger/index.html#/) and can be viewed here.
 
 ## Application Architecture
 ### Backend
@@ -55,6 +67,15 @@
 4. Once user entered the premise, and users is verified belong to 3rd parties, SnB will send request to this service with type `LEAVE_LOOP` indicating that user is already entered. For users that is not marked under any 3rd parties, SnB will not send this request.
 
 ### Exit flow
+![Exit Flow](./screenshots/oa-exit.png)
+1. As user exited. SnB will send request to this service with type `IDENTIFICATION`. OA-integrator will check if user exist in the database. 
+2. If user exist, it will send finalMessageCustomer to SnB with all relevant data.
+3. If user is not exist in the database, it will send empty message on finalMessageCustomer and the process will end here.
+4. SnB will then send request to OA-integrator with type `PAYMENT` to request for payment. OA-integrator will then call 3rd parties to request for payment.
+5. If payment is successful, OA-integrator will send finalMessageCustomer to SnB with all relevant data.
+6. If payment is not successful, OA-integrator will finalMessageCustomer to SnB with all relevant data but paid amount is 0. Indicated that SnB should proceed with other payment method.
+7. User is marked as "Payment success" or "Payment failed" based on payment status.
+8. After user left the premise, user is marked with "User left the location".
 
 ## Using the application
 > :information_source: By default, there is no need for login to view the data. However, there is a login page that can be used to login only to edit configuration.
