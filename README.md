@@ -18,6 +18,8 @@
             - [Online Authorisation Transactions](#online-authorisation-transactions)
                 - [Default](#default)
                 - [Filter](#filter)
+        - [Logs](#logs)
+        - [Login Page](#login-page)
     - [References](#references)
 
 ## Terminology
@@ -129,6 +131,7 @@
 ![Home Page](./screenshots/homepage_1.png)
 
 > :heavy_exclamation_mark: All data displayed here are **only for current day**.
+> :heavy_exclamation_mark: This page does not require login
 
 1. Landing page of the application.
 2. Total entry indicates the number of success entries (exit included).
@@ -139,6 +142,8 @@
    call this service.
 
 ### Transactions
+
+> :heavy_exclamation_mark: This page does not require login
 
 #### Online Authorisation Transactions
 
@@ -162,6 +167,35 @@
     4. License Plate Number
     5. Facility
     6. Job
+
+### Logs
+
+> :heavy_exclamation_mark: This page does not require login
+
+![logs](./screenshots/logs.png)
+
+1. This page shows all the application logs.
+2. The logs are limited to application logs, not system logs.
+
+#### Filter
+1. As there are lots of logs generated, the logs can be filtered by:
+    1. Date range
+    2. Message
+    3. Fields
+2. Every logs carry message and fields. Fields are data that carried with logs.
+3. More info in fields can be found in `Fields` column.
+4. Typically LPN is search in the fields.
+
+### Login Page
+
+![login](./screenshots/login.png)
+
+1. Login button can be accessed from the top right corner, and it's always visible in every page.
+2. Enter username and password to login.
+3. Currently, there is no recover password page, in case of forgotten password, get admin to recreate the account.
+4. Upon login, logout button will appear at the bottom left of the page, and it's always visible in every page.
+
+
 
 ## References
 
