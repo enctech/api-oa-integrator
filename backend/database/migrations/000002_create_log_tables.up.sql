@@ -19,7 +19,7 @@ $$
 BEGIN
     DELETE
     FROM logs
-    WHERE created_at < NOW() - interval '90 days';
+    WHERE created_at < NOW() - interval '100 days';
 
     RETURN NULL;
 END;

@@ -16,7 +16,7 @@ create table if not exists oa_transactions
 
 create trigger set_oa_transaction_updated_timestamp
     before update
-    on users
+    on oa_transactions
     for each row
 execute procedure trigger_set_timestamp();
 
@@ -25,7 +25,7 @@ $$
 BEGIN
     DELETE
     FROM oa_transactions
-    WHERE created_at < NOW() - interval '90 days';
+    WHERE created_at < NOW() - interval '100 days';
 
     RETURN NULL;
 END;
