@@ -13,11 +13,6 @@ create table if not exists integrator_config
     updated_at           timestamp      not null default NOW()
 );
 
-insert into integrator_config (client_id, name, provider_id, sp_id, plaza_id_map, url, insecure_skip_verify)
-VALUES ('CETA0109', 'TNG', 2, 'ET', '{
-  "1230": "A01"
-}', 'http://47.254.241.45:8081', false);
-
 create trigger set_integrator_config_timestamp
     before update
     on integrator_config
