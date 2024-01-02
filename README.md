@@ -1,26 +1,30 @@
 # Online Authorisation Integrator Application
 
-- [Table of Content](#online-authorisation-integrator-application)
-    - [Terminology](#terminology)
-    - [Pre-requisites](#pre-requisites)
-    - [Deployment](#deployment)
-    - [Application Architecture](#application-architecture)
-        - [Backend](#backend)
-        - [Frontend](#frontend)
-        - [SSL/TLS](#ssltls)
-        - [Database backup](#database-backup)
-    - [Understanding the system](#understanding-the-system)
-        - [Entry flow](#entry-flow)
-        - [Exit flow](#exit-flow)
-    - [Using the application](#using-the-application)
-        - [Home Page](#home-page)
-        - [Transactions](#transactions)
-            - [Online Authorisation Transactions](#online-authorisation-transactions)
-                - [Default](#default)
-                - [Filter](#filter)
-        - [Logs](#logs)
-        - [Login Page](#login-page)
-    - [References](#references)
+## Table of Contents
+- [Terminology](#terminology)
+- [Pre-requisites](#pre-requisites)
+- [Deployment](#deployment)
+- [Application Architecture](#application-architecture)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+    - [SSL/TLS](#ssltls)
+    - [Database backup](#database-backup)
+- [Understanding the system](#understanding-the-system)
+    - [Entry flow](#entry-flow)
+    - [Exit flow](#exit-flow)
+- [Using the application](#using-the-application)
+    - [Home Page](#home-page)
+    - [Transactions](#transactions)
+        - [Online Authorisation Transactions](#online-authorisation-transactions)
+            - [Default](#default)
+            - [Filter](#filter)
+    - [Logs](#logs)
+    - [Login Page](#login-page)
+    - [Configuration](#configuration)
+        - [SnB Configuration](#snb-configuration)
+        - [3rd Party Configuration](#3rd-party-configuration)
+            - [TnG Configuration](#tng-configuration)
+- [References](#references)
 
 ## Terminology
 
@@ -195,7 +199,41 @@
 3. Currently, there is no recover password page, in case of forgotten password, get admin to recreate the account.
 4. Upon login, logout button will appear at the bottom left of the page, and it's always visible in every page.
 
+### Configuration
 
+#### SnB Configuration
+![oa-config-list](./screenshots/oa-config-list.png)
+![oa-config-details](./screenshots/oa-config-details.png)
+
+1. The default page shows listing of the SnB configurations set. By default, this will be empty.
+2. Click on the `New` button to create new configuration or click on the item to edit the configuration.
+3. This system is meant to be handle multiple SnB configurations defined by Facilities and Lanes.
+4. Each of the value is defined by SnB system.
+
+#### 3rd Party Configuration
+![3rd-party-list](./screenshots/3rd-party-list.png)
+![3rd-party-details](./screenshots/3rd-party-details.png)
+
+1. The default page shows listing of the 3rd party configurations set. By default, this will be empty.
+2. Click on the `New` button to create new configuration or click on the item to edit the configuration.
+3. This system is meant to be handle multiple 3rd party configurations, and there are custom configuration defined by
+   the 3rd party.
+4. Name field is the name of the 3rd party.
+5. URL field is the URL that will be called by this system to the 3rd party.
+6. ProviderID field is the ID that will be used by SnB to identify the 3rd party.
+7. ClientID and Service Provider field is identifier that is used by 3rd party. This value should be defined by 3rd party.
+8. Tax Rate and Surcharge is defined by the business.
+9. Surcharge comes with 2 types, which is percentage and fixed amount. This is defined by the business.
+10. 3rd Party selection is used to select which 3rd party to be used for the configuration. This is defined by the
+    business. The values are pre-defined by the system upon integrating to the 3rd party.
+11. Integration to new 3rd party is done manually by the developer following the spec of the 3rd party system.
+12. Plaza ID mapper is for mapping the location id of the 3rd party to the location id of SnB. This is defined by the
+    3rd party as well as SnB system.
+
+##### TnG Configuration
+1. TnG specific configuration is Private SSH Key.
+2. As per stated by TnG representative
+> Please create using online tool here : https://cryptotools.net/rsagen. Use 2048 key length. Please share only public key to TNG and use private key to generate signature.
 
 ## References
 
