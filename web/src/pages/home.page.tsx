@@ -104,7 +104,7 @@ const HomePage = () => {
         <Status
           title="3rd parties Status"
           data={
-            data?.integrators.map((x) => ({
+            data?.integrators?.map((x) => ({
               info: x.integrator,
               status: x.status,
             })) || []
