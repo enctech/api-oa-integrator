@@ -117,7 +117,8 @@ const HomePage = () => {
         <Status
           title="Snb Status"
           data={
-            data?.snb.map((x) => ({ info: x.facility, status: x.status })) || []
+            data?.snb?.map((x) => ({ info: x.facility, status: x.status })) ||
+            []
           }
           partialAvailableMessage="Partial SnB system available"
           fullyAvailableMessage="All SnB system available"
