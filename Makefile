@@ -16,3 +16,8 @@ build_new:
 
 run_application:
 	make build_new && make clear_images
+
+update_restart:
+	git pull
+	chmod u+x scripts/db_backup.sh
+	make run_application

@@ -47,7 +47,7 @@ interface FormData {
   extra: any[];
 }
 
-const IntegratorConfigsDetails = () => {
+const ThirdPartyConfigsDetailsPage = () => {
   const navigate = useNavigate();
   const { control, handleSubmit, register, setValue } = useForm<FormData>({
     defaultValues: {
@@ -618,4 +618,4 @@ const NoMaxWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 });
 
-export default IntegratorConfigsDetails;
+export default ThirdPartyConfigsDetailsPage;

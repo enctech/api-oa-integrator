@@ -18,10 +18,10 @@ import HomePage from "./home.page";
 import LogsPage from "./logs.page";
 import OAConfigsPage from "./config/oa-configs.page";
 import OaConfigsDetailsPage from "./config/oa-configs-details.page";
-import IntegratorConfigsPage from "./config/integrator-configs.page";
-import IntegratorConfigsDetailsPage from "./config/integrator-configs-details.page";
+import ThirdPartyConfigsPage from "./config/third-party-configs.page";
+import IntegratorConfigsDetailsPage from "./config/third-party-configs-details.page";
 import OATransactionPage from "./oa-transactions.page";
-import IntegratorTransactionsPage from "./integrators-transactions.page";
+import ThirdPartyTransactionsPage from "./third-party-transactions.page";
 import { useSession } from "../context/session-context";
 import AlertDialog from "../components/dialog";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -176,7 +176,7 @@ function PersistentDrawerRight() {
                     },
                     {
                       text: "3rd parties",
-                      link: "/integrator-configs",
+                      link: "/3rd-party-config",
                     },
                   ],
                 },
@@ -190,7 +190,7 @@ function PersistentDrawerRight() {
                     },
                     {
                       text: "3rd parties",
-                      link: "/integrator-transactions",
+                      link: "/3rd-party-transactions",
                     },
                   ],
                 },
@@ -220,8 +220,8 @@ function PersistentDrawerRight() {
                       link: "/oa-transactions",
                     },
                     {
-                      text: "Integrator Transactions",
-                      link: "/integrator-transactions",
+                      text: "3rd parties",
+                      link: "/3rd-party-transactions",
                     },
                   ],
                 },
@@ -343,16 +343,16 @@ function AppRoutes() {
       <Route path="/logs" element={<LogsPage />} />
       <Route path="/oa-configs" element={<OAConfigsPage />} />
       <Route path="/oa-configs/:id" element={<OaConfigsDetailsPage />} />
-      <Route path="/integrator-configs" element={<IntegratorConfigsPage />} />
+      <Route path="/3rd-party-config" element={<ThirdPartyConfigsPage />} />
       <Route
-        path="/integrator-configs/:id"
+        path="/3rd-party-config/:id"
         element={<IntegratorConfigsDetailsPage />}
       />
       <Route path="/oa-transactions" element={<OATransactionPage />} />
       <Route path="/users" element={<UsersPage />} />
       <Route
-        path="/integrator-transactions"
-        element={<IntegratorTransactionsPage />}
+        path="/3rd-party-transactions"
+        element={<ThirdPartyTransactionsPage />}
       />
     </Routes>
   );

@@ -36,7 +36,7 @@ interface FormData {
   integratorName: string;
 }
 
-const IntegratorTransactionsPage: React.FC = () => {
+const ThirdPartyTransactionsPage: React.FC = () => {
   const perPagesDefault = useRef([100, 500, 1000]);
   const [currentQueryParameters, setSearchParams] = useSearchParams();
   const newParams = useRef(new URLSearchParams());
@@ -350,4 +350,4 @@ const IntegratorTransactionsPage: React.FC = () => {
   );
 };
 
-export default IntegratorTransactionsPage;
+export default ThirdPartyTransactionsPage;

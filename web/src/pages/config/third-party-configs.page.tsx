@@ -15,7 +15,7 @@ import { getIntegratorConfigs, IntegratorConfigs } from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import { AdminOnly } from "../../components/auth-guard";
 
-const IntegratorConfigsPage = () => {
+const ThirdPartyConfigsPage = () => {
   const navigate = useNavigate();
 
   const perPagesDefault = useRef([100, 500, 1000]);
@@ -41,11 +41,11 @@ const IntegratorConfigsPage = () => {
   };
 
   const handleRowClick = (id: string) => {
-    navigate(`/integrator-configs/${id}`);
+    navigate(`/3rd-party-configs/${id}`);
   };
 
   const createNewConfig = () => {
-    navigate(`/integrator-configs/new`);
+    navigate(`/3rd-party-configs/new`);
   };
 
   return (
@@ -121,4 +121,4 @@ const IntegratorConfig = ({
   );
 };
 
-export default IntegratorConfigsPage;
+export default ThirdPartyConfigsPage;
