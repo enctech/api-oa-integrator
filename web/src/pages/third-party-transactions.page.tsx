@@ -240,7 +240,7 @@ const ThirdPartyTransactionsPage: React.FC = () => {
                 },
                 {
                   type: "integratorName",
-                  label: "Integrator",
+                  label: "3rd Party",
                 },
               ].map((fieldName) => (
                 <Grid item xs={6} key={fieldName.type}>
