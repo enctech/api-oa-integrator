@@ -41,11 +41,11 @@ const ThirdPartyConfigsPage = () => {
   };
 
   const handleRowClick = (id: string) => {
-    navigate(`/3rd-party-configs/${id}`);
+    navigate(`/3rd-party-config/${id}`);
   };
 
   const createNewConfig = () => {
-    navigate(`/3rd-party-configs/new`);
+    navigate(`/3rd-party-config/new`);
   };
 
   return (
