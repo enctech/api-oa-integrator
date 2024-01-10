@@ -4,3 +4,5 @@
 ssh
 api-oa-integrator
 .env
+backend/cert
+web/cert

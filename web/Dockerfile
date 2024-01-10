@@ -27,5 +27,7 @@ RUN pnpm run build
 # Expose the port that the app will run on
 EXPOSE 3000
 
+RUN chmod +x ./run.sh
+
 # Define the command to run the app
-CMD ["npx","serve", "--ssl-cert", "cert/certificate.pem", "--ssl-key", "cert/private-key.pem","-s", "build"]
+CMD ["./run.sh"]

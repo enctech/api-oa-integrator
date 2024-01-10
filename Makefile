@@ -5,8 +5,13 @@ start_podman:
 	podman-compose up -d
 
 copy_cert:
-	cp -r ./cert ./backend/
+	make copy_cert_backend && make copy_cert_web
+
+copy_cert_web:
 	cp -r ./cert ./web/
+
+copy_cert_backend:
+	cp -r ./cert ./backend/
 
 clear_images:
 	docker image ls -q --filter "dangling=true" | xargs docker image rm
