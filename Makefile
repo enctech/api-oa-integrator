@@ -20,6 +20,7 @@ build_new:
 	docker compose up -d --build
 
 run_application:
+	chmod u+x scripts/db_backup.sh
 	make build_new && make clear_images
 
 update_restart:
