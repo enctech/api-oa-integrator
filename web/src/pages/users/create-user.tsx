@@ -3,11 +3,11 @@ import React from "react";
 import DialogTitle from "@mui/material/DialogTitle";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useMutation } from "react-query";
 import { createUser } from "../../api/auth";
+import DialogContentText from "@mui/material/DialogContentText";
 
 interface CreateUserFormData {
   name: string;
@@ -53,12 +53,12 @@ export default function CreateUser(arg: Props) {
 
   return (
     <Dialog open={arg.isVisible} onClose={arg.close}>
-      <DialogTitle>Subscribe</DialogTitle>
+      <DialogTitle>Create User</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
+            To create a new user, please fill the form below. To create user
+            with admin access, please check the "Set as admin" checkbox.
           </DialogContentText>
           <div className="h-4" />
           {[
