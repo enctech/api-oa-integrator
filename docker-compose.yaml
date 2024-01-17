@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   api-oa-integrator:
+    restart: on-failure:3
     build: ./backend
     container_name: api-oa-integrator
     ports:
