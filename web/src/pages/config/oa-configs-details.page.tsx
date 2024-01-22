@@ -169,7 +169,13 @@ const OaConfigsDetailsPage = () => {
                 ))
               }
               onChange={(e, value) => {
-                setFacilities(value);
+                const temp = value.map((v: string) => {
+                  if (v.includes(",")) {
+                    return v.split(",").map((v: string) => v.trim());
+                  }
+                  return v;
+                });
+                setFacilities(temp.flat().filter((v: string) => v !== ""));
               }}
               renderInput={(params) => (
                 <TextField
@@ -177,6 +183,10 @@ const OaConfigsDetailsPage = () => {
                   sx={{
                     "& .MuiInputBase-input.Mui-disabled": {
                       WebkitTextFillColor: "#000000",
+                      background: "transparent",
+                    },
+                    "& .MuiInputBase-root": {
+                      background: "#d2d5d81A",
                     },
                   }}
                   {...params}
@@ -209,7 +219,13 @@ const OaConfigsDetailsPage = () => {
                 ))
               }
               onChange={(e, value) => {
-                setDevices(value);
+                const temp = value.map((v: string) => {
+                  if (v.includes(",")) {
+                    return v.split(",").map((v: string) => v.trim());
+                  }
+                  return v;
+                });
+                setDevices(temp.flat().filter((v: string) => v !== ""));
               }}
               renderInput={(params) => (
                 <TextField
@@ -217,6 +233,10 @@ const OaConfigsDetailsPage = () => {
                   sx={{
                     "& .MuiInputBase-input.Mui-disabled": {
                       WebkitTextFillColor: "#000000",
+                      background: "transparent",
+                    },
+                    "& .MuiInputBase-root": {
+                      background: "#d2d5d81A",
                     },
                   }}
                   {...params}

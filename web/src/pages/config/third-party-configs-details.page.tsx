@@ -70,7 +70,7 @@ const ThirdPartyConfigsDetailsPage = () => {
     name: "plazaIdMappers",
   });
 
-  const { data, isLoading } = useQuery(
+  const { data } = useQuery(
     ["getIntegratorConfig", id],
     () => getIntegratorConfig(id || ""),
     {
@@ -101,7 +101,7 @@ const ThirdPartyConfigsDetailsPage = () => {
   const [isEditing, setIsEditing] = useState(id === "new");
   const [name, setName] = useState("");
 
-  const { mutate, data: updatedData } = useMutation(
+  const { mutate } = useMutation(
     "updateIntegratorConfig",
     updateIntegratorConfig,
     {
@@ -111,7 +111,7 @@ const ThirdPartyConfigsDetailsPage = () => {
     },
   );
 
-  const { mutate: create, data: newData } = useMutation(
+  const { mutate: create } = useMutation(
     "createIntegratorConfig",
     createIntegratorConfig,
     {
@@ -611,6 +611,7 @@ const buildExtraDataForForm = (
   return out;
 };
 
+// noinspection RequiredAttributes
 const NoMaxWidthTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))({
