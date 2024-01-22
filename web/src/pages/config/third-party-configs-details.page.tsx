@@ -97,6 +97,10 @@ const ThirdPartyConfigsDetailsPage = () => {
       },
     },
   );
+
+  const [isEditing, setIsEditing] = useState(id === "new");
+  const [name, setName] = useState("");
+
   const { mutate, data: updatedData } = useMutation(
     "updateIntegratorConfig",
     updateIntegratorConfig,
@@ -116,9 +120,6 @@ const ThirdPartyConfigsDetailsPage = () => {
       },
     },
   );
-
-  const [isEditing, setIsEditing] = useState(id === "new");
-  const [name, setName] = useState("");
 
   const reset = () => {
     if (!data) return;

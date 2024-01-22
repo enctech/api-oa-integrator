@@ -24,7 +24,7 @@ export const getOAConfigs = async () => {
 };
 
 export const getOAConfig = async (id: string) => {
-  if (id == "new") return {} as typeof sampleDetails;
+  if (id === "new") return {} as typeof sampleDetails;
   return axios
     .get(`/config/snb-config/${id}`)
     .then((response) => response.data as typeof sampleDetails);
@@ -66,6 +66,10 @@ export const createOAConfig = async (req: UpdateOAConfigRequest) => {
     .then((response) => response.data as typeof sampleDetails);
 };
 
+export const deleteOAConfig = async (id: string) => {
+  return axios.delete(`/config/snb-config/${id}`);
+};
+
 export type SurchargeType = "percentage" | "exact";
 
 export interface IntegratorConfigs {
@@ -97,7 +101,7 @@ export const getIntegrators = async () => {
 };
 
 export const getIntegratorConfig = async (id: string) => {
-  if (id == "new") return {} as IntegratorConfigs;
+  if (id === "new") return {} as IntegratorConfigs;
   return axios
     .get(`/config/integrator-config/${id}`)
     .then((response) => response.data as IntegratorConfigs);
@@ -145,4 +149,8 @@ export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
       extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
     })
     .then((response) => response.data as IntegratorConfigs);
+};
+
+export const deleteIntegratorConfig = async (id: string) => {
+  return axios.delete(`/config/integrator-config/${id}`);
 };

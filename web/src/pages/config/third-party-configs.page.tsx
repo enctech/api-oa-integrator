@@ -10,10 +10,17 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
-import { useQuery } from "react-query";
-import { getIntegratorConfigs, IntegratorConfigs } from "../../api/config";
+import { useMutation, useQuery } from "react-query";
+import {
+  deleteIntegratorConfig,
+  getIntegratorConfigs,
+  IntegratorConfigs,
+} from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import { AdminOnly } from "../../components/auth-guard";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
+import AlertDialog from "../../components/dialog";
 
 const ThirdPartyConfigsPage = () => {
   const navigate = useNavigate();
@@ -74,6 +81,7 @@ const ThirdPartyConfigsPage = () => {
               <TableCell>Provider ID</TableCell>
               <TableCell>Client ID</TableCell>
               <TableCell>Service Provider ID</TableCell>
+              <TableCell className="w-5 pl-1" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -82,6 +90,7 @@ const ThirdPartyConfigsPage = () => {
                 key={row.id}
                 row={row}
                 handleRowClick={handleRowClick}
+                reFetch={refetch}
               />
             ))}
           </TableBody>
@@ -103,21 +112,75 @@ const ThirdPartyConfigsPage = () => {
 const IntegratorConfig = ({
   row,
   handleRowClick,
+  reFetch,
 }: {
   row: IntegratorConfigs;
   handleRowClick: (id: string) => void;
+  reFetch: () => void;
 }) => {
+  const [showDeleteConfig, setShowDeleteConfigDialog] = useState(false);
+
+  const { mutate: mutateDelete } = useMutation(
+    "deleteIntegratorConfig",
+    deleteIntegratorConfig,
+    {
+      onSuccess: () => reFetch(),
+      onSettled: () => setShowDeleteConfigDialog(false),
+    },
+  );
+
   return (
-    <TableRow
-      className={"cursor-pointer"}
-      key={row.id}
-      onClick={() => handleRowClick(row.id!)}
-    >
-      <TableCell>{row.name}</TableCell>
-      <TableCell>{row.providerId}</TableCell>
-      <TableCell>{row.clientId}</TableCell>
-      <TableCell>{row.serviceProviderId}</TableCell>
-    </TableRow>
+    <>
+      <TableRow
+        className={"cursor-pointer"}
+        key={row.id}
+        onClick={() => handleRowClick(row.id!)}
+      >
+        <TableCell>{row.name}</TableCell>
+        <TableCell>{row.providerId}</TableCell>
+        <TableCell>{row.clientId}</TableCell>
+        <TableCell>{row.serviceProviderId}</TableCell>
+        <TableCell>
+          <AdminOnly>
+            <IconButton
+              className="w-5 pl-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfigDialog(true);
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </AdminOnly>
+        </TableCell>
+      </TableRow>
+      <AlertDialog
+        isOpen={showDeleteConfig}
+        handleClose={() => setShowDeleteConfigDialog(false)}
+        title={"Delete config"}
+        description={"Are you sure you want to delete this configuration?"}
+        buttons={[
+          <Button
+            key="cancel"
+            onClick={() => setShowDeleteConfigDialog(false)}
+            color="primary"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="yes"
+            onClick={() => {
+              if (!row.id) return;
+              mutateDelete(row.id);
+            }}
+            color="primary"
+            autoFocus
+          >
+            Delete
+          </Button>,
+        ]}
+      />
+    </>
   );
 };
 

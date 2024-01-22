@@ -10,11 +10,18 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
-import { useQuery } from "react-query";
-import { getOAConfigs, OAConfigResponse } from "../../api/config";
+import { useMutation, useQuery } from "react-query";
+import {
+  deleteOAConfig,
+  getOAConfigs,
+  OAConfigResponse,
+} from "../../api/config";
 import { useNavigate } from "react-router-dom";
 import { getOAHealth } from "../../api/health";
 import { AdminOnly } from "../../components/auth-guard";
+import DeleteIcon from "@mui/icons-material/Delete";
+import IconButton from "@mui/material/IconButton";
+import AlertDialog from "../../components/dialog";
 
 const OAConfigsPage = () => {
   const navigate = useNavigate();
@@ -73,6 +80,7 @@ const OAConfigsPage = () => {
               <TableCell>Facilities</TableCell>
               <TableCell>Devices</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell className="w-5 pl-1" />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -81,6 +89,7 @@ const OAConfigsPage = () => {
                 key={row.id}
                 row={row}
                 handleRowClick={handleRowClick}
+                reFetch={refetch}
               />
             ))}
           </TableBody>
@@ -102,9 +111,11 @@ const OAConfigsPage = () => {
 const OAConfigRow = ({
   row,
   handleRowClick,
+  reFetch,
 }: {
   row: OAConfigResponse;
   handleRowClick: (id: string) => void;
+  reFetch: () => void;
 }) => {
   const { data: oaHealth } = useQuery(
     "getOAHealth",
@@ -118,31 +129,82 @@ const OAConfigRow = ({
     {},
   );
 
+  const [showDeleteConfig, setShowDeleteConfigDialog] = useState(false);
+
+  const { mutate: mutateDelete } = useMutation(
+    "deleteOaConfig",
+    deleteOAConfig,
+    {
+      onSuccess: () => reFetch(),
+      onSettled: () => setShowDeleteConfigDialog(false),
+    },
+  );
+
   return (
-    <TableRow
-      className={"cursor-pointer"}
-      key={row.id}
-      onClick={() => handleRowClick(row.id)}
-    >
-      <TableCell>{row.name}</TableCell>
-      <TableCell>{row.facilities?.join(", ")}</TableCell>
-      <TableCell>{row.devices?.join(", ")}</TableCell>
-      <TableCell>
-        {oaHealth?.oa === "up" ? (
-          <div
-            className="w-5 h-5 rounded-full
+    <>
+      <TableRow
+        className={"cursor-pointer"}
+        key={row.id}
+        onClick={() => handleRowClick(row.id)}
+      >
+        <TableCell>{row.name}</TableCell>
+        <TableCell>{row.facilities?.join(", ")}</TableCell>
+        <TableCell>{row.devices?.join(", ")}</TableCell>
+        <TableCell>
+          {oaHealth?.oa === "up" ? (
+            <div
+              className="w-5 h-5 rounded-full
                 inline-flex items-center justify-center
                 bg-green-500"
-          ></div>
-        ) : (
-          <div
-            className="w-5 h-5 rounded-full
+            ></div>
+          ) : (
+            <div
+              className="w-5 h-5 rounded-full
                 inline-flex items-center justify-center
                 bg-red-500"
-          ></div>
-        )}
-      </TableCell>
-    </TableRow>
+            ></div>
+          )}
+        </TableCell>
+        <TableCell>
+          <AdminOnly>
+            <IconButton
+              className="w-5 pl-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfigDialog(true);
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </AdminOnly>
+        </TableCell>
+      </TableRow>
+      <AlertDialog
+        isOpen={showDeleteConfig}
+        handleClose={() => setShowDeleteConfigDialog(false)}
+        title={"Delete config"}
+        description={"Are you sure you want to delete this configuration?"}
+        buttons={[
+          <Button
+            key="cancel"
+            onClick={() => setShowDeleteConfigDialog(false)}
+            color="primary"
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="yes"
+            onClick={() => {
+              mutateDelete(row.id);
+            }}
+            color="primary"
+            autoFocus
+          >
+            Delete
+          </Button>,
+        ]}
+      />
+    </>
   );
 };
 
