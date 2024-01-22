@@ -9,10 +9,6 @@ RUN mkdir cert
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-ARG REACT_APP_API_URL
-
-ENV REACT_APP_API_URL $REACT_APP_API_URL
-
 RUN npm install -g pnpm
 
 # Install app dependencies

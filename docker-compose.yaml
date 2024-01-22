@@ -13,8 +13,6 @@ services:
   oa-dashboard:
     build:
       context: ./web
-      args:
-        REACT_APP_API_URL: ${BACKEND_BASE_URL}
     container_name: oa-dashboard
     ports:
       - "3000:3000"

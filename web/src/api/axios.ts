@@ -2,12 +2,12 @@ import axios from "axios";
 import authMiddleware from "../middlewares/auth-middlewares";
 
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: window.location.origin.replace(":3000", ":1323"),
   timeout: 10000,
 });
 
 export const internal = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: window.location.origin.replace(":3000", ":1323"),
   timeout: 10000,
 });
 
