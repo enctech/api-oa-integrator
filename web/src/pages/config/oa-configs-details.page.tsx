@@ -147,7 +147,11 @@ const OaConfigsDetailsPage = () => {
         </div>
         {facilities && (
           <div className="mb-8">
-            <div>Facilities</div>
+            <div className="flex">
+              <div>Facilities </div>
+              &nbsp;
+              <div>(Press enter to confirm)</div>
+            </div>
             <Autocomplete
               clearIcon={false}
               options={[]}
@@ -197,7 +201,11 @@ const OaConfigsDetailsPage = () => {
         )}
         {devices && (
           <div className="mb-8">
-            <div>Devices</div>
+            <div className="flex">
+              <div>Devices</div>
+              &nbsp;
+              <div>(Press enter to confirm)</div>
+            </div>
             <Autocomplete
               clearIcon={false}
               options={[]}
