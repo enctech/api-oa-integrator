@@ -23,7 +23,11 @@ run_application:
 	chmod u+x scripts/db_backup.sh
 	make build_new && make clear_images
 
-update_restart:
+update:
 	git pull
 	chmod u+x scripts/db_backup.sh
+	chmod u+x scripts/startup.sh
+
+update_restart:
+	make update
 	make run_application
