@@ -20,13 +20,13 @@ build_new:
 	docker compose up -d --build
 
 run_application:
-	chmod u+x scripts/db_backup.sh
-	make build_new && make clear_images
+	make update && make build_new && make clear_images
 
 update:
 	git pull
 	chmod u+x scripts/db_backup.sh
 	chmod u+x scripts/startup.sh
+	chmod u+x scripts/update_cert.sh
 
 update_restart:
 	make update
