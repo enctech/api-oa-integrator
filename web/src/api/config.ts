@@ -114,7 +114,7 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
   return axios
     .put(`/config/integrator-config/${arg.id}`, {
       clientId: data.clientId,
-      providerId: data.providerId,
+      providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
       integratorName: data.integratorName,
