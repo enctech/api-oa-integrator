@@ -392,7 +392,7 @@ const ThirdPartyConfigsDetailsPage = () => {
               <RadioGroup
                 {...field}
                 key={data?.surchargeType}
-                defaultValue={data?.surchargeType}
+                defaultValue={data?.surchargeType || "exact"}
                 row={true}
                 className="mb-8"
               >

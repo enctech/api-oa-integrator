@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"strconv"
+	"strings"
 )
 
 func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
@@ -232,6 +233,15 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		return IntegratorConfig{}, err
 	}
 
+	surchRes, err := strconv.ParseFloat(strings.TrimSpace(config.Surcharge.String), 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("error parse float surcharge %v", err), nil)
+	}
+	taxRateRes, err := strconv.ParseFloat(strings.TrimSpace(config.TaxRate.String), 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("error parse float TaxRate %v", err), nil)
+	}
+
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	return IntegratorConfig{
@@ -245,6 +255,9 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		PlazaIdMap:         in.PlazaIdMap,
 		Url:                config.Url.String,
 		Extra:              extra,
+		SurchargeType:      config.SurchangeType.SurchargeType,
+		Surcharge:          surchRes,
+		TaxRate:            taxRateRes,
 	}, nil
 }
 
