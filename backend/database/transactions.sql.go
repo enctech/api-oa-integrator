@@ -381,7 +381,7 @@ func (q *Queries) GetOAEntryTransactions(ctx context.Context, arg GetOAEntryTran
 const getOAExitTransactions = `-- name: GetOAExitTransactions :one
 select count(*)
 from oa_transactions
-where exit_lane is not null
+where extra ->> 'steps' = 'exit_leave_loop_done'
   and created_at >= $1
   and created_at <= $2
 `

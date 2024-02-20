@@ -48,7 +48,7 @@ where extra ->> 'steps' = 'leave_loop_entry_done'
 -- name: GetOAExitTransactions :one
 select count(*)
 from oa_transactions
-where exit_lane is not null
+where extra ->> 'steps' = 'exit_leave_loop_done'
   and created_at >= sqlc.arg(start_at)
   and created_at <= sqlc.arg(end_at);
 
