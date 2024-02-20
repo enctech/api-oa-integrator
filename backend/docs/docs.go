@@ -1025,6 +1025,9 @@ const docTemplate = `{
                 "clientId": {
                     "type": "string"
                 },
+                "displayName": {
+                    "type": "string"
+                },
                 "extra": {
                     "type": "object",
                     "additionalProperties": {

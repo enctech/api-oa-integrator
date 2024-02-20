@@ -78,6 +78,7 @@ export interface IntegratorConfigs {
   providerId: number;
   serviceProviderId: string;
   name: string;
+  displayName: string;
   integratorName?: string;
   url: string;
   insecureSkipVerify: boolean;
@@ -117,6 +118,7 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
       providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
+      displayName: data.displayName,
       integratorName: data.integratorName,
       url: data.url,
       insecureSkipVerify: data.insecureSkipVerify,
@@ -140,13 +142,17 @@ export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
       providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
+      displayName: data.displayName,
       integratorName: data.integratorName,
       url: data.url,
       insecureSkipVerify: data.insecureSkipVerify,
       plazaIdMap: JSON.parse(
-        JSON.stringify(Object.fromEntries(arg.plazaIdMap)),
+        JSON.stringify(Object.fromEntries(data.plazaIdMap)),
       ),
       extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
+      taxRate: +arg.taxRate,
+      surcharge: +arg.surcharge,
+      surchargeType: arg.surchargeType,
     })
     .then((response) => response.data as IntegratorConfigs);
 };

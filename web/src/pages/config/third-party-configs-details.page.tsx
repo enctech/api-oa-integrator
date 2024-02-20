@@ -35,6 +35,7 @@ import { AdminOnly } from "../../components/auth-guard";
 interface FormData {
   url: string;
   name: string;
+  displayName: string;
   clientId: string;
   integratorName?: string;
   serviceProviderId: string;
@@ -125,6 +126,8 @@ const ThirdPartyConfigsDetailsPage = () => {
     if (!data) return;
     setValue("url", data.url);
     setValue("name", data.name);
+    setValue("name", data.name);
+    setValue("displayName", data.displayName);
     setName(data.name);
     setValue("clientId", data.clientId);
     setValue("providerId", data.providerId);
@@ -133,7 +136,7 @@ const ThirdPartyConfigsDetailsPage = () => {
     setValue("integratorName", data.integratorName);
     setValue("taxRate", data.taxRate);
     setValue("surcharge", data.surcharge);
-    setValue("surchargeType", data.surchargeType);
+    setValue("surchargeType", data.surchargeType || "exact");
     if (data.plazaIdMap) {
       const keys = Object.keys(data.plazaIdMap);
       keys.forEach((key, index) => {
@@ -171,6 +174,7 @@ const ThirdPartyConfigsDetailsPage = () => {
       create({
         id: id || "",
         url: data.url,
+        displayName: data.displayName,
         name: data.name,
         clientId: data.clientId,
         serviceProviderId: data.serviceProviderId,
@@ -190,6 +194,7 @@ const ThirdPartyConfigsDetailsPage = () => {
       id: id || "",
       url: data.url,
       name: data.name,
+      displayName: data.displayName,
       clientId: data.clientId,
       serviceProviderId: data.serviceProviderId,
       providerId: data.providerId,
@@ -207,7 +212,7 @@ const ThirdPartyConfigsDetailsPage = () => {
     <Container className="p-16">
       <div className="flex content-between items-center justify-center mb-6">
         <Typography variant="h5" component="h2">
-          {data?.name} Config Details
+          {data?.displayName} Config Details
         </Typography>
         <div className="flex-1" />
         <AdminOnly>
@@ -228,16 +233,7 @@ const ThirdPartyConfigsDetailsPage = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <div className="mb-8">
-            <div>
-              Name
-              <NoMaxWidthTooltip
-                title={`This will be identifier for SnB to use to call OA system. Example, http://localhost:8080/oa/${
-                  name || "{name}"
-                }/AuthorizationService3rdParty`}
-              >
-                <InfoIcon />
-              </NoMaxWidthTooltip>
-            </div>
+            <div>Display Name</div>
             <TextField
               fullWidth={true}
               variant="outlined"
@@ -247,11 +243,34 @@ const ThirdPartyConfigsDetailsPage = () => {
                   WebkitTextFillColor: "#000000",
                 },
               }}
-              {...register("name", {
-                onChange: (e) => setName(e.target.value),
-              })}
+              {...register("displayName")}
             />
           </div>
+        </div>
+        <div className="mb-8">
+          <div>
+            Name
+            <NoMaxWidthTooltip
+              title={`This will be identifier for SnB to use to call OA system. Example, http://localhost:8080/oa/${
+                name || "{name}"
+              }/AuthorizationService3rdParty`}
+            >
+              <InfoIcon />
+            </NoMaxWidthTooltip>
+          </div>
+          <TextField
+            fullWidth={true}
+            variant="outlined"
+            disabled={!isEditing}
+            sx={{
+              "& .MuiInputBase-input.Mui-disabled": {
+                WebkitTextFillColor: "#000000",
+              },
+            }}
+            {...register("name", {
+              onChange: (e) => setName(e.target.value),
+            })}
+          />
         </div>
         <div>
           <div className="flex">

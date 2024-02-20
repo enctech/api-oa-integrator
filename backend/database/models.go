@@ -61,6 +61,7 @@ type IntegratorConfig struct {
 	ClientID           sql.NullString
 	ProviderID         sql.NullInt32
 	Name               sql.NullString
+	DisplayName        sql.NullString
 	IntegratorName     sql.NullString
 	SpID               sql.NullString
 	PlazaIDMap         pqtype.NullRawMessage

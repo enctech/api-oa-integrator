@@ -136,7 +136,7 @@ const IntegratorConfig = ({
         key={row.id}
         onClick={() => handleRowClick(row.id!)}
       >
-        <TableCell>{row.name}</TableCell>
+        <TableCell>{row.displayName}</TableCell>
         <TableCell>{row.providerId}</TableCell>
         <TableCell>{row.clientId}</TableCell>
         <TableCell>{row.serviceProviderId}</TableCell>

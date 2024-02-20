@@ -18,6 +18,7 @@ type IntegratorConfig struct {
 	ProviderId         int32                  `json:"providerId,omitempty"`
 	ServiceProviderId  string                 `json:"serviceProviderId,omitempty"`
 	Name               string                 `json:"name,omitempty"`
+	DisplayName        string                 `json:"displayName,omitempty"`
 	IntegratorName     string                 `json:"integratorName,omitempty"`
 	Url                string                 `json:"url,omitempty"`
 	InsecureSkipVerify bool                   `json:"insecureSkipVerify,omitempty"`

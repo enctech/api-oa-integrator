@@ -111,11 +111,15 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
 		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
 		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
+		DisplayName:        sql.NullString{String: in.DisplayName, Valid: in.DisplayName != ""},
 		InsecureSkipVerify: sql.NullBool{Bool: in.InsecureSkipVerify, Valid: true},
-		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: jsonString != nil},
+		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: err != nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},
 		IntegratorName:     sql.NullString{String: in.IntegratorName, Valid: in.Url != ""},
 		Extra:              pqtype.NullRawMessage{RawMessage: extraData, Valid: extraData != nil || len(extraData) > 0},
+		Surcharge:          sql.NullString{String: fmt.Sprintf("%f", in.Surcharge), Valid: true},
+		TaxRate:            sql.NullString{String: fmt.Sprintf("%f", in.TaxRate), Valid: true},
+		SurchangeType:      database.NullSurchargeType{SurchargeType: in.SurchargeType, Valid: true},
 	})
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("error create integrator config %v", err), nil)
@@ -126,6 +130,15 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
+	surchRes, err := strconv.ParseFloat(strings.TrimSpace(config.Surcharge.String), 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("error parse float surcharge %v", err), nil)
+	}
+	taxRateRes, err := strconv.ParseFloat(strings.TrimSpace(config.TaxRate.String), 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("error parse float TaxRate %v", err), nil)
+	}
+
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
@@ -134,9 +147,12 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
 		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         plazaId,
+		PlazaIdMap:         in.PlazaIdMap,
 		Url:                config.Url.String,
 		Extra:              extra,
+		SurchargeType:      config.SurchangeType.SurchargeType,
+		Surcharge:          surchRes,
+		TaxRate:            taxRateRes,
 	}, nil
 }
 
@@ -155,6 +171,7 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 		var extra map[string]string
 		_ = json.Unmarshal(config.Extra.RawMessage, &plazaId)
 		out = append(out, IntegratorConfig{
+			DisplayName:        config.DisplayName.String,
 			IntegratorName:     config.IntegratorName.String,
 			Id:                 config.ID.String(),
 			ClientId:           config.ClientID.String,
@@ -185,15 +202,16 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 
 	surcharge := 0.0
-	if s, err := strconv.ParseFloat(config.Surcharge.String, 32); err == nil {
+	if s, err := strconv.ParseFloat(strings.TrimSpace(config.Surcharge.String), 64); err == nil {
 		surcharge = s
 	}
 
 	taxRate := 0.0
-	if s, err := strconv.ParseFloat(config.TaxRate.String, 32); err == nil {
+	if s, err := strconv.ParseFloat(strings.TrimSpace(config.TaxRate.String), 64); err == nil {
 		taxRate = s
 	}
 	return IntegratorConfig{
+		DisplayName:        config.DisplayName.String,
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
 		ClientId:           config.ClientID.String,
@@ -219,6 +237,7 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
 		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
 		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
+		DisplayName:        sql.NullString{String: in.DisplayName, Valid: in.DisplayName != ""},
 		InsecureSkipVerify: sql.NullBool{Bool: in.InsecureSkipVerify, Valid: true},
 		PlazaIDMap:         pqtype.NullRawMessage{RawMessage: jsonString, Valid: err == nil},
 		Url:                sql.NullString{String: in.Url, Valid: in.Url != ""},

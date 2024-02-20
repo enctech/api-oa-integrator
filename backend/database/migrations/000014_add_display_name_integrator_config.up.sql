@@ -1,0 +1,1 @@
+alter table integrator_config add column display_name varchar(255) null;

@@ -23,6 +23,8 @@ definitions:
     properties:
       clientId:
         type: string
+      displayName:
+        type: string
       extra:
         additionalProperties:
           type: string

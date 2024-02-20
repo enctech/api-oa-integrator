@@ -35,6 +35,7 @@ create table integrator_config
     client_id            varchar,
     provider_id          int,
     name                 varchar,
+    display_name         varchar,
     integrator_name      varchar,
     sp_id                varchar,
     plaza_id_map         json,
@@ -67,7 +68,7 @@ create table oa_transactions
 create table integrator_transactions
 (
     id                      uuid primary key,
-    business_transaction_id uuid not null,
+    business_transaction_id uuid      not null,
     lpn                     varchar,
     integrator_id           uuid,
     status                  varchar,

@@ -354,7 +354,7 @@ func (con controller) getIntegratorTransactions(c echo.Context) error {
 			err = json.Unmarshal(txn.TaxData.RawMessage, &taxData)
 		}
 
-		amount, _ := strconv.ParseFloat(txn.Amount.String, 32)
+		amount, _ := strconv.ParseFloat(txn.Amount.String, 64)
 		txnData = append(txnData, IntegratorTransactions{
 			Id:                    txn.ID.String(),
 			BusinessTransactionID: txn.BusinessTransactionID.String(),

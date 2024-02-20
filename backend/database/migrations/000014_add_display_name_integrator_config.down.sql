@@ -1,0 +1,1 @@
+alter table integrator_config drop column display_name;
