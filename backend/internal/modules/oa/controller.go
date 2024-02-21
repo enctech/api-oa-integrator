@@ -180,7 +180,10 @@ func (con controller) createJob(c echo.Context) error {
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		go sendEmptyFinalMessage(rm)
-		return nil
+		return c.XML(http.StatusCreated, ConfirmationResponse{
+			ConfirmationDetailStatus: "JOB_CREATED",
+			ConfirmationStatus:       "OK",
+		})
 	}
 	logger.LogData("info", "createJob", map[string]interface{}{
 		"facility":    c.Param("facility"),
