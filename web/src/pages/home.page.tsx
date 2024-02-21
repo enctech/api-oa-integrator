@@ -26,9 +26,13 @@ const HomePage = () => {
   const { data } = useQuery("misc", misc, {
     refetchInterval: 1000 * 5,
   });
-  const { data: integratorData } = useQuery("misc", integratorStatus, {
-    refetchInterval: 1000 * 60,
-  });
+  const { data: integratorData } = useQuery(
+    "integratorStatus",
+    integratorStatus,
+    {
+      refetchInterval: 1000 * 60,
+    },
+  );
   return (
     <Container>
       <div className="flex">
