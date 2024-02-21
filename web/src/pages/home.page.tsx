@@ -24,7 +24,7 @@ import { statusMapper } from "./oa-transactions.page";
 
 const HomePage = () => {
   const { data } = useQuery("misc", misc, {
-    refetchInterval: 5000,
+    refetchInterval: 1000 * 60,
   });
   return (
     <Container>
