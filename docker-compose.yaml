@@ -20,11 +20,11 @@ services:
       - api-oa-integrator
   oa-integrator-db:
     image: postgres:latest
-    container_name: postgres_db
+    container_name: oa-integrator-db
     restart: always
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_PASSWORD=a8mJ!4ug2dvj
     ports:
       - '5432:5432'
     volumes:

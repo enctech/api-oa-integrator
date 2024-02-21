@@ -4,4 +4,4 @@ app:
   secret: QjrwoX405TUmRVsZPmZ5qVuZDIhz3tDCUQf2TBZQCGk0jCcMx-JcaJizu82-GoeSudfrbtAgwvA-7R6aB3AKOQ==
 
 database:
-  url: postgres://postgres:postgres123@localhost:5432/postgres?sslmode=disable
+  url: postgres://postgres:a8mJ!4ug2dvj@localhost:5432/postgres?sslmode=disable
