@@ -2,11 +2,14 @@ import axios from "./axios";
 import moment from "moment/moment";
 
 interface MiscResponse {
-  integrators: { integrator: string; status: string }[];
-  snb: { facility: string; status: string }[];
   totalIn: number;
   totalOut: number;
   totalPayment: number;
+}
+
+interface IntegratorStatusResponse {
+  integrators: { integrator: string; status: string }[];
+  snb: { facility: string; status: string }[];
 }
 
 export const misc = async () => {
@@ -18,4 +21,10 @@ export const misc = async () => {
       },
     })
     .then((res) => res.data as MiscResponse);
+};
+
+export const integratorStatus = async () => {
+  return axios
+    .get("/misc/integrator")
+    .then((res) => res.data as IntegratorStatusResponse);
 };

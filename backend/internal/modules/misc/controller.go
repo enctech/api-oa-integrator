@@ -17,6 +17,7 @@ func InitController(e *echo.Echo) {
 	g := e.Group("misc")
 	c := controller{}
 	g.GET("/", c.getData)
+	g.GET("/integrator", c.getIntegratorStatus)
 }
 
 // getData godoc
@@ -35,8 +36,6 @@ func (con controller) getData(c echo.Context) error {
 	if err != nil {
 		before = time.Now()
 	}
-	snbStatus := getAllSnBStatus(c.Request().Context())
-	integratorsStatus := getAllIntegratorStatus(c.Request().Context())
 
 	totalIn, _ := database.New(database.D()).GetOAEntryTransactions(c.Request().Context(), database.GetOAEntryTransactionsParams{
 		StartAt: after.UTC().Round(time.Microsecond),
@@ -54,11 +53,28 @@ func (con controller) getData(c echo.Context) error {
 	})
 	payment, err := strconv.ParseFloat(totalPayment, 64)
 	out := map[string]any{
-		"snb":          snbStatus,
-		"integrators":  integratorsStatus,
 		"totalPayment": payment,
 		"totalIn":      totalIn,
 		"totalOut":     totalOut,
+	}
+
+	return c.JSON(http.StatusOK, out)
+}
+
+// getIntegratorStatus godoc
+//
+//	@Summary		Get all integrator status
+//	@Description	Get all integrator status
+//	@Tags		 misc
+//	@Accept			application/json
+//	@Produce		application/json
+//	@Router			/misc/integrator [get]
+func (con controller) getIntegratorStatus(c echo.Context) error {
+	snbStatus := getAllSnBStatus(c.Request().Context())
+	integratorsStatus := getAllIntegratorStatus(c.Request().Context())
+	out := map[string]any{
+		"snb":         snbStatus,
+		"integrators": integratorsStatus,
 	}
 
 	return c.JSON(http.StatusOK, out)

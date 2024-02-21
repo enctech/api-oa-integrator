@@ -17,13 +17,16 @@ import TimeToLeaveIcon from "@mui/icons-material/TimeToLeave";
 import NoCrashIcon from "@mui/icons-material/NoCrash";
 import PaidIcon from "@mui/icons-material/Paid";
 import { useQuery } from "react-query";
-import { misc } from "../api/misc";
+import { integratorStatus, misc } from "../api/misc";
 import { getLatestOATransactions } from "../api/transactions";
 import moment from "moment";
 import { statusMapper } from "./oa-transactions.page";
 
 const HomePage = () => {
   const { data } = useQuery("misc", misc, {
+    refetchInterval: 1000 * 5,
+  });
+  const { data: integratorData } = useQuery("misc", integratorStatus, {
     refetchInterval: 1000 * 60,
   });
   return (
@@ -104,7 +107,7 @@ const HomePage = () => {
         <Status
           title="3rd parties Status"
           data={
-            data?.integrators?.map((x) => ({
+            integratorData?.integrators?.map((x) => ({
               info: x.integrator,
               status: x.status,
             })) || []
@@ -117,8 +120,10 @@ const HomePage = () => {
         <Status
           title="Snb Status"
           data={
-            data?.snb?.map((x) => ({ info: x.facility, status: x.status })) ||
-            []
+            integratorData?.snb?.map((x) => ({
+              info: x.facility,
+              status: x.status,
+            })) || []
           }
           partialAvailableMessage="Partial SnB system available"
           fullyAvailableMessage="All SnB system available"
