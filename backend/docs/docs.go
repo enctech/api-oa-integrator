@@ -498,6 +498,22 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/misc/integrator": {
+            "get": {
+                "description": "Get all integrator status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "misc"
+                ],
+                "summary": "Get all integrator status",
+                "responses": {}
+            }
+        },
         "/oa/{vendor}/AuthorizationService3rdParty/version": {
             "put": {
                 "description": "get the version and configuration available",

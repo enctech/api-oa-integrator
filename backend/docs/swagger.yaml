@@ -567,6 +567,17 @@ paths:
       summary: Get all misc data used in homepage
       tags:
       - misc
+  /misc/integrator:
+    get:
+      consumes:
+      - application/json
+      description: Get all integrator status
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all integrator status
+      tags:
+      - misc
   /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}:
     post:
       consumes:

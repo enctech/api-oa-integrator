@@ -44,7 +44,7 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		"request": map[string]any{
 			"header": map[string]any{
 				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Format(time.RFC3339),
+				"timestamp": time.Now().Local().Format(time.RFC3339),
 				"clientId":  c.ClientID.String,
 				"function":  "falcon.device.status",
 				"version":   viper.GetString("app.version"),
@@ -54,7 +54,7 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 					"deviceType": deviceTypeLPR,
 					"deviceNo":   plateNumber,
 				},
-				"entryTimestamp": time.Now().Format(time.RFC3339),
+				"entryTimestamp": time.Now().Local().Format(time.RFC3339),
 				"entrySPId":      c.SpID.String,
 				"entryPlazaId":   c.PlazaId,
 				"entryLaneId":    entryLane,
