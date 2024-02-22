@@ -40,6 +40,8 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		"vehiclePlateNo": plateNumber,
 		"vehicleType":    "Motorcar",
 	})
+
+	logger.LogData("info", fmt.Sprintf("current time: %v", time.Now().Local().Format(time.RFC3339)), map[string]interface{}{})
 	reqBody := map[string]interface{}{
 		"request": map[string]any{
 			"header": map[string]any{
