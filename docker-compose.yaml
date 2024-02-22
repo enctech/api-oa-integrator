@@ -10,6 +10,9 @@ services:
       DATABASE_URL: postgres://postgres:a8mJ!4ug2dvj@oa-integrator-db:5432/postgres?sslmode=disable
     depends_on:
       - oa-integrator-db
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
   oa-dashboard:
     build:
       context: ./web
