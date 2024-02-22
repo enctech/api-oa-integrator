@@ -78,6 +78,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
