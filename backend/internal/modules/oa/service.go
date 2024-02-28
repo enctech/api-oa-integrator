@@ -277,7 +277,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 			PaymentInformation: BuildPaymentInformation(&PaymentData{
 				OriginalAmount: OriginalAmount{
 					VatRate: job.PaymentData.OriginalAmount.VatRate,
-					Amount:  "0.00",
+					Amount:  "0",
 				},
 			}),
 		})
