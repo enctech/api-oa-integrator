@@ -436,7 +436,11 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 
 	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
 
-	counting := "RESERVED"
+	var counting *string = nil
+	if in.PaymentInformation != nil {
+		_counting := "RESERVED"
+		counting = &_counting
+	}
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{
 		PaymentInformation: in.PaymentInformation,
 		ProviderInformation: &ProviderInformation{
@@ -445,7 +449,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 				ProviderName: vendor.Name.String,
 			},
 		},
-		Counting: &counting,
+		Counting: counting,
 		MediaDataList: &[]MediaDataList{
 			{
 				MediaType:  "LICENSE_PLATE",
