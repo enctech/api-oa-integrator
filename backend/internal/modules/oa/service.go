@@ -264,10 +264,12 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	}
 	amountConv := amount / 100
 
-	var customerInformation *CustomerInformation
-	if job.CustomerInformation != nil && job.CustomerInformation.Customer != (Customer{}) {
-		customerInformation = &CustomerInformation{Customer: job.CustomerInformation.Customer}
-	}
+	cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+
+	customerInformation := &CustomerInformation{Customer: Customer{
+		CustomerId:    oaTxn.Customerid.String,
+		CustomerGroup: cfg.Name.String,
+	}}
 
 	sendZeroAmount := func() {
 		sendFinalMessageCustomer(metadata, FMCReq{
