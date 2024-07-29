@@ -143,6 +143,12 @@ Open your Ubuntu terminal and execute the following commands:
         ```
     **Note:** This command will start the application and can also be used to restart it for updates.
 
+## 7. Test the Application
+
+1. **Open your web browser and navigate to:**
+    - [https://localhost:3000](https://localhost:3000) or
+    - [https://[ipaddress]:3000](https://[ipaddress]:3000)
+
 
 ## Application Architecture
 
