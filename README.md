@@ -63,6 +63,11 @@ Open your Ubuntu terminal and execute the following commands:
     ```sh
     git clone https://github.com/enctech/api-oa-integrator.git
     ```
+    When prompted, enter the following credentials:
+    ```
+    Username for 'https://github.com': enctech
+    Password for 'https://enctech@github.com': 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
+    ```
     **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
 
 ## 2. Update SSL Certificate
