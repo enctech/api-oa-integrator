@@ -48,29 +48,56 @@
 
 ### Deployment
 
-Step-by-Step Instructions
-1. Clone the Repository
+# Step-by-Step Instructions
+
+## 1. Clone the Repository
+
 Open your Ubuntu terminal and execute the following commands:
-1.	Navigate to the desired directory:
-cd /path/to/your/directory
-2.	Clone the repository:
-git clone https://github.com/enctech/api-oa-integrator.git
-** If you encounter permission issues, please get personal access token  from enctech Admin.
-2 . Update SSL Certificate
-1.	Navigate to the cert folder within the cloned repository:
-cd /path/to/your/directory/api-oa-integrator/cert
-2.	Update or create the SSL certificate:
-o	a new certificate, you can use a tool like openssl:
-openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
-3. Copy the Certificate
-1.	Navigate back to the root of the cloned repository:
-cd /path/to/your/directory/api-oa-integrator
-2.	Run the make copy_cert command to copy the certificate to the backend and frontend folders:
-make copy_cert
-4. Run the Application
-1.	Start the application using the make run_application command:
-make run_application
-** This command will start the application and can also be used to restart it for updates.
+
+1. **Navigate to the desired directory:**
+    ```sh
+    cd /path/to/your/directory
+    ```
+
+2. **Clone the repository:**
+    ```sh
+    git clone https://github.com/enctech/api-oa-integrator.git
+    ```
+    **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
+
+## 2. Update SSL Certificate
+
+1. **Navigate to the `cert` folder within the cloned repository:**
+    ```sh
+    cd /path/to/your/directory/api-oa-integrator/cert
+    ```
+
+2. **Update or create the SSL certificate:**
+    - To create a new certificate, you can use a tool like `openssl`:
+        ```sh
+        openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
+        ```
+
+## 3. Copy the Certificate
+
+1. **Navigate back to the root of the cloned repository:**
+    ```sh
+    cd /path/to/your/directory/api-oa-integrator
+    ```
+
+2. **Run the `make copy_cert` command to copy the certificate to the backend and frontend folders:**
+    ```sh
+    make copy_cert
+    ```
+
+## 4. Run the Application
+
+1. **Start the application using the `make run_application` command:**
+    ```sh
+    make run_application
+    ```
+    **Note:** This command will start the application and can also be used to restart it for updates.
+
 
 ## Application Architecture
 
