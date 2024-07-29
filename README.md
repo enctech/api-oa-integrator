@@ -48,14 +48,29 @@
 
 ### Deployment
 
-1. Clone this repo (https://github.com/enctech/api-oa-integrator) or download from
-   releases (https://github.com/enctech/api-oa-integrator/releases).
-2. Update SSL certificate in [cert](./cert) folder. Create one if there's none.
-3. Run `make copy_cert`. This will copy the certificate to backend and frontend folder.
-4. Run `make run_application` to start the application. This can be used as restarting the application for updates as
-   well.
-5. Head over to [dashboard](https://localhost:3000) to view the application.
-6. API documentation is done through [swagger](https://localhost:1323/swagger/index.html#/) and can be viewed here.
+Step-by-Step Instructions
+1. Clone the Repository
+Open your Ubuntu terminal and execute the following commands:
+1.	Navigate to the desired directory:
+cd /path/to/your/directory
+2.	Clone the repository:
+git clone https://github.com/enctech/api-oa-integrator.git
+** If you encounter permission issues, please get personal access token  from enctech Admin.
+2 . Update SSL Certificate
+1.	Navigate to the cert folder within the cloned repository:
+cd /path/to/your/directory/api-oa-integrator/cert
+2.	Update or create the SSL certificate:
+o	a new certificate, you can use a tool like openssl:
+openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
+3. Copy the Certificate
+1.	Navigate back to the root of the cloned repository:
+cd /path/to/your/directory/api-oa-integrator
+2.	Run the make copy_cert command to copy the certificate to the backend and frontend folders:
+make copy_cert
+4. Run the Application
+1.	Start the application using the make run_application command:
+make run_application
+** This command will start the application and can also be used to restart it for updates.
 
 ## Application Architecture
 
