@@ -118,8 +118,30 @@ Open your Ubuntu terminal and execute the following commands:
     ```sh
     make run_application
     ```
-    **Note:** This command will start the application and can also be used to restart it for updates.
 
+    This command will perform the following steps:
+    - **Update the repository:** 
+        ```sh
+        make update
+        ```
+    - **Build the new version:**
+        ```sh
+        make build_new
+        ```
+    - **Clear old images:**
+        ```sh
+        make clear_images
+        ```
+    - **Pull the latest changes from the repository:**
+        ```sh
+        git pull
+        ```
+        When prompted, enter the following credentials:
+        ```
+        Username for 'https://github.com': enctech
+        Password for 'https://enctech@github.com': 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
+        ```
+    **Note:** This command will start the application and can also be used to restart it for updates.
 
 ## Application Architecture
 
