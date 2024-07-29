@@ -54,10 +54,10 @@
 
 Open your Ubuntu terminal and execute the following commands:
 
-1. **Create a directory named `OA` and navigate to it:**
+1. **Create a directory named `api-oa-integrator` under `/home/Downloads` and navigate to it:**
     ```sh
-    mkdir -p /path/to/OA
-    cd /path/to/OA
+    mkdir -p /home/Downloads/api-oa-integrator
+    cd /home/Downloads/api-oa-integrator
     ```
 
 ## 2. Clone the Repository
@@ -77,7 +77,7 @@ Open your Ubuntu terminal and execute the following commands:
 
 1. **Navigate to the `cert` folder within the cloned repository:**
     ```sh
-    cd /path/to/OA/api-oa-integrator
+    cd /home/Downloads/api-oa-integrator/api-oa-integrator
     mkdir -p cert
     cd cert
     ```
@@ -104,7 +104,7 @@ Open your Ubuntu terminal and execute the following commands:
 
 1. **Navigate back to the root of the cloned repository:**
     ```sh
-    cd /path/to/OA/api-oa-integrator
+    cd /home/Downloads/api-oa-integrator/api-oa-integrator
     ```
 
 2. **Run the `make copy_cert` command to copy the certificate to the backend and frontend folders:**
@@ -120,7 +120,7 @@ Open your Ubuntu terminal and execute the following commands:
     ```
 
     This command will perform the following steps:
-    - **Update the repository:** 
+    - **Update the repository:**
         ```sh
         make update
         ```
@@ -142,6 +142,7 @@ Open your Ubuntu terminal and execute the following commands:
         Password for 'https://enctech@github.com': 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
         ```
     **Note:** This command will start the application and can also be used to restart it for updates.
+
 
 ## Application Architecture
 
