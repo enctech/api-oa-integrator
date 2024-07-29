@@ -89,6 +89,16 @@ Open your Ubuntu terminal and execute the following commands:
         ```sh
         openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
         ```
+    - During the creation process, use the following details:
+        ```
+        Country Name (2 letter code) [AU]:MY
+        State or Province Name (full name) [Some-State]:Selangor
+        Locality Name (eg, city) []:Puchong
+        Organization Name (eg, company) [Internet Widgits Pty Ltd]:Enctech Services Sdn Bhd
+        Organizational Unit Name (eg, section) []:Parking
+        Common Name (e.g. server FQDN or YOUR name) []:enctech.com
+        Email Address []:enctech@gmail.com
+        ```
 
 ## 5. Copy the Certificate
 
