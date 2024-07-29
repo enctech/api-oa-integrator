@@ -73,20 +73,24 @@ Open your Ubuntu terminal and execute the following commands:
     ```
     **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
 
-## 3. Update SSL Certificate
+## 3. Create `cert` Folder
 
 1. **Navigate to the `cert` folder within the cloned repository:**
     ```sh
-    cd /path/to/OA/api-oa-integrator/cert
+    cd /path/to/OA/api-oa-integrator
+    mkdir -p cert
+    cd cert
     ```
 
-2. **Update or create the SSL certificate:**
+## 4. Update SSL Certificate
+
+1. **Update or create the SSL certificate:**
     - To create a new certificate, you can use a tool like `openssl`:
         ```sh
         openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
         ```
 
-## 4. Copy the Certificate
+## 5. Copy the Certificate
 
 1. **Navigate back to the root of the cloned repository:**
     ```sh
@@ -98,7 +102,7 @@ Open your Ubuntu terminal and execute the following commands:
     make copy_cert
     ```
 
-## 5. Run the Application
+## 6. Run the Application
 
 1. **Start the application using the `make run_application` command:**
     ```sh
