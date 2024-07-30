@@ -118,24 +118,7 @@ Open your Ubuntu terminal and execute the following commands:
     make run_application
     ```
 
-    This command will perform the following steps:
-    - **Update the repository:**
-        ```sh
-        make update
-        ```
-    - **Build the new version:**
-        ```sh
-        make build_new
-        ```
-    - **Clear old images:**
-        ```sh
-        make clear_images
-        ```
-    - **Pull the latest changes from the repository:**
-        ```sh
-        git pull
-        ```
-        When prompted, enter the following credentials:
+    When prompted, enter the following credentials:
         ```
         Username for 'https://github.com': enctech
         Password for 'https://enctech@github.com': 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
