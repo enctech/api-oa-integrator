@@ -48,9 +48,9 @@
 
 ### Deployment
 
-## Step-by-Step Instructions
+### Step-by-Step Instructions
 
-### 1. Create a Directory
+#### 1. Create a Directory
 
 Open your Ubuntu terminal and execute the following commands:
 
@@ -60,7 +60,7 @@ Open your Ubuntu terminal and execute the following commands:
     cd /home/Downloads/api-oa-integrator
     ```
 
-### 2. Clone the Repository
+#### 2. Clone the Repository
 
 1. **Clone the repository:**
     ```sh
@@ -73,14 +73,14 @@ Open your Ubuntu terminal and execute the following commands:
     ```
     **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
 
-### 3. Navigate to the `cert` Folder
+#### 3. Navigate to the `cert` Folder
 
 1. **Navigate to the `cert` folder within the cloned repository:**
     ```sh
     cd /home/Downloads/api-oa-integrator/api-oa-integrator/cert
     ```
 
-### 4. Update SSL Certificate
+#### 4. Update SSL Certificate
 
 1. **Update or create the SSL certificate:**
     - To create a new certificate, you can use a tool like `openssl`:
@@ -98,7 +98,7 @@ Open your Ubuntu terminal and execute the following commands:
         Email Address []:enctech@gmail.com
         ```
 
-### 5. Copy the Certificate
+#### 5. Copy the Certificate
 
 1. **Navigate back to the root of the cloned repository:**
     ```sh
@@ -110,7 +110,7 @@ Open your Ubuntu terminal and execute the following commands:
     make copy_cert
     ```
 
-### 6. Run the Application
+#### 6. Run the Application
 
 1. **Start the application using the `make run_application` command:**
     ```sh
@@ -141,7 +141,7 @@ Open your Ubuntu terminal and execute the following commands:
         ```
     **Note:** This command will start the application and can also be used to restart it for updates.
 
-### 7. Test the Application
+#### 7. Test the Application
 
 1. **Open your web browser and navigate to:**
     - [https://localhost:3000](https://localhost:3000) or
