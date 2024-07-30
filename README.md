@@ -118,11 +118,11 @@ Open your Ubuntu terminal and execute the following commands:
     make run_application
     ```
 
-    **When prompted, enter the following credentials:
-        ```
-        Username for 'https://github.com': enctech
-        Password for 'https://enctech@github.com': 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
-        ```
+    When prompted, enter the following credentials:
+    ```
+    Username for 'https://github.com': enctech
+    Password for 'https://enctech@github.com': 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
+    ```
     **Note:** This command will start the application and can also be used to restart it for updates.
 
 #### 7. Test the Application
