@@ -19,6 +19,7 @@ var Integrators = []string{"tng"}
 type Process interface {
 	VerifyVehicle(plateNumber, entryLane string) error
 	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error)
+	VoidTransaction(plateNumber, entryLane string, entryAt time.Time) error
 }
 
 func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Process, database.IntegratorConfig, error) {

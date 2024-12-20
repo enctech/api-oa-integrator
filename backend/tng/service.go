@@ -107,18 +107,95 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
+func (c Config) VoidTransaction(plateNumber, entryLane string, entryAt time.Time) error {
+	logger.LogData("info", "VoidTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+	extendInfo, _ := json.Marshal(map[string]any{
+		"vehiclePlateNo": plateNumber,
+		"vehicleType":    "Motorcar",
+	})
+
+	body := map[string]any{
+		"deviceInfo": map[string]any{
+			"deviceType": deviceTypeLPR,
+			"deviceNo":   plateNumber,
+		},
+		"entryTimestamp": entryAt,
+		"entrySPId":      c.SpID.String,
+		"entryPlazaId":   c.PlazaId,
+		"entryLaneId":    entryLane,
+		"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
+	}
+
+	var extra map[string]string
+	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
+
+	signature := createSignature(extra["sshKey"])
+	if signature == "" {
+		return errors.New("tng error: empty signature")
+	}
+
+	reqBody := map[string]interface{}{
+		"request": map[string]any{
+			"header": map[string]any{
+				"requestId": uuid.New().String(),
+				"timestamp": time.Now().Format(time.RFC3339),
+				"clientId":  c.ClientID.String,
+				"function":  "falcon.parking.transaction",
+				"version":   viper.GetString("app.version"),
+			},
+			"body": body,
+		},
+		"signature": signature,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/cancel/entry", c.Url.String), bytes.NewBuffer(jsonData))
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+
+	client := &http.Client{}
+	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("tng error: %v", "invalid response status"))
+	}
+	var data map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	responseBody := data["response"].(map[string]any)["body"]
+	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
+		return errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
+	}
+	return nil
+}
+
 func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
-	logger.LogData("error", "PerformTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+	logger.LogData("info", "PerformTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 	if plateNumber == "" {
 		return nil, nil, errors.New("tng error: empty plate number")
 	}
 
+	logger.LogData("info", "TESTT", map[string]interface{}{})
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
 	signature := createSignature(extra["sshKey"])
 	if signature == "" {
 		return nil, nil, errors.New("tng error: empty signature")
 	}
+
+	logger.LogData("info", "TESTT2", map[string]interface{}{})
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -198,6 +275,9 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	}
 	responseBody := data["response"].(map[string]any)["body"]
 	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
+		if err := c.VoidTransaction(plateNumber, entryLane, entryAt); err != nil {
+			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
+		}
 		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
 	}
 	return body, taxData, nil
