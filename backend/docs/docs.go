@@ -1413,7 +1413,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/api/",
 	Schemes:          []string{},
 	Title:            "Swagger OA Integrator API",
 	Description:      "This is a server OA integrator.",

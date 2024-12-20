@@ -13,7 +13,7 @@ import (
 type controller struct {
 }
 
-func InitController(e *echo.Echo) {
+func InitController(e *echo.Group) {
 	g := e.Group("misc")
 	c := controller{}
 	g.GET("/", c.getData)

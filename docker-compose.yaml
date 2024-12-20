@@ -1,28 +1,28 @@
 services:
-  api-oa-integrator:
+  backend:
     restart: always
     build: ./backend
-    container_name: api-oa-integrator
+    container_name: backend
     ports:
       - "1323:1323"
     environment:
-      DATABASE_URL: postgres://postgres:a8mJ!4ug2dvj@oa-integrator-db:5432/postgres?sslmode=disable
+      DATABASE_URL: postgres://postgres:a8mJ!4ug2dvj@db:5432/postgres?sslmode=disable
     depends_on:
-      - oa-integrator-db
+      - db
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-  oa-dashboard:
+  web:
     build:
       context: ./web
-    container_name: oa-dashboard
+    container_name: web
     ports:
       - "3000:3000"
     depends_on:
-      - api-oa-integrator
-  oa-integrator-db:
+      - backend
+  db:
     image: postgres:latest
-    container_name: oa-integrator-db
+    container_name: db
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -31,3 +31,14 @@ services:
       - '5432:5432'
     volumes:
       - /var/lib/postgresql/data:/var/lib/postgresql/data
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - web

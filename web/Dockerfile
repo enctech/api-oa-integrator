@@ -26,4 +26,4 @@ EXPOSE 3000
 RUN chmod +x ./run.sh
 
 # Define the command to run the app
-CMD ["./run.sh"]
+CMD ["npx", "serve", "-s", "build"]
