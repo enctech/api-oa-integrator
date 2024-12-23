@@ -37,8 +37,11 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
+      - "3030:3030"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
       - web

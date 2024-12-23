@@ -20,7 +20,7 @@ func InitServer() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	g := e.Group("api/")
-	g.GET("/swagger/*", echoSwagger.WrapHandler)
+	g.GET("swagger/*", echoSwagger.WrapHandler)
 	misc.InitController(g)
 	health.InitController(g)
 	oa.InitController(g)
