@@ -107,23 +107,17 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
-func (c Config) VoidTransaction(plateNumber, entryLane string, entryAt time.Time) error {
+func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 	logger.LogData("info", "VoidTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-	extendInfo, _ := json.Marshal(map[string]any{
-		"vehiclePlateNo": plateNumber,
-		"vehicleType":    "Motorcar",
-	})
 
 	body := map[string]any{
 		"deviceInfo": map[string]any{
 			"deviceType": deviceTypeLPR,
 			"deviceNo":   plateNumber,
 		},
-		"entryTimestamp": entryAt,
-		"entrySPId":      c.SpID.String,
-		"entryPlazaId":   c.PlazaId,
-		"entryLaneId":    entryLane,
-		"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
+		"serialNum":         transactionId,
+		"cancelRequestTime": time.Now().Format(time.RFC3339),
+		"extendInfo":        nil,
 	}
 
 	var extra map[string]string
@@ -140,7 +134,7 @@ func (c Config) VoidTransaction(plateNumber, entryLane string, entryAt time.Time
 				"requestId": uuid.New().String(),
 				"timestamp": time.Now().Format(time.RFC3339),
 				"clientId":  c.ClientID.String,
-				"function":  "falcon.parking.transaction",
+				"function":  "falcon.parking.cancel.transaction.order",
 				"version":   viper.GetString("app.version"),
 			},
 			"body": body,
@@ -153,7 +147,7 @@ func (c Config) VoidTransaction(plateNumber, entryLane string, entryAt time.Time
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/cancel/entry", c.Url.String), bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/cancel/transaction-order", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
@@ -212,12 +206,13 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"parkingTaxAmt":   tax.parkingTaxAmt,
 	}
 	now := time.Now()
+	serialNum := fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405"))
 	body := map[string]any{
 		"deviceInfo": map[string]any{
 			"deviceType": deviceTypeLPR,
 			"deviceNo":   plateNumber,
 		},
-		"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405")),
+		"serialNum":       serialNum,
 		"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
 		"entryTimestamp":  entryAt,
 		"entrySPId":       c.SpID.String,
@@ -275,7 +270,7 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	}
 	responseBody := data["response"].(map[string]any)["body"]
 	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
-		if err := c.VoidTransaction(plateNumber, entryLane, entryAt); err != nil {
+		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
 			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
 		}
 		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
