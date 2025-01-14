@@ -256,24 +256,17 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
-	if err != nil {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
-	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", "invalid response status"))
+	if err != nil {
+		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
+			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
+		}
+		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
-	}
-	responseBody := data["response"].(map[string]any)["body"]
-	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
-		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
-			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
-		}
-		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
 	}
 	return body, taxData, nil
 }
