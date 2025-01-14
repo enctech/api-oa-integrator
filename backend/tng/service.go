@@ -176,20 +176,16 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 }
 
 func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
-	logger.LogData("info", "PerformTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 	if plateNumber == "" {
 		return nil, nil, errors.New("tng error: empty plate number")
 	}
 
-	logger.LogData("info", "TESTT", map[string]interface{}{})
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
 	signature := createSignature(extra["sshKey"])
 	if signature == "" {
 		return nil, nil, errors.New("tng error: empty signature")
 	}
-
-	logger.LogData("info", "TESTT2", map[string]interface{}{})
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -256,13 +252,13 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	client := &http.Client{}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
 			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
 		}
 		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
+	defer resp.Body.Close()
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
