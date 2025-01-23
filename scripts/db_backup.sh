@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set your PostgreSQL container name, username, and database name
-container_name="postgres_db"
+container_name="db"
 username="postgres"
 database="postgres"
 
