@@ -6,7 +6,8 @@ services:
     ports:
       - "1323:1323"
     environment:
-      DATABASE_URL: postgres://postgres:a8mJ!4ug2dvj@db:5432/postgres?sslmode=disable
+      - TZ=Asia/Singapore
+      - DATABASE_URL=postgres://postgres:a8mJ!4ug2dvj@db:5432/postgres?sslmode=disable
     depends_on:
       - db
     volumes:
