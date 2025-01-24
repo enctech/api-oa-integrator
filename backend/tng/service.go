@@ -22,6 +22,8 @@ type Config struct {
 	PlazaId string
 }
 
+const timeOut = time.Second * 2
+
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 	logger.LogData("info", "VerifyVehicle", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 
@@ -76,7 +78,9 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: timeOut,
+	}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -153,7 +157,9 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: timeOut,
+	}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -249,7 +255,9 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: timeOut,
+	}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
