@@ -1,5 +1,5 @@
 api-oa-integrator.pokgak.xyz {
-    reverse_proxy 127.0.0.1:3000
+    reverse_proxy web:3000
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
     }
