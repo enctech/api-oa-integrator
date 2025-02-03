@@ -30,7 +30,7 @@ services:
     depends_on:
       - backend
   db:
-    image: postgres:latest
+    image: postgres:17
     container_name: db
     restart: always
     environment:
