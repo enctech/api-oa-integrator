@@ -45,6 +45,8 @@ services:
     volumes:
       - /root/api-oa-integrator/db-data:/var/lib/postgresql/data
   caddy:
+    build:
+      context: ./caddy
     image: caddy:2.9
     container_name: caddy
     restart: unless-stopped
@@ -53,7 +55,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     environment:
