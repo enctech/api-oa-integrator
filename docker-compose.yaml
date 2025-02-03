@@ -39,7 +39,7 @@ services:
     ports:
       - '127.0.0.1:5432:5432'
     volumes:
-      - /var/lib/postgresql/data:/var/lib/postgresql/data
+      - /root/api-oa-integrator/db-data:/var/lib/postgresql/data
   # nginx:
   #   image: nginx:latest
   #   container_name: nginx
