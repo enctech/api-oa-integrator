@@ -51,7 +51,7 @@ services:
     container_name: caddy
     restart: unless-stopped
     ports:
-      - "127.0.0.1:2019:2019"
+      - "2019:2019"
       - "80:80"
       - "443:443"
       - "443:443/udp"
