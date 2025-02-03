@@ -9,3 +9,4 @@ backend/cert
 web/cert
 cert
 ssl
+db-data/
