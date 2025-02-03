@@ -1,7 +1,9 @@
 {
-	servers {
-		metrics
-	}
+	admin 0.0.0.0:2019
+}
+
+localhost, 127.0.0.1 {
+	metrics
 }
 
 api-oa-integrator.pokgak.xyz {
