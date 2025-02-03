@@ -1,5 +1,7 @@
 {
-	metrics /metrics
+	servers {
+        metrics
+    }
 }
 
 api-oa-integrator.pokgak.xyz {
