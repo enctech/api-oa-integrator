@@ -1,4 +1,6 @@
-metrics /metrics
+{
+	metrics /metrics
+}
 
 api-oa-integrator.pokgak.xyz {
 	reverse_proxy web:3000
