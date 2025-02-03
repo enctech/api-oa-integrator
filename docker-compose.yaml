@@ -1,3 +1,7 @@
+volumes:
+  caddy_data:
+  caddy_config:
+
 services:
   backend:
     restart: always
@@ -40,6 +44,22 @@ services:
       - '127.0.0.1:5432:5432'
     volumes:
       - /root/api-oa-integrator/db-data:/var/lib/postgresql/data
+  caddy:
+    image: caddy:<version>
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CLOUDFLARE_API_TOKEN: tiKE18CWRvRQW-1qXcvuPRKIV8AYhyZiIduQhN6r
+    depends_on:
+      - backend
+      - web
   # nginx:
   #   image: nginx:latest
   #   container_name: nginx
