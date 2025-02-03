@@ -5,8 +5,7 @@ services:
       context: ./backend
       platforms:
         - linux/amd64
-      tags:
-        - ghcr.io/pokgak/api-oa-integrator/backend:latest
+    image: ghcr.io/pokgak/api-oa-integrator/backend:latest 
     container_name: backend
     platform: linux/amd64
     ports:
@@ -24,8 +23,7 @@ services:
       context: ./web
       platforms:
         - linux/amd64
-      tags:
-        - ghcr.io/pokgak/api-oa-integrator/web:latest
+    image: ghcr.io/pokgak/api-oa-integrator/web:latest 
     container_name: web
     ports:
       - "3000:3000"
@@ -56,3 +54,4 @@ services:
     depends_on:
       - backend
       - web
+
