@@ -113,12 +113,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		for _, cfg := range configs {
 			vendor := cfg.Name.String
 			if vendor != successfulVendor {
-				go func() {
-					err := integrator.CancelEntry(vendor, metadata.facility)
-					if err != nil {
-
-					}
-				}()
+				go integrator.CancelEntry(vendor, metadata.facility)
 			}
 		}
 	}()

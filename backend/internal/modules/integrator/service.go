@@ -56,16 +56,9 @@ func VerifyVehicle(client, locationId, plateNumber, lane string) error {
 	return nil
 }
 
-func CancelEntry(client, locationId string) error {
-	integratorConfig, _, err := getConfigFromIntegratorBasedOnIntegrator(client, locationId)
-	if err != nil {
-		return err
-	}
-	err = integratorConfig.CancelEntry()
-	if err != nil {
-		return err
-	}
-	return nil
+func CancelEntry(client, locationId string) {
+	integratorConfig, _, _ := getConfigFromIntegratorBasedOnIntegrator(client, locationId)
+	_ = integratorConfig.CancelEntry()
 }
 
 type TransactionArg struct {
