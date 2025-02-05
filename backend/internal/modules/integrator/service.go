@@ -20,6 +20,7 @@ type Process interface {
 	VerifyVehicle(plateNumber, entryLane string) error
 	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error)
 	VoidTransaction(plateNumber, transactionId string) error
+	CancelEntry() error
 }
 
 func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Process, database.IntegratorConfig, error) {
@@ -49,6 +50,18 @@ func VerifyVehicle(client, locationId, plateNumber, lane string) error {
 		return err
 	}
 	err = integratorConfig.VerifyVehicle(plateNumber, lane)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CancelEntry(client, locationId string) error {
+	integratorConfig, _, err := getConfigFromIntegratorBasedOnIntegrator(client, locationId)
+	if err != nil {
+		return err
+	}
+	err = integratorConfig.CancelEntry()
 	if err != nil {
 		return err
 	}

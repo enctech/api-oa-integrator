@@ -61,7 +61,6 @@ type RequestMetadata struct {
 	device   string `param:"device"`
 	facility string `param:"facility"`
 	jobId    string `param:"jobId"`
-	vendor   string `param:"vendor"`
 }
 
 type JobWrapper struct {

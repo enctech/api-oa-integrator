@@ -114,7 +114,7 @@ const createOATransaction = `-- name: CreateOATransaction :one
 insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane,
                              exit_lane)
 values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-returning id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+returning id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 `
 
 type CreateOATransactionParams struct {
@@ -144,6 +144,7 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 	var i OaTransaction
 	err := row.Scan(
 		&i.ID,
+		&i.IntegratorID,
 		&i.Businesstransactionid,
 		&i.Lpn,
 		&i.Customerid,
@@ -274,7 +275,7 @@ func (q *Queries) GetIntegratorTransactionsCount(ctx context.Context, arg GetInt
 }
 
 const getLatestOATransaction = `-- name: GetLatestOATransaction :one
-select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+select id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
 where businesstransactionid = $1
 order by created_at desc
@@ -286,6 +287,7 @@ func (q *Queries) GetLatestOATransaction(ctx context.Context, businesstransactio
 	var i OaTransaction
 	err := row.Scan(
 		&i.ID,
+		&i.IntegratorID,
 		&i.Businesstransactionid,
 		&i.Lpn,
 		&i.Customerid,
@@ -302,7 +304,7 @@ func (q *Queries) GetLatestOATransaction(ctx context.Context, businesstransactio
 }
 
 const getLatestOATransactions = `-- name: GetLatestOATransactions :many
-select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+select id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
 where updated_at >= $3
   and updated_at <= $4
@@ -333,6 +335,7 @@ func (q *Queries) GetLatestOATransactions(ctx context.Context, arg GetLatestOATr
 		var i OaTransaction
 		if err := rows.Scan(
 			&i.ID,
+			&i.IntegratorID,
 			&i.Businesstransactionid,
 			&i.Lpn,
 			&i.Customerid,
@@ -399,7 +402,7 @@ func (q *Queries) GetOAExitTransactions(ctx context.Context, arg GetOAExitTransa
 }
 
 const getOATransaction = `-- name: GetOATransaction :one
-select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+select id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
 where businesstransactionid = $1
 `
@@ -409,6 +412,7 @@ func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid st
 	var i OaTransaction
 	err := row.Scan(
 		&i.ID,
+		&i.IntegratorID,
 		&i.Businesstransactionid,
 		&i.Lpn,
 		&i.Customerid,
@@ -425,7 +429,7 @@ func (q *Queries) GetOATransaction(ctx context.Context, businesstransactionid st
 }
 
 const getOATransactions = `-- name: GetOATransactions :many
-select id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+select id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 from oa_transactions
 where lpn like concat('%', $3::text, '%')
   and jobid::text like concat('%', $4::text, '%')
@@ -472,6 +476,7 @@ func (q *Queries) GetOATransactions(ctx context.Context, arg GetOATransactionsPa
 		var i OaTransaction
 		if err := rows.Scan(
 			&i.ID,
+			&i.IntegratorID,
 			&i.Businesstransactionid,
 			&i.Lpn,
 			&i.Customerid,
@@ -558,15 +563,16 @@ func (q *Queries) GetTotalTransactionAmount(ctx context.Context, arg GetTotalTra
 
 const updateOATransaction = `-- name: UpdateOATransaction :one
 update oa_transactions
-set lpn        = coalesce($2, lpn),
-    customerid = coalesce($3, customerid),
-    jobid      = coalesce($4, jobid),
-    facility   = coalesce($5, facility),
-    device     = coalesce($6, device),
-    extra      = coalesce($7, extra),
-    exit_lane  = coalesce($8, exit_lane)
+set lpn           = coalesce($2, lpn),
+    customerid    = coalesce($3, customerid),
+    jobid         = coalesce($4, jobid),
+    facility      = coalesce($5, facility),
+    device        = coalesce($6, device),
+    extra         = coalesce($7, extra),
+    exit_lane     = coalesce($8, exit_lane),
+    integrator_id = coalesce($9, integrator_id)
 where businesstransactionid = $1
-returning id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
+returning id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 `
 
 type UpdateOATransactionParams struct {
@@ -578,6 +584,7 @@ type UpdateOATransactionParams struct {
 	Device                sql.NullString
 	Extra                 pqtype.NullRawMessage
 	ExitLane              sql.NullString
+	IntegratorID          uuid.NullUUID
 }
 
 func (q *Queries) UpdateOATransaction(ctx context.Context, arg UpdateOATransactionParams) (OaTransaction, error) {
@@ -590,10 +597,12 @@ func (q *Queries) UpdateOATransaction(ctx context.Context, arg UpdateOATransacti
 		arg.Device,
 		arg.Extra,
 		arg.ExitLane,
+		arg.IntegratorID,
 	)
 	var i OaTransaction
 	err := row.Scan(
 		&i.ID,
+		&i.IntegratorID,
 		&i.Businesstransactionid,
 		&i.Lpn,
 		&i.Customerid,

@@ -19,6 +19,7 @@ import (
 	"maps"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -56,38 +57,78 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		return
 	}
 
-	err = integrator.VerifyVehicle(metadata.vendor, metadata.facility, lpn, lane)
+	configs, err := database.New(database.D()).GetIntegratorConfigs(context.Background())
 	if err != nil {
-		logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), nil)
-
-		jsonStr, err := json.Marshal(map[string]any{
-			"steps": "identification_entry_error",
-			"error": err.Error(),
-		})
-		if err != nil {
-			logger.LogData("error", fmt.Sprintf("Error marshal %v", err), nil)
-			go sendEmptyFinalMessage(metadata)
-			return
-		}
-		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-			Businesstransactionid: data.Businesstransactionid,
-			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
-		})
-		if err != nil {
-			logger.LogData("error", fmt.Sprintf("Error UpdateOATransaction %v", err), nil)
-			go sendEmptyFinalMessage(metadata)
-			return
-		}
+		logger.LogData("error", fmt.Sprintf("Error create oa transaction %v", err), nil)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
+	var wg sync.WaitGroup
+	vendorChannel := make(chan string, 1)
+
+	for i := range configs {
+		wg.Add(1)
+		go func(vendorName string) {
+			defer wg.Done()
+			err = integrator.VerifyVehicle(vendorName, metadata.facility, lpn, lane)
+
+			if err != nil {
+				logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), nil)
+				jsonStr, err := json.Marshal(map[string]any{
+					"steps": "identification_entry_error",
+					"error": err.Error(),
+				})
+				if err != nil {
+					logger.LogData("error", fmt.Sprintf("Error marshal %v", err), nil)
+					go sendEmptyFinalMessage(metadata)
+					return
+				}
+				_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
+					Businesstransactionid: data.Businesstransactionid,
+					Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+				})
+			} else {
+				select {
+				case vendorChannel <- vendorName:
+				default: // Ignore if already filled
+				}
+			}
+		}(configs[i].Name.String)
+	}
+
+	wg.Wait()
+	close(vendorChannel)
+
+	var successfulVendor string
+	select {
+	case successfulVendor = <-vendorChannel:
+		fmt.Printf("Success from: %s\n", successfulVendor)
+	default:
+		sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
-		if err != nil {
+		for _, cfg := range configs {
+			vendor := cfg.Name.String
+			if vendor != successfulVendor {
+				go func() {
+					err := integrator.CancelEntry(vendor, metadata.facility)
+					if err != nil {
+
+					}
+				}()
+			}
+		}
+	}()
+
+	go func() {
+		if successfulVendor == "" {
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
+
 		jsonStr, err := json.Marshal(map[string]any{
 			"steps": "identification_entry_done",
 		})
@@ -96,6 +137,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
+
 		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
 			Businesstransactionid: data.Businesstransactionid,
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
@@ -106,11 +148,11 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			CustomerInformation: &CustomerInformation{
 				Customer: Customer{
 					CustomerId:    data.Customerid.String,
-					CustomerGroup: cfg.Name.String,
+					CustomerGroup: successfulVendor,
 				},
 			},
 			PaymentInformation: BuildPaymentInformation(nil),
-		})
+		}, successfulVendor)
 	}()
 
 	if c.Request().Header.Get("istest") != "" {
@@ -185,6 +227,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	lane := job.TimeAndPlace.Device.DeviceNumber
 	btid := job.BusinessTransaction.ID
 	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
+	config, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
 
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
@@ -204,7 +247,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	})
 
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: config.Name.String, Valid: true})
 		if err != nil {
 			go sendEmptyFinalMessage(metadata)
 			return
@@ -217,7 +260,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 				CustomerGroup: cfg.Name.String,
 			}},
 			PaymentInformation: BuildPaymentInformation(nil),
-		})
+		}, cfg.Name.String)
 	}()
 }
 
@@ -264,7 +307,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	}
 	amountConv := amount / 100
 
-	cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
 
 	customerInformation := &CustomerInformation{Customer: Customer{
 		CustomerId:    oaTxn.Customerid.String,
@@ -282,7 +325,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 					Amount:  "0",
 				},
 			}),
-		})
+		}, cfg.Name.String)
 	}
 
 	arg := integrator.TransactionArg{
@@ -292,7 +335,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Amount:                amountConv,
 		EntryAt:               oaTxn.CreatedAt,
 		BusinessTransactionId: btid,
-		Client:                metadata.vendor,
+		Client:                cfg.Name.String,
 		Facility:              metadata.facility,
 	}
 	err = integrator.PerformTransaction(arg)
@@ -347,7 +390,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 				Amount:  job.PaymentData.OriginalAmount.Amount,
 			},
 		}),
-	})
+	}, cfg.Name.String)
 }
 
 func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
@@ -374,6 +417,8 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
+
 	if extra["steps"] != "payment_exit_done" {
 		arg := integrator.TransactionArg{
 			LPN:                   lpn,
@@ -382,7 +427,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 			Amount:                0.00,
 			EntryAt:               oaTxn.CreatedAt,
 			BusinessTransactionId: btid,
-			Client:                metadata.vendor,
+			Client:                cfg.Name.String,
 			Facility:              metadata.facility,
 		}
 		err = integrator.PerformTransaction(arg)
@@ -423,7 +468,7 @@ type FMCReq struct {
 	Identifier          Identifier
 }
 
-func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
+func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName string) {
 	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   metadata.device,
 		Facility: metadata.facility,
@@ -434,7 +479,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
-	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: vendorName, Valid: true})
 
 	var counting *string = nil
 	if in.PaymentInformation != nil {

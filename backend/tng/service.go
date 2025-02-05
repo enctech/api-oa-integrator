@@ -302,6 +302,9 @@ func (c Config) calculateTax(txn float64) TaxCalculation {
 
 	return calculatePercentSurchargeAmount(txn, tax, surcharge)
 }
+func (c Config) CancelEntry() error {
+	return nil
+}
 
 func calculateExactSurchargeAmount(txnAmt, tax, surcharge float64) TaxCalculation {
 	surcF := surcharge

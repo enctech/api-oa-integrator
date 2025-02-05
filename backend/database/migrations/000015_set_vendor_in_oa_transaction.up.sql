@@ -1,0 +1,1 @@
+ALTER TABLE oa_transactions ADD COLUMN integrator_id uuid REFERENCES integrator_config (id)

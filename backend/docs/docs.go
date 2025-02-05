@@ -514,7 +514,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/oa/{vendor}/AuthorizationService3rdParty/version": {
+        "/oa/AuthorizationService3rdParty/version": {
             "put": {
                 "description": "get the version and configuration available",
                 "consumes": [
@@ -529,13 +529,6 @@ const docTemplate = `{
                 "summary": "check version",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Vendor",
-                        "name": "vendor",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Request Body",
                         "name": "request",
                         "in": "body",
@@ -547,7 +540,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}": {
+        "/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}": {
             "post": {
                 "description": "Creates new job and sends the required information as URI and \u003cjob\u003e element to 3rd party system.",
                 "consumes": [
@@ -583,13 +576,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Vendor",
-                        "name": "vendor",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Request Body",
                         "name": "request",
                         "in": "body",
@@ -601,7 +587,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel": {
+        "/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel": {
             "put": {
                 "description": "This request cancels a running job on the 3rd party side. The job is identified by its resource /facility/device/jobid",
                 "consumes": [
@@ -637,13 +623,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Vendor",
-                        "name": "vendor",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Request Body",
                         "name": "request",
                         "in": "body",
@@ -655,7 +634,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage": {
+        "/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage": {
             "put": {
                 "description": "This request sends the last message for a job. The job is identified by its resources /facility/device/jobid",
                 "consumes": [
@@ -691,13 +670,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Vendor",
-                        "name": "vendor",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "Request Body",
                         "name": "request",
                         "in": "body",
@@ -709,7 +681,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist": {
+        "/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist": {
             "post": {
                 "description": "Creates new media data for an existing job and sends the required information as a \u003cmediaData\u003e element to the 3rd party system.",
                 "consumes": [
@@ -741,13 +713,6 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Job ID",
                         "name": "jobId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Vendor",
-                        "name": "vendor",
                         "in": "path",
                         "required": true
                     },

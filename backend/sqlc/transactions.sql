@@ -66,13 +66,14 @@ where lpn like concat('%', sqlc.arg(lpn)::text, '%')
 
 -- name: UpdateOATransaction :one
 update oa_transactions
-set lpn        = coalesce($2, lpn),
-    customerid = coalesce($3, customerid),
-    jobid      = coalesce($4, jobid),
-    facility   = coalesce($5, facility),
-    device     = coalesce($6, device),
-    extra      = coalesce($7, extra),
-    exit_lane  = coalesce($8, exit_lane)
+set lpn           = coalesce($2, lpn),
+    customerid    = coalesce($3, customerid),
+    jobid         = coalesce($4, jobid),
+    facility      = coalesce($5, facility),
+    device        = coalesce($6, device),
+    extra         = coalesce($7, extra),
+    exit_lane     = coalesce($8, exit_lane),
+    integrator_id = coalesce($9, integrator_id)
 where businesstransactionid = $1
 returning *;
 

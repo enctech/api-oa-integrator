@@ -99,6 +99,7 @@ type Log struct {
 
 type OaTransaction struct {
 	ID                    uuid.UUID
+	IntegratorID          uuid.NullUUID
 	Businesstransactionid string
 	Lpn                   sql.NullString
 	Customerid            sql.NullString
