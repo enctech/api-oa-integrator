@@ -8,7 +8,9 @@ localhost, 127.0.0.1 {
 }
 
 api-oa-integrator.pokgak.xyz {
-	reverse_proxy web:3000
+	reverse_proxy /api/* http://backend:1323
+    reverse_proxy * http://web:3000
+
 	tls {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 	}
