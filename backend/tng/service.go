@@ -25,6 +25,8 @@ type Config struct {
 const statusCodeSuccess = "000"
 const statusCodeDuplicateTransaction = "998"
 const timeOut = time.Second * 2
+const transactionTimeOut = time.Second * 3
+const voidDelayDuration = time.Second * 5
 
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 	logger.LogData("info", "VerifyVehicle", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
@@ -88,17 +90,16 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
+	defer resp.Body.Close()
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-
 	responseBody := data["response"].(map[string]any)["body"]
 	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
 		return errors.New(fmt.Sprintf("tng error: fail to verify vehicle %v", responseBody))
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("tng error: invalid response status")
 	}
@@ -122,7 +123,7 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 			"deviceNo":   plateNumber,
 		},
 		"serialNum":         transactionId,
-		"cancelRequestTime": time.Now().Format(time.RFC3339),
+		"cancelRequestTime": time.Now().Local().Format(time.RFC3339),
 		"extendInfo":        nil,
 	}
 
@@ -138,7 +139,7 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 		"request": map[string]any{
 			"header": map[string]any{
 				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Format(time.RFC3339),
+				"timestamp": time.Now().Local().Format(time.RFC3339),
 				"clientId":  c.ClientID.String,
 				"function":  "falcon.parking.cancel.transaction.order",
 				"version":   viper.GetString("app.version"),
@@ -238,7 +239,7 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"request": map[string]any{
 			"header": map[string]any{
 				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Format(time.RFC3339),
+				"timestamp": time.Now().Local().Format(time.RFC3339),
 				"clientId":  c.ClientID.String,
 				"function":  "falcon.parking.transaction",
 				"version":   viper.GetString("app.version"),
@@ -259,11 +260,12 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	}
 
 	client := &http.Client{
-		Timeout: timeOut,
+		Timeout: transactionTimeOut,
 	}
 	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {
+		time.Sleep(voidDelayDuration)
 		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
 			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
 		}
@@ -274,6 +276,11 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	responseBody := data["response"].(map[string]any)["body"]
+	statusCode := responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string)
+	if statusCode != statusCodeSuccess && statusCode != statusCodeDuplicateTransaction {
+		return body, taxData, errors.New(fmt.Sprintf("response code is not %v or %v", statusCodeSuccess, statusCodeDuplicateTransaction))
 	}
 	return body, taxData, nil
 }
