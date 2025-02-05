@@ -22,6 +22,8 @@ type Config struct {
 	PlazaId string
 }
 
+const statusCodeSuccess = "000"
+const statusCodeDuplicateTransaction = "998"
 const timeOut = time.Second * 2
 
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
@@ -175,7 +177,8 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	responseBody := data["response"].(map[string]any)["body"]
-	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
+	statusCode := responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string)
+	if statusCode != statusCodeSuccess && statusCode != statusCodeDuplicateTransaction {
 		return errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
 	}
 	return nil
