@@ -1,7 +1,7 @@
 -- name: CreateOATransaction :one
 insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane,
-                             exit_lane)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                             exit_lane, integrator_id)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 returning *;
 
 -- name: GetOATransaction :one

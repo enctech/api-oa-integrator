@@ -112,8 +112,8 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 
 const createOATransaction = `-- name: CreateOATransaction :one
 insert into oa_transactions (businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane,
-                             exit_lane)
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                             exit_lane, integrator_id)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 returning id, integrator_id, businesstransactionid, lpn, customerid, jobid, facility, device, extra, entry_lane, exit_lane, created_at, updated_at
 `
 
@@ -127,6 +127,7 @@ type CreateOATransactionParams struct {
 	Extra                 pqtype.NullRawMessage
 	EntryLane             sql.NullString
 	ExitLane              sql.NullString
+	IntegratorID          uuid.NullUUID
 }
 
 func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransactionParams) (OaTransaction, error) {
@@ -140,6 +141,7 @@ func (q *Queries) CreateOATransaction(ctx context.Context, arg CreateOATransacti
 		arg.Extra,
 		arg.EntryLane,
 		arg.ExitLane,
+		arg.IntegratorID,
 	)
 	var i OaTransaction
 	err := row.Scan(

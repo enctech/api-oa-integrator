@@ -133,9 +133,16 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			return
 		}
 
+		config, err := utils.FirstWhere(configs, func(config database.IntegratorConfig) bool {
+			return config.Name.String == successfulVendor
+		})
+
 		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
 			Businesstransactionid: data.Businesstransactionid,
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+			IntegratorID: uuid.NullUUID{
+				UUID: config.ID, Valid: true,
+			},
 		})
 		sendFinalMessageCustomer(metadata, FMCReq{
 			Identifier:          Identifier{Name: lpn},
@@ -191,6 +198,7 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 	go sendEmptyFinalMessage(metadata)
 }
@@ -239,6 +247,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: lane, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	go func() {
@@ -293,6 +302,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
@@ -350,6 +360,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 			EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 			ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+			IntegratorID:          oaTxn.IntegratorID,
 		})
 		return
 	}
@@ -373,6 +384,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	go sendFinalMessageCustomer(metadata, FMCReq{
@@ -451,6 +463,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	go sendEmptyFinalMessage(metadata)
