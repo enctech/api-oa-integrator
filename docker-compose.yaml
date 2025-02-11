@@ -24,6 +24,7 @@ services:
       - DATABASE_URL=postgres://postgres:a8mJ!4ug2dvj@db:5432/postgres?sslmode=disable
     depends_on:
       - db
+    command: ["--config", "/app/config.yaml"]
     volumes:
       - /root/api-oa-integrator/backend/config.yaml:/app/config.yaml
       - "/etc/timezone:/etc/timezone:ro"

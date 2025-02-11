@@ -20,10 +20,9 @@ RUN --mount=type=cache,target=/root/.cache/go-build go build -mod=readonly -o /g
 FROM debian:bookworm-slim
 
 # Copy the built binary from the builder stage
-COPY --from=builder /go/src/app/config.yaml /app/config.yaml
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 
 EXPOSE 1323
 
 # Command to run the executable
-ENTRYPOINT ["/usr/local/bin/api-oa-integrator", "--config", "/app/config.yaml"]
+ENTRYPOINT ["/usr/local/bin/api-oa-integrator"]
