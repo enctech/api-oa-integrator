@@ -14,11 +14,15 @@ import (
 )
 
 func init() {
+	// Define the --config flag
+	pflag.String("config", "", "Path to the config file")
+	pflag.Parse()
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
-	// Allow override default config file path using --config parameter
+	// Bind the --config flag to viper
 	viper.BindPFlag("config", pflag.Lookup("config"))
 	if configPath := viper.GetString("config"); configPath != "" {
 		viper.SetConfigFile(configPath)
