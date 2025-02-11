@@ -13,8 +13,8 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 # Copy the rest of the application source code
 COPY ./ .
 
-# Build the Go application with cached dependencies
-RUN go build -mod=readonly -o /go/bin/api-oa-integrator
+# Build the Go application with cached dependencies and build cache
+RUN --mount=type=cache,target=/root/.cache/go-build go build -mod=readonly -o /go/bin/api-oa-integrator
 
 # Stage 2: Create a smaller image for running the application
 FROM alpine:latest
