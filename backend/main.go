@@ -6,15 +6,23 @@ import (
 	"api-oa-integrator/internal"
 	"api-oa-integrator/logger"
 	"fmt"
+	"strings"
+
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"strings"
 )
 
 func init() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+
+	// Allow override default config file path using --config parameter
+	viper.BindPFlag("config", pflag.Lookup("config"))
+	if configPath := viper.GetString("config"); configPath != "" {
+		viper.SetConfigFile(configPath)
+	}
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err := viper.ReadInConfig() // Find and read the config file
