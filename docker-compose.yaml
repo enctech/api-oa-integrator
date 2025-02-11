@@ -15,7 +15,7 @@ services:
           - type=gha
         cache-to:
           - type=gha,mode=max
-    image: ghcr.io/enctech/api-oa-integrator-backend:0.2
+    image: ghcr.io/enctech/api-oa-integrator-backend:0.3
     container_name: backend
     ports:
       - "127.0.0.1:1323:1323"
@@ -24,7 +24,6 @@ services:
       - DATABASE_URL=postgres://postgres:a8mJ!4ug2dvj@db:5432/postgres?sslmode=disable
     depends_on:
       - db
-    command: ["--config", "/app/config.yaml"]
     volumes:
       - /root/api-oa-integrator/backend/config.yaml:/app/config.yaml
       - "/etc/timezone:/etc/timezone:ro"
