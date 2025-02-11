@@ -52,9 +52,18 @@
 
 you might need to setup your github Personal Access Token (PAT) first and then use it with docker login ghcr.io, please refer to https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic
 
+The image tag depends on the tag set inside `docker-compose.yaml`, make sure to update that first before building the image.
+
 After that, go to the root of the repo and run to build and push the image:
 ```
 docker buildx bake --push
+```
+
+After that is done, SSH into the server, navigate to the repo directory and run:
+
+```
+git pull
+docker compose up -d
 ```
 
 ### Step-by-Step Instructions
