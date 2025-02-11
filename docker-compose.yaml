@@ -9,7 +9,7 @@ services:
       context: ./backend
       platforms:
         - linux/amd64
-    image: ghcr.io/enctech/api-oa-integrator/backend:0.0.4
+    image: ghcr.io/enctech/api-oa-integrator-backend:0.0.4
     container_name: backend
     platform: linux/amd64
     ports:
@@ -27,7 +27,7 @@ services:
       context: ./web
       platforms:
         - linux/amd64
-    image: ghcr.io/enctech/api-oa-integrator/web:0.0.4
+    image: ghcr.io/enctech/api-oa-integrator-web:0.0.4
     container_name: web
     ports:
       - "127.0.0.1:3000:3000"
