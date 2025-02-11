@@ -22,6 +22,11 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
+    x-bake:
+      cache-from:
+        - type=gha
+      cache-to:
+        - type=gha,mode=max
   web:
     build:
       context: ./web
