@@ -7,8 +7,8 @@ WORKDIR /usr/src/app
 # Copy only package manager files first (improves caching)
 COPY package.json pnpm-lock.yaml ./
 
-# Install PNPM globally
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install PNPM globally using npm
+RUN npm install -g pnpm
 
 # Install dependencies with cache
 RUN --mount=type=cache,target=/root/.pnpm-store pnpm install --frozen-lockfile
