@@ -9,6 +9,11 @@ services:
       context: ./backend
       platforms:
         - linux/amd64
+      x-bake:
+        cache-from:
+          - type=gha
+        cache-to:
+          - type=gha,mode=max
     image: ghcr.io/enctech/api-oa-integrator-backend:0.0.4
     container_name: backend
     platform: linux/amd64
@@ -22,11 +27,6 @@ services:
     volumes:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
-    x-bake:
-      cache-from:
-        - type=gha
-      cache-to:
-        - type=gha,mode=max
   web:
     build:
       context: ./web
