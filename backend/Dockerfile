@@ -28,4 +28,4 @@ RUN ls -la /usr/local/bin
 EXPOSE 1323
 
 # Command to run the executable
-CMD ["/usr/local/bin/api-oa-integrator"]
+ENTRYPOINT ["/usr/local/bin/api-oa-integrator"]

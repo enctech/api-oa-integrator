@@ -32,4 +32,4 @@ COPY --from=builder /usr/src/app .
 EXPOSE 3000
 
 # Run the app
-CMD ["npx", "serve", "-s", "build"]
+ENTRYPOINT ["npx", "serve", "-s", "build"]
