@@ -25,4 +25,4 @@ COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin/api-oa-integrator
 EXPOSE 1323
 
 # Command to run the executable
-CMD ["api-oa-integrator"]
+CMD ["/usr/local/bin/api-oa-integrator"]
