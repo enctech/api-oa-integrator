@@ -21,6 +21,7 @@ FROM debian:bookworm-slim
 
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
+COPY --from=builder /go/src/app/database/migrations /app/database/migrations
 
 EXPOSE 1323
 

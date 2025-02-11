@@ -16,6 +16,7 @@ import (
 func init() {
 	// Define the --config flag
 	pflag.String("config", "", "Path to the config file")
+	pflag.String("migrations", "./database/migrations", "Path to the migrations folder")
 	pflag.Parse()
 
 	viper.SetConfigName("config")
@@ -24,6 +25,7 @@ func init() {
 
 	// Bind the --config flag to viper
 	viper.BindPFlag("config", pflag.Lookup("config"))
+	viper.BindPFlag("migrations", pflag.Lookup("migrations"))
 	if configPath := viper.GetString("config"); configPath != "" {
 		viper.SetConfigFile(configPath)
 	}
