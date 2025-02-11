@@ -22,10 +22,7 @@ FROM alpine:latest
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 
-# Disable cache for this specific layer
-RUN ls -la /usr/local/bin
-
 EXPOSE 1323
 
 # Command to run the executable
-ENTRYPOINT ["/usr/local/bin/api-oa-integrator"]
+ENTRYPOINT ["api-oa-integrator"]

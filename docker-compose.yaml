@@ -17,7 +17,6 @@ services:
           - type=gha,mode=max
     image: ghcr.io/enctech/api-oa-integrator-backend:0.1
     container_name: backend
-    platform: linux/amd64
     ports:
       - "127.0.0.1:1323:1323"
     environment:
