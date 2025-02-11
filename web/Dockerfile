@@ -5,7 +5,7 @@ FROM node:20 AS builder
 WORKDIR /usr/src/app
 
 # Copy only package manager files first (improves caching)
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml ./
 
 # Install PNPM globally
 RUN corepack enable && corepack prepare pnpm@latest --activate
