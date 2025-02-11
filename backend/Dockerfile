@@ -1,5 +1,5 @@
 # Stage 1: Build the Go application
-FROM golang:latest AS builder
+FROM golang:1.23 AS builder
 
 # Set the working directory to /go/src/app
 WORKDIR /go/src/app
@@ -17,7 +17,7 @@ COPY ./ .
 RUN --mount=type=cache,target=/root/.cache/go-build go build -mod=readonly -o /go/bin/api-oa-integrator
 
 # Stage 2: Create a smaller image for running the application
-FROM alpine:latest
+FROM alpine:3.21
 
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
