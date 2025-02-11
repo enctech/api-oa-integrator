@@ -1,29 +1,35 @@
-# Use an official Node runtime as a parent image
-FROM node:20
+# syntax=docker/dockerfile:1.4
+FROM node:20 AS builder
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /usr/src/app
 
-RUN mkdir cert
+# Copy only package manager files first (improves caching)
+COPY package.json pnpm-lock.yaml .npmrc ./
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+# Install PNPM globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN npm install -g pnpm
+# Install dependencies with cache
+RUN --mount=type=cache,target=/root/.pnpm-store pnpm install --frozen-lockfile
 
-# Install app dependencies
-RUN pnpm install -d
-
-# Copy the rest of the application code to the working directory
+# Copy the rest of the application files
 COPY . .
 
 # Build the app
 RUN pnpm run build
 
-# Expose the port that the app will run on
+# Use a lightweight production image
+FROM node:20-alpine AS production
+
+# Set working directory
+WORKDIR /usr/src/app
+
+# Copy built files from the builder stage
+COPY --from=builder /usr/src/app .
+
+# Expose the required port
 EXPOSE 3000
 
-RUN chmod +x ./run.sh
-
-# Define the command to run the app
+# Run the app
 CMD ["npx", "serve", "-s", "build"]

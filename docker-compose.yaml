@@ -33,6 +33,11 @@ services:
       context: ./web
       platforms:
         - linux/amd64
+      x-bake:
+        cache-from:
+          - type=gha
+        cache-to:
+          - type=gha,mode=max
     image: ghcr.io/enctech/api-oa-integrator-web:0.0.4
     container_name: web
     ports:
