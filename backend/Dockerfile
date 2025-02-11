@@ -24,7 +24,6 @@ COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 
 # Disable cache for this specific layer
 RUN ls -la /usr/local/bin
-RUN file /usr/local/bin/api-oa-integrator
 
 EXPOSE 1323
 
