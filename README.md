@@ -48,6 +48,15 @@
 
 ### Deployment
 
+### docker build from local
+
+you might need to setup your github Personal Access Token (PAT) first and then use it with docker login ghcr.io, please refer to https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic
+
+After that, go to the root of the repo and run to build and push the image:
+```
+docker buildx bake --push
+```
+
 ### Step-by-Step Instructions
 
 #### 1. Create a Directory
@@ -73,57 +82,12 @@ Open your Ubuntu terminal and execute the following commands:
     ```
     **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
 
-#### 3. Create and Navigate to the cert Folder
-
-1. **Create the cert folder and navigate to it:**
-    ```sh
-    mkdir -p /home/Downloads/api-oa-integrator/api-oa-integrator/cert
-	cd /home/Downloads/api-oa-integrator/api-oa-integrator/cert
-    ```
-
-#### 4. Update SSL Certificate
-
-1. **Update or create the SSL certificate:**
-    - To create a new certificate, you can use a tool like `openssl`:
-        ```sh
-        openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
-        ```
-    - During the creation process, use the following details:
-        ```
-        Country Name (2 letter code) [AU]:MY
-        State or Province Name (full name) [Some-State]:Selangor
-        Locality Name (eg, city) []:Puchong
-        Organization Name (eg, company) [Internet Widgits Pty Ltd]:Enctech Services Sdn Bhd
-        Organizational Unit Name (eg, section) []:Parking
-        Common Name (e.g. server FQDN or YOUR name) []:enctech.com
-        Email Address []:enctech@gmail.com
-        ```
-
-#### 5. Copy the Certificate
-
-1. **Navigate back to the root of the cloned repository:**
-    ```sh
-    cd /home/Downloads/api-oa-integrator/api-oa-integrator
-    ```
-
-2. **Run the `make copy_cert` command to copy the certificate to the backend and frontend folders:**
-    ```sh
-    make copy_cert
-    ```
-
 #### 6. Run the Application
 
 1. **Start the application using the `make run_application` command:**
     ```sh
     make run_application
     ```
-
-    When prompted, enter the following credentials:
-    ```
-    Username for 'https://github.com': enctech
-    Password for 'https://enctech@github.com': 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
-    ```
-    **Note:** This command will start the application and can also be used to restart it for updates.
 
 #### 7. Test the Application
 

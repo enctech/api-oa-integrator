@@ -4,15 +4,6 @@ start_docker:
 start_podman:
 	podman-compose up -d
 
-copy_cert:
-	make copy_cert_backend && make copy_cert_web
-
-copy_cert_web:
-	cp -r ./cert ./web/
-
-copy_cert_backend:
-	cp -r ./cert ./backend/
-
 clear_images:
 	docker image ls -q --filter "dangling=true" | xargs docker image rm
 
@@ -26,7 +17,6 @@ update:
 	git pull
 	chmod u+x scripts/db_backup.sh
 	chmod u+x scripts/startup.sh
-	chmod u+x scripts/update_cert.sh
 
 update_restart:
 	make update
