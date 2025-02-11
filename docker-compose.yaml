@@ -26,7 +26,7 @@ services:
       - db
     command: ["--config", "/app/config.yaml"]
     volumes:
-      - /root/api-oa-integrator/backend/config.yaml:/app/config.yaml
+      - /root/api-oa-integrator/backend/config.yaml:/app
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
   web:
