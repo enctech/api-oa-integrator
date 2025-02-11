@@ -17,7 +17,7 @@ COPY ./ .
 RUN --mount=type=cache,target=/root/.cache/go-build go build -mod=readonly -o /go/bin/api-oa-integrator
 
 # Stage 2: Create a smaller image for running the application
-FROM alpine:3.21
+FROM gcr.io/distroless/base-debian10
 
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
@@ -25,4 +25,4 @@ COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 EXPOSE 1323
 
 # Command to run the executable
-ENTRYPOINT ["api-oa-integrator"]
+ENTRYPOINT ["/usr/local/bin/api-oa-integrator"]
