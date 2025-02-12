@@ -1,5 +1,6 @@
 // SessionContext.tsx
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface User {
   username: string;
@@ -10,7 +11,7 @@ interface User {
 }
 
 interface SessionContextProps {
-  session: Partial<User> | null;
+  session: Partial<User> | null | undefined;
   login: (user: User) => void;
   logout: () => void;
 }
@@ -25,6 +26,16 @@ export const useSession = (): SessionContextProps => {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
+};
+
+export const useSessionGuard = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const storedUserData = sessionStorage.getItem("userData");
+    if (!storedUserData) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 };
 
 export const SessionProvider = ({ children }: any) => {
