@@ -71,7 +71,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      CLOUDFLARE_API_TOKEN: tiKE18CWRvRQW-1qXcvuPRKIV8AYhyZiIduQhN6r
+      CLOUDFLARE_API_TOKEN: B-FxxLzv80Z-9qLbm_j1IRj6hCou6hBCK-FGQhll
     depends_on:
       - backend
       - web
