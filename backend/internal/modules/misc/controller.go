@@ -5,6 +5,7 @@ import (
 	"api-oa-integrator/internal/modules/oa"
 	"api-oa-integrator/logger"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -123,7 +124,7 @@ func getAllIntegratorStatus(ctx context.Context) []map[string]any {
 			continue
 		}
 		integratorStatus := "up"
-		err := ping(config.Url.String)
+		err := ping(config.Url.String, config.InsecureSkipVerify.Bool)
 
 		if err != nil {
 			logger.LogData("error", fmt.Sprintf("fail to ping %v %v", err, config.Url.String), nil)
@@ -139,10 +140,16 @@ func getAllIntegratorStatus(ctx context.Context) []map[string]any {
 	return out
 }
 
-func ping(domain string) error {
+func ping(domain string, insecure bool) error {
 	var client = http.Client{
 		Timeout:   time.Second * 10,
 		Transport: &http.Transport{},
+	}
+
+	if insecure {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Ignore TLS verification
+		}
 	}
 
 	req, err := http.NewRequest("HEAD", domain, nil)
