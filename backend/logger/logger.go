@@ -16,7 +16,6 @@ import (
 func LogData(level string, msg string, fields map[string]interface{}) {
 	out := map[string]any{
 		"level":     level,
-		"message":   msg,
 		"fields":    fields,
 		"timestamp": time.Now().UTC().Round(time.Microsecond),
 	}

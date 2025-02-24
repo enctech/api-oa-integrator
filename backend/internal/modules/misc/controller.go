@@ -3,7 +3,9 @@ package misc
 import (
 	"api-oa-integrator/database"
 	"api-oa-integrator/internal/modules/oa"
+	"api-oa-integrator/logger"
 	"context"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -124,6 +126,7 @@ func getAllIntegratorStatus(ctx context.Context) []map[string]any {
 		err := ping(config.Url.String)
 
 		if err != nil {
+			logger.LogData("error", fmt.Sprintf("fail to ping %v %v", err, config.Url.String), nil)
 			integratorStatus = "down"
 		}
 
