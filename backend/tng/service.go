@@ -205,9 +205,9 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 	return nil
 }
 
-func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
+func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error) {
 	if plateNumber == "" {
-		return nil, nil, errors.New("tng error: empty plate number")
+		return nil, nil, nil, errors.New("tng error: empty plate number")
 	}
 
 	var extra map[string]string
@@ -266,7 +266,7 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	signer, _ := NewSigner(extra["sshKey"])
 	signature, err := signer.Sign(string(originalDataBytes))
 	if signature == "" {
-		return nil, nil, errors.New("tng error: empty signature")
+		return nil, nil, nil, errors.New("tng error: empty signature")
 	}
 
 	// Create the final request with both request and signature
@@ -278,12 +278,12 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
 	client := &http.Client{
@@ -294,22 +294,26 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 	if err != nil {
 		time.Sleep(voidDelayDuration)
 		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
-			return body, taxData, errors.New(fmt.Sprintf("fail to void transaction %v", err))
+			return body, taxData, nil, errors.New(fmt.Sprintf("fail to void transaction %v", err))
 		}
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	defer resp.Body.Close()
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	responseBody := data["response"].(map[string]any)["body"]
 	statusCode := responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string)
 	if statusCode != statusCodeSuccess && statusCode != statusCodeDuplicateTransaction {
-		return body, taxData, errors.New(fmt.Sprintf("response code is not %v or %v", statusCodeSuccess, statusCodeDuplicateTransaction))
+		return body, taxData, nil, errors.New(fmt.Sprintf("response code is not %v or %v", statusCodeSuccess, statusCodeDuplicateTransaction))
 	}
-	return body, taxData, nil
+	if statusCode == statusCodeDuplicateTransaction {
+		status := "duplicate"
+		return body, taxData, &status, nil
+	}
+	return body, taxData, nil, nil
 }
 
 type TaxCalculation struct {

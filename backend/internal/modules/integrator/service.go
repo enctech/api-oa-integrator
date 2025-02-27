@@ -18,7 +18,7 @@ var Integrators = []string{"tng"}
 
 type Process interface {
 	VerifyVehicle(plateNumber, entryLane string) error
-	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error)
+	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error)
 	VoidTransaction(plateNumber, transactionId string) error
 	CancelEntry() error
 }
@@ -81,8 +81,11 @@ func PerformTransaction(arg TransactionArg) error {
 	if err != nil {
 		return err
 	}
-	data, taxData, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
+	data, taxData, customStatus, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
 	status := "success"
+	if customStatus != nil {
+		status = *customStatus
+	}
 	errorMessage := ""
 	if txnErr != nil {
 		status = "fail"

@@ -40,6 +40,10 @@ const ThirdPartyTransactionsPage: React.FC = () => {
   const perPagesDefault = useRef([100, 500, 1000]);
   const [currentQueryParameters, setSearchParams] = useSearchParams();
   const newParams = useRef(new URLSearchParams());
+  const statusColor: Record<string, string> = {
+    success: "#00afaa",
+    fail: "#e4002b",
+  };
   const { control, register, handleSubmit, watch, setValue } =
     useForm<FormData>({
       defaultValues: {
@@ -289,7 +293,7 @@ const ThirdPartyTransactionsPage: React.FC = () => {
                   <Typography
                     className="w-[5rem]"
                     sx={{
-                      color: row.status === "success" ? "#00afaa" : "#e4002b",
+                      color: statusColor[row.status] || "#808080",
                     }}
                   >
                     {row.status}
