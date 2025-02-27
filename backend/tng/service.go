@@ -37,10 +37,6 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
-	signature := createSignature(extra["sshKey"])
-	if signature == "" {
-		return errors.New("tng error: empty signature")
-	}
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -49,29 +45,48 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 
 	logger.LogData("info", fmt.Sprintf("current time: %v", time.Now().Local().Format(time.RFC3339)), map[string]interface{}{})
 	reqBody := map[string]interface{}{
-		"request": map[string]any{
-			"header": map[string]any{
-				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Local().Format(time.RFC3339),
-				"clientId":  c.ClientID.String,
-				"function":  "falcon.device.status",
-				"version":   viper.GetString("app.version"),
-			},
-			"body": map[string]any{
-				"deviceInfo": map[string]any{
-					"deviceType": deviceTypeLPR,
-					"deviceNo":   plateNumber,
-				},
-				"entryTimestamp": time.Now().Local().Format(time.RFC3339),
-				"entrySPId":      c.SpID.String,
-				"entryPlazaId":   c.PlazaId,
-				"entryLaneId":    entryLane,
-				"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
-			},
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientID.String,
+			"function":  "falcon.device.status",
+			"version":   viper.GetString("app.version"),
 		},
+		"body": map[string]any{
+			"deviceInfo": map[string]any{
+				"deviceType": deviceTypeLPR,
+				"deviceNo":   plateNumber,
+			},
+			"entryTimestamp": time.Now().Local().Format(time.RFC3339),
+			"entrySPId":      c.SpID.String,
+			"entryPlazaId":   c.PlazaId,
+			"entryLaneId":    entryLane,
+			"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
+		},
+	}
+
+	originalRequestData, err := json.Marshal(reqBody)
+	signer, err := NewSigner(extra["sshKey"])
+	if err != nil {
+		return errors.New(fmt.Sprintf("Error creating signer: %v\n", err))
+	}
+	dataToSign := string(originalRequestData)
+	signature, err := signer.Sign(dataToSign)
+	if err != nil {
+		fmt.Printf("Error signing data: %v\n", err)
+		return errors.New(fmt.Sprintf("Error signing data: %v\n", err))
+	}
+
+	if signature == "" {
+		return errors.New("tng error: empty signature")
+	}
+
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
 		"signature": signature,
 	}
-	jsonData, err := json.Marshal(reqBody)
+	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
@@ -130,26 +145,31 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
 
-	signature := createSignature(extra["sshKey"])
+	reqBody := map[string]interface{}{
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientID.String,
+			"function":  "falcon.parking.cancel.transaction.order",
+			"version":   viper.GetString("app.version"),
+		},
+		"body": body,
+	}
+
+	originalDataBytes, err := json.Marshal(reqBody)
+	signer, _ := NewSigner(extra["sshKey"])
+	signature, err := signer.Sign(string(originalDataBytes))
 	if signature == "" {
 		return errors.New("tng error: empty signature")
 	}
 
-	reqBody := map[string]interface{}{
-		"request": map[string]any{
-			"header": map[string]any{
-				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Local().Format(time.RFC3339),
-				"clientId":  c.ClientID.String,
-				"function":  "falcon.parking.cancel.transaction.order",
-				"version":   viper.GetString("app.version"),
-			},
-			"body": body,
-		},
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
 		"signature": signature,
 	}
 
-	jsonData, err := json.Marshal(reqBody)
+	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
@@ -192,10 +212,6 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
-	signature := createSignature(extra["sshKey"])
-	if signature == "" {
-		return nil, nil, errors.New("tng error: empty signature")
-	}
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -236,19 +252,30 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 
 	maps.Copy(body, taxData)
 	reqBody := map[string]interface{}{
-		"request": map[string]any{
-			"header": map[string]any{
-				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Local().Format(time.RFC3339),
-				"clientId":  c.ClientID.String,
-				"function":  "falcon.parking.transaction",
-				"version":   viper.GetString("app.version"),
-			},
-			"body": body,
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientID.String,
+			"function":  "falcon.parking.transaction",
+			"version":   viper.GetString("app.version"),
 		},
+		"body": body,
+	}
+
+	originalDataBytes, err := json.Marshal(reqBody)
+	signer, _ := NewSigner(extra["sshKey"])
+	signature, err := signer.Sign(string(originalDataBytes))
+	if signature == "" {
+		return nil, nil, errors.New("tng error: empty signature")
+	}
+
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
 		"signature": signature,
 	}
-	jsonData, err := json.Marshal(reqBody)
+
+	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
