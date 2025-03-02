@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"io"
 	"net/http"
@@ -13,9 +14,37 @@ import (
 type controller struct {
 }
 
+func isValidUser(username, password string) bool {
+	identifications := []struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{
+		{
+			Username: "aKr71dJ1~P_",
+			Password: "cpVh19{3L92H",
+		},
+		{
+			Username: "K6k6zm8JFW6X",
+			Password: "3Xv7Kx8hNkIg",
+		},
+	}
+	for _, id := range identifications {
+		if username == id.Username && password == fmt.Sprintf(":%v", id.Password) {
+			return true
+		}
+	}
+	return false
+}
+
 func InitController(e *echo.Group) {
 	g := e.Group("oa")
 	c := controller{}
+	g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		if isValidUser(username, password) {
+			return true, nil
+		}
+		return false, nil
+	}))
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
