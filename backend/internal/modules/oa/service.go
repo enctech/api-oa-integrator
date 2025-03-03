@@ -292,6 +292,11 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 
 	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
 
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
@@ -313,6 +318,11 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	amountConv := amount / 100
 
 	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
+
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
 
 	customerInformation := &CustomerInformation{Customer: Customer{
 		CustomerId:    oaTxn.Customerid.String,
