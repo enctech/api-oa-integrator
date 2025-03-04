@@ -297,6 +297,13 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	var extra map[string]string
+	_ = json.Unmarshal(oaTxn.Extra.RawMessage, &extra)
+	if extra["steps"] != "identification_exit_done" && extra["steps"] != "leave_loop_entry_done" {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
