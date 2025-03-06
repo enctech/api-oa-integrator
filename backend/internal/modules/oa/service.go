@@ -299,10 +299,6 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 
 	var extra map[string]string
 	_ = json.Unmarshal(oaTxn.Extra.RawMessage, &extra)
-	if extra["steps"] != "identification_exit_done" && extra["steps"] != "leave_loop_entry_done" {
-		go sendEmptyFinalMessage(metadata)
-		return
-	}
 
 	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
@@ -316,13 +312,6 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 		IntegratorID:          oaTxn.IntegratorID,
 	})
-
-	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
-	if err != nil {
-		go sendEmptyFinalMessage(metadata)
-		return
-	}
-	amountConv := amount / 100
 
 	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
 
@@ -348,6 +337,20 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 				},
 			}),
 		}, cfg.Name.String)
+	}
+
+	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("failed to ParseFloat %v", err), nil)
+		go sendZeroAmount()
+		return
+	}
+	amountConv := amount / 100
+
+	if extra["steps"] != "identification_exit_done" && extra["steps"] != "leave_loop_entry_done" {
+		logger.LogData("error", "previous step is not either identification_exit_done or leave_loop_entry_done", nil)
+		go sendZeroAmount()
+		return
 	}
 
 	arg := integrator.TransactionArg{
