@@ -347,6 +347,8 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 	}
 	amountConv := amount / 100
 
+	logger.LogData("info", fmt.Sprintf("previous step is %v", extra["steps"]), nil)
+
 	if extra["steps"] != "identification_exit_done" && extra["steps"] != "leave_loop_entry_done" {
 		logger.LogData("error", "previous step is not either identification_exit_done or leave_loop_entry_done", nil)
 		go sendZeroAmount()
