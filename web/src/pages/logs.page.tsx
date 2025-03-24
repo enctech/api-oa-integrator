@@ -230,7 +230,7 @@ const LogsPage = () => {
                   <div className="w-[5rem]">
                     {moment(row.createdAt)
                       .local()
-                      .format("DD/MM/yyyy hh:mm:ss A")}
+                      .format("DD/MM/yyyy hh:mm:ss.SSSSSS A")}
                   </div>
                 </TableCell>
                 <TableCell>
