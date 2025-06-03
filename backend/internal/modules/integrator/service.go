@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
-	"time"
 )
 
 var Integrators = []string{"tng"}
@@ -30,6 +31,9 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	}
 	var plazaIdMap map[string]any
 	err = json.Unmarshal(cfg.PlazaIDMap.RawMessage, &plazaIdMap)
+	if plazaIdMap[locationId] == nil || plazaIdMap[locationId] == "" {
+		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("plazaId not found for locationId %v", locationId))
+	}
 	if err != nil {
 		return nil, database.IntegratorConfig{}, err
 	}
