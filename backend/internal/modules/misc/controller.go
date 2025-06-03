@@ -7,10 +7,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 type controller struct {
@@ -132,7 +133,7 @@ func getAllIntegratorStatus(ctx context.Context) []map[string]any {
 		}
 
 		out = append(out, map[string]any{
-			"integrator": config.Name.String,
+			"integrator": config.DisplayName.String,
 			"status":     integratorStatus,
 		})
 	}
