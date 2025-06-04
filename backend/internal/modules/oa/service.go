@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"strconv"
@@ -587,6 +588,28 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	}
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
+
+	if metadata.facility == "1212" {
+
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		client := &http.Client{Transport: tr}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Transport error:", err)
+			return
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+
+		fmt.Println("Status:", resp.Status)
+		fmt.Println("Body:", string(body))
+		return
+	}
 
 	client := &http.Client{
 		Timeout: time.Second * 10,
