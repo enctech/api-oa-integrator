@@ -289,16 +289,28 @@ const ThirdPartyConfigsDetailsPage = () => {
               />
             </div>
             <div className="w-8" />
-            <FormControlLabel
-              {...register("isInsecure")}
-              control={<Checkbox />}
-              disabled={!isEditing}
-              sx={{
-                "& .MuiTypography-root": {
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-              label="Insecure endpoint"
+            <Controller
+              name="isInsecure"
+              control={control}
+              defaultValue={false}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      {...field}
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)} // map event to boolean
+                    />
+                  }
+                  disabled={!isEditing}
+                  sx={{
+                    "& .MuiTypography-root": {
+                      WebkitTextFillColor: "#000000",
+                    },
+                  }}
+                  label="Insecure endpoint"
+                />
+              )}
             />
           </div>
         </div>
