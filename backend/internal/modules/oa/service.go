@@ -12,15 +12,16 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/spf13/viper"
-	"github.com/sqlc-dev/pqtype"
 	"maps"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/spf13/viper"
+	"github.com/sqlc-dev/pqtype"
 )
 
 func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetadata) {

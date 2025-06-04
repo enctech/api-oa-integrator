@@ -4,11 +4,12 @@ import (
 	"api-oa-integrator/logger"
 	"encoding/xml"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
-	"io"
-	"net/http"
 )
 
 type controller struct {
@@ -52,6 +53,7 @@ func InitController(e *echo.Group) {
 	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
 	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
 	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
+	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/fake", c.fakeTest)
 	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId", c.createJob)
 }
 
@@ -234,6 +236,19 @@ func (con controller) createJob(c echo.Context) error {
 	if c.Response().Committed {
 		return nil
 	}
+	return c.XML(http.StatusCreated, ConfirmationResponse{
+		ConfirmationDetailStatus: "JOB_CREATED",
+		ConfirmationStatus:       "OK",
+	})
+}
+
+func (con controller) fakeTest(c echo.Context) error {
+	rm := &RequestMetadata{
+		facility: c.Param("facility"),
+		device:   c.Param("device"),
+		jobId:    c.Param("jobId"),
+	}
+	go sendEmptyFinalMessage(rm)
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "JOB_CREATED",
 		ConfirmationStatus:       "OK",
