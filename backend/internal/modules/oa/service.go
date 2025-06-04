@@ -588,14 +588,13 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
 	client.Transport = &utils.LoggingRoundTripper{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
-	}
-	if err != nil {
-		return
 	}
 
 	resp, err := client.Do(req)
