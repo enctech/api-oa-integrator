@@ -39,7 +39,7 @@ services:
           - type=gha
         cache-to:
           - type=gha,mode=max
-    image: ghcr.io/enctech/api-oa-integrator-web:0.6
+    image: ghcr.io/enctech/api-oa-integrator-web:0.7
     container_name: web
     ports:
       - "127.0.0.1:3000:3000"
