@@ -512,7 +512,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 
 	var counting *string = nil
 	if in.PaymentInformation != nil {
-		_counting := "RESERVED"
+		_counting := "NON-RESERVED"
 		counting = &_counting
 	}
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{
