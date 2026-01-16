@@ -75,19 +75,10 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			err = integrator.VerifyVehicle(vendorName, metadata.facility, lpn, lane)
 
 			if err != nil {
-				logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), nil)
-				jsonStr, err := json.Marshal(map[string]any{
-					"steps": "identification_entry_error",
-					"error": err.Error(),
-				})
-				if err != nil {
-					logger.LogData("error", fmt.Sprintf("Error marshal %v", err), nil)
-					go sendEmptyFinalMessage(metadata)
-					return
-				}
-				_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-					Businesstransactionid: data.Businesstransactionid,
-					Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+				logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), map[string]interface{}{
+					"lpn":        lpn,
+					"vendorName": vendorName,
+					"facility":   metadata.facility,
 				})
 			} else {
 				select {
