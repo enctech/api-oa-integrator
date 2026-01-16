@@ -7,14 +7,13 @@ import (
 	"api-oa-integrator/internal/modules/misc"
 	"api-oa-integrator/internal/modules/oa"
 	"api-oa-integrator/internal/modules/transactions"
-	"fmt"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func InitServer() {
+func InitServer() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -27,5 +26,5 @@ func InitServer() {
 	auth.InitController(g)
 	config.InitController(g)
 	transactions.InitController(g)
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
+	return e
 }

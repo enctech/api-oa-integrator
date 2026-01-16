@@ -8,8 +8,10 @@ package database
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -51,6 +53,32 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (sql.Resul
 		arg.Message,
 		arg.Fields,
 		arg.CreatedAt,
+	)
+}
+
+const createLogs = `-- name: CreateLogs :execresult
+insert into logs (level, message, fields, created_at)
+select l, m, f, t
+from unnest($1::text[]) with ordinality as a(l, i)
+         join unnest($2::text[]) with ordinality as b(m, i2) on a.i = b.i2
+         join unnest($3::jsonb[]) with ordinality as c(f, i3) on a.i = i3
+         join unnest($4::timestamptz[]) with ordinality as d(t, i4) on a.i = i4
+returning id, level, message, fields, created_at
+`
+
+type CreateLogsParams struct {
+	Column1 []string
+	Column2 []string
+	Column3 []json.RawMessage
+	Column4 []time.Time
+}
+
+func (q *Queries) CreateLogs(ctx context.Context, arg CreateLogsParams) (sql.Result, error) {
+	return q.exec(ctx, q.createLogsStmt, createLogs,
+		pq.Array(arg.Column1),
+		pq.Array(arg.Column2),
+		pq.Array(arg.Column3),
+		pq.Array(arg.Column4),
 	)
 }
 
