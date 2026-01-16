@@ -7,7 +7,6 @@ import (
 	"api-oa-integrator/utils"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"encoding/xml"
@@ -538,14 +537,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
@@ -571,7 +563,9 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
@@ -579,16 +573,7 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
@@ -616,7 +601,10 @@ func CheckSystemAvailability(facility, device string) error {
 	</configuration>
 	</version>`, viper.GetString("app.version")))
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return err
@@ -624,19 +612,7 @@ func CheckSystemAvailability(facility, device string) error {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return err

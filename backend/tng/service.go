@@ -5,16 +5,17 @@ import (
 	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
-	"crypto/tls"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"maps"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -91,17 +92,15 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/device/status", c.Url.String), bytes.NewBuffer(jsonData))
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/device/status", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{
-		Timeout: timeOut,
-	}
-	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
@@ -174,17 +173,17 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/cancel/transaction-order", c.Url.String), bytes.NewBuffer(jsonData))
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/parking/cancel/transaction-order", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{
-		Timeout: timeOut,
-	}
-	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
@@ -280,17 +279,17 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
+
+	ctx, cancel := context.WithTimeout(context.Background(), transactionTimeOut)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{
-		Timeout: transactionTimeOut,
-	}
-	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		time.Sleep(voidDelayDuration)
 		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
