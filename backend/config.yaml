@@ -1,6 +1,6 @@
 app:
   port: 1323
-  version: 0.22
+  version: 0.23
   secret: QjrwoX405TUmRVsZPmZ5qVuZDIhz3tDCUQf2TBZQCGk0jCcMx-JcaJizu82-GoeSudfrbtAgwvA-7R6aB3AKOQ==
 
 database:
