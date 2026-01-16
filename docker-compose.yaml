@@ -15,7 +15,7 @@ services:
           - type=gha
         cache-to:
           - type=gha,mode=max
-    image: ghcr.io/enctech/api-oa-integrator-backend:0.28
+    image: ghcr.io/enctech/api-oa-integrator-backend:0.29
     container_name: backend
     ports:
       - "127.0.0.1:1323:1323"
