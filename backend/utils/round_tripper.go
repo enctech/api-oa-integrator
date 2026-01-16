@@ -37,7 +37,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		resInfo["request-body"] = requestBody.String()
 	}
 	if err != nil {
-		resInfo["error"] = err
+		resInfo["error"] = err.Error()
 		logger.LogData("info", "HTTP Response", resInfo)
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	// Capture the response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		resInfo["error"] = err
+		resInfo["error"] = err.Error()
 		logger.LogData("info", fmt.Sprintf("HTTP Response error %v", req.URL.String()), resInfo)
 		return nil, err
 	}
