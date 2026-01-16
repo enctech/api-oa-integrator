@@ -25,7 +25,7 @@ type Config struct {
 
 const statusCodeSuccess = "000"
 const statusCodeDuplicateTransaction = "998"
-const timeOut = time.Second * 2
+const timeOut = time.Second * 5
 const transactionTimeOut = time.Second * 3
 const voidDelayDuration = time.Second * 5
 
