@@ -7,6 +7,7 @@ import (
 	"api-oa-integrator/logger"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -55,20 +56,31 @@ func init() {
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token.
 func main() {
-	log := logger.CreateLogger()
-	fmt.Println(viper.GetString("database.url"))
 
-	defer func(logger *zap.Logger) {
-		_ = logger.Sync()
-	}(log)
-
-	zap.ReplaceGlobals(log)
 	err := database.InitDatabase()
 
 	if err != nil {
 		panic(fmt.Sprintf("init database error %v", err))
 		return
 	}
+
+	zapLogger := logger.CreateLogger()
+	zap.ReplaceGlobals(zapLogger)
+
+	// Initialize the database
+	db := database.D()
+
+	// Initialize the batcher with:
+	// - batch size: 100 logs
+	// - flush delay: 5 seconds
+	logger.InitBatcher(db, 100, 5*time.Second)
+
+	fmt.Println(viper.GetString("database.url"))
+
+	defer func(zapLogger *zap.Logger) {
+		logger.Shutdown()
+		_ = zapLogger.Sync()
+	}(zapLogger)
 
 	internal.InitServer()
 }
