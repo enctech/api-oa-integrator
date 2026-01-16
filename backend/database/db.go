@@ -36,9 +36,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createLogStmt, err = db.PrepareContext(ctx, createLog); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLog: %w", err)
 	}
-	if q.createLogsStmt, err = db.PrepareContext(ctx, createLogs); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateLogs: %w", err)
-	}
 	if q.createOATransactionStmt, err = db.PrepareContext(ctx, createOATransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateOATransaction: %w", err)
 	}
@@ -149,11 +146,6 @@ func (q *Queries) Close() error {
 	if q.createLogStmt != nil {
 		if cerr := q.createLogStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createLogStmt: %w", cerr)
-		}
-	}
-	if q.createLogsStmt != nil {
-		if cerr := q.createLogsStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createLogsStmt: %w", cerr)
 		}
 	}
 	if q.createOATransactionStmt != nil {
@@ -344,7 +336,6 @@ type Queries struct {
 	createIntegratorConfigStmt          *sql.Stmt
 	createIntegratorTransactionStmt     *sql.Stmt
 	createLogStmt                       *sql.Stmt
-	createLogsStmt                      *sql.Stmt
 	createOATransactionStmt             *sql.Stmt
 	createSnbConfigStmt                 *sql.Stmt
 	createUserStmt                      *sql.Stmt
@@ -384,7 +375,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createIntegratorConfigStmt:          q.createIntegratorConfigStmt,
 		createIntegratorTransactionStmt:     q.createIntegratorTransactionStmt,
 		createLogStmt:                       q.createLogStmt,
-		createLogsStmt:                      q.createLogsStmt,
 		createOATransactionStmt:             q.createOATransactionStmt,
 		createSnbConfigStmt:                 q.createSnbConfigStmt,
 		createUserStmt:                      q.createUserStmt,

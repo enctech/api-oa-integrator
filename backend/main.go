@@ -5,13 +5,8 @@ import (
 	_ "api-oa-integrator/docs"
 	"api-oa-integrator/internal"
 	"api-oa-integrator/logger"
-	"context"
 	"fmt"
-	"os"
-	"os/signal"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -60,32 +55,20 @@ func init() {
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token.
 func main() {
+	log := logger.CreateLogger()
+	fmt.Println(viper.GetString("database.url"))
+
+	defer func(logger *zap.Logger) {
+		_ = logger.Sync()
+	}(log)
+
+	zap.ReplaceGlobals(log)
 	err := database.InitDatabase()
+
 	if err != nil {
-		panic(fmt.Sprintf("init database error: %v", err))
-	}
-	db := database.D()
-	logger.Init(db)
-	defer zap.L().Sync()
-
-	// 2️⃣ Init Echo server
-	e := internal.InitServer()
-
-	// 3️⃣ Listen for shutdown signals
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
-	<-quit // wait for Ctrl+C or SIGTERM
-	zap.L().Info("Shutting down server...")
-
-	// 4️⃣ Graceful shutdown HTTP server
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
-		zap.L().Error("server shutdown failed", zap.Error(err))
+		panic(fmt.Sprintf("init database error %v", err))
+		return
 	}
 
-	// 5️⃣ Flush pending logs
-	logger.Shutdown(ctx)
-	zap.L().Info("Server stopped gracefully")
+	internal.InitServer()
 }
