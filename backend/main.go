@@ -70,10 +70,7 @@ func main() {
 	// Initialize the database
 	db := database.D()
 
-	// Initialize the batcher with:
-	// - batch size: 100 logs
-	// - flush delay: 5 seconds
-	logger.InitBatcher(db, 100, 5*time.Second)
+	logger.InitBatcher(db, 50, 5*time.Second)
 
 	fmt.Println(viper.GetString("database.url"))
 
