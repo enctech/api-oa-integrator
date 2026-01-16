@@ -25,7 +25,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		reqInfo["body"] = requestBody.String()
 	}
 
-	go logger.LogData("info", fmt.Sprintf("HTTP Request %v", req.URL.String()), reqInfo)
+	logger.LogData("info", fmt.Sprintf("HTTP Request %v", req.URL.String()), reqInfo)
 
 	// Perform the actual HTTP request
 	resp, err := lrt.Transport.RoundTrip(req)
@@ -38,7 +38,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	}
 	if err != nil {
 		resInfo["error"] = err.Error()
-		go logger.LogData("info", "HTTP Response", resInfo)
+		logger.LogData("info", "HTTP Response", resInfo)
 		return nil, err
 	}
 
@@ -48,14 +48,14 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		resInfo["error"] = err.Error()
-		go logger.LogData("info", fmt.Sprintf("HTTP Response error %v", req.URL.String()), resInfo)
+		logger.LogData("info", fmt.Sprintf("HTTP Response error %v", req.URL.String()), resInfo)
 		return nil, err
 	}
 	if resp.Body != nil {
 		resInfo["response-body"] = string(responseBody)
 	}
 
-	go logger.LogData("info", fmt.Sprintf("HTTP Response %v", req.URL.String()), resInfo)
+	logger.LogData("info", fmt.Sprintf("HTTP Response %v", req.URL.String()), resInfo)
 
 	// Create a new response object with the same status, headers, and body
 	newResponse := &http.Response{
