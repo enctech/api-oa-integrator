@@ -89,6 +89,7 @@ const LogsPage = () => {
         ),
       }),
     {
+      enabled: false, // Temporarily disabled - query is too slow, see PR #2
       refetchInterval: 5000,
     },
   );
