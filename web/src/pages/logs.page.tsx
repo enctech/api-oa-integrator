@@ -124,6 +124,18 @@ const LogsPage = () => {
     setSearchParams(newParams.current);
   }, []);
 
+  // Temporarily disabled - logs query is too slow
+  return (
+    <div className="p-4 px-8">
+      <Paper className="p-8 text-center">
+        <h2 className="text-xl font-semibold mb-2">Logs Temporarily Unavailable</h2>
+        <p className="text-gray-600">
+          This page is under maintenance to improve performance. Please check back later.
+        </p>
+      </Paper>
+    </div>
+  );
+
   return (
     <div className="p-4 px-8">
       <div className={"flex"}>
