@@ -16,6 +16,14 @@
     ```
   - Resolves Caddy warning: "failed to sufficiently increase receive buffer size"
 
+### Application Changes
+
+- **Optimized GetLogs query performance** ([PR #2](https://github.com/enctech/api-oa-integrator/pull/2))
+  - Added index on `logs.created_at` for faster sorting and range queries
+  - Reordered query to filter by date first (uses index)
+  - Default date range changed to last 1 hour (prevents full table scan)
+  - Configured database connection pool limits
+
 ## 2026-01-20
 
 ### Infrastructure
