@@ -202,9 +202,10 @@ func (con controller) createJob(c echo.Context) error {
 		device:   c.Param("device"),
 		jobId:    c.Param("jobId"),
 	}
+	ctx := c.Request().Context()
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		go sendEmptyFinalMessage(rm)
+		go sendEmptyFinalMessage(ctx, rm)
 		return c.XML(http.StatusCreated, ConfirmationResponse{
 			ConfirmationDetailStatus: "JOB_CREATED",
 			ConfirmationStatus:       "OK",
@@ -222,17 +223,17 @@ func (con controller) createJob(c echo.Context) error {
 	err = xml.Unmarshal(body, &req)
 
 	if err != nil {
-		go sendEmptyFinalMessage(rm)
+		go sendEmptyFinalMessage(ctx, rm)
 		return c.XML(http.StatusCreated, ConfirmationResponse{
 			ConfirmationDetailStatus: "JOB_CREATED",
 			ConfirmationStatus:       "OK",
 		})
 	}
 	handleIdentificationEntry(c, req, rm)
-	handleLeaveLoopEntry(req, rm)
-	handleIdentificationExit(req, rm)
-	handlePaymentExit(req, rm)
-	handleLeaveLoopExit(req, rm)
+	handleLeaveLoopEntry(ctx, req, rm)
+	handleIdentificationExit(ctx, req, rm)
+	handlePaymentExit(ctx, req, rm)
+	handleLeaveLoopExit(ctx, req, rm)
 	if c.Response().Committed {
 		return nil
 	}
@@ -248,7 +249,7 @@ func (con controller) fakeTest(c echo.Context) error {
 		device:   c.Param("device"),
 		jobId:    c.Param("jobId"),
 	}
-	go sendEmptyFinalMessage(rm)
+	go sendEmptyFinalMessage(c.Request().Context(), rm)
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "JOB_CREATED",
 		ConfirmationStatus:       "OK",

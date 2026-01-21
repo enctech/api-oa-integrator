@@ -5,3 +5,5 @@ app:
 
 database:
   url: postgres://postgres:a8mJ!4ug2dvj@localhost:5432/postgres?sslmode=disable
+
+# Tracing: Set OTEL_EXPORTER_OTLP_ENDPOINT env var to enable (e.g., "http://localhost:4317")

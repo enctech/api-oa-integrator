@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
+	zaplogfmt "github.com/jsternberg/zap-logfmt"
 	"github.com/sqlc-dev/pqtype"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 type logEntry struct {
@@ -198,15 +200,57 @@ func LogData(level string, msg string, fields map[string]interface{}) {
 
 func CreateLogger() *zap.Logger {
 	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = "timestamp"
+	encoderCfg.TimeKey = "ts"
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderCfg.EncodeLevel = zapcore.LowercaseLevelEncoder
+	encoderCfg.EncodeDuration = zapcore.StringDurationEncoder
 
 	logger := zap.New(zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderCfg),
+		zaplogfmt.NewEncoder(encoderCfg),
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
 		zap.DebugLevel,
 	))
 
 	return zap.Must(logger, nil)
+}
+
+func LogWithContext(ctx context.Context, level, msg string, fields map[string]interface{}) {
+	logger := zap.L()
+
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if spanCtx.HasTraceID() {
+		logger = logger.With(
+			zap.String("trace_id", spanCtx.TraceID().String()),
+			zap.String("span_id", spanCtx.SpanID().String()),
+		)
+	}
+
+	if fields != nil {
+		for k, v := range fields {
+			logger = logger.With(zap.Any(k, v))
+		}
+	}
+
+	switch level {
+	case "error":
+		logger.Error(msg)
+	case "info":
+		logger.Info(msg)
+	case "debug":
+		logger.Debug(msg)
+	case "warn":
+		logger.Warn(msg)
+	default:
+		logger.Info(msg)
+	}
+
+	if batcher != nil && fields != nil {
+		entry := logEntry{
+			level:     level,
+			message:   msg,
+			fields:    fields,
+			timestamp: time.Now().UTC().Round(time.Microsecond),
+		}
+		_ = entry
+	}
 }
