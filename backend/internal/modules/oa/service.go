@@ -52,7 +52,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error Marshal %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 	data, err := database.New(database.TracedD()).CreateOATransaction(ctx, database.CreateOATransactionParams{
@@ -70,7 +70,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error create oa transaction %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -79,7 +79,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error get integrator configs %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -113,10 +113,10 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	var successfulVendor string
 	select {
 	case successfulVendor = <-vendorChannel:
-		fmt.Printf("Success from: %s\n", successfulVendor)
+		logger.LogWithContext(ctx, "info", fmt.Sprintf("Success from: %s", successfulVendor), nil)
 		span.SetAttributes(tracing.VendorKey.String(successfulVendor))
 	default:
-		sendEmptyFinalMessage(ctx, metadata)
+		sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -130,8 +130,9 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	}()
 
 	go func() {
+		bgCtx := tracing.DetachedContext(ctx)
 		if successfulVendor == "" {
-			go sendEmptyFinalMessage(ctx, metadata)
+			go sendEmptyFinalMessage(bgCtx, metadata)
 			return
 		}
 
@@ -139,8 +140,8 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			"steps": "identification_entry_done",
 		})
 		if err != nil {
-			logger.LogWithContext(ctx, "error", fmt.Sprintf("Error Marshal %v", err), nil)
-			go sendEmptyFinalMessage(ctx, metadata)
+			logger.LogWithContext(bgCtx, "error", fmt.Sprintf("Error Marshal %v", err), nil)
+			go sendEmptyFinalMessage(bgCtx, metadata)
 			return
 		}
 
@@ -148,14 +149,14 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			return config.Name.String == successfulVendor
 		})
 
-		_, err = database.New(database.TracedD()).UpdateOATransaction(ctx, database.UpdateOATransactionParams{
+		_, err = database.New(database.TracedD()).UpdateOATransaction(bgCtx, database.UpdateOATransactionParams{
 			Businesstransactionid: data.Businesstransactionid,
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 			IntegratorID: uuid.NullUUID{
 				UUID: config.ID, Valid: true,
 			},
 		})
-		sendFinalMessageCustomer(ctx, metadata, FMCReq{
+		sendFinalMessageCustomer(bgCtx, metadata, FMCReq{
 			Identifier:          Identifier{Name: lpn},
 			BusinessTransaction: &BusinessTransaction{ID: btid},
 			CustomerInformation: &CustomerInformation{
@@ -185,12 +186,12 @@ func handleLeaveLoopEntry(ctx context.Context, job *Job, metadata *RequestMetada
 	defer span.End()
 
 	if job.BusinessTransaction == nil {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
 	if job.BusinessTransaction.ID == "" {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -201,7 +202,7 @@ func handleLeaveLoopEntry(ctx context.Context, job *Job, metadata *RequestMetada
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -209,6 +210,12 @@ func handleLeaveLoopEntry(ctx context.Context, job *Job, metadata *RequestMetada
 	span.SetAttributes(tracing.TransactionIDKey.String(btid))
 
 	oaTxn, err := database.New(database.TracedD()).GetLatestOATransaction(ctx, btid)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
+		return
+	}
 
 	_, _ = database.New(database.TracedD()).CreateOATransaction(ctx, database.CreateOATransactionParams{
 		Businesstransactionid: btid,
@@ -221,7 +228,7 @@ func handleLeaveLoopEntry(ctx context.Context, job *Job, metadata *RequestMetada
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		IntegratorID:          oaTxn.IntegratorID,
 	})
-	go sendEmptyFinalMessage(ctx, metadata)
+	go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 }
 
 func handleIdentificationExit(ctx context.Context, job *Job, metadata *RequestMetadata) {
@@ -235,12 +242,12 @@ func handleIdentificationExit(ctx context.Context, job *Job, metadata *RequestMe
 	defer span.End()
 
 	if job.BusinessTransaction == nil {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
 	if job.BusinessTransaction.ID == "" {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -251,7 +258,7 @@ func handleIdentificationExit(ctx context.Context, job *Job, metadata *RequestMe
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -261,12 +268,18 @@ func handleIdentificationExit(ctx context.Context, job *Job, metadata *RequestMe
 	span.SetAttributes(tracing.ExitLaneKey.String(lane))
 
 	oaTxn, err := database.New(database.TracedD()).GetLatestOATransaction(ctx, btid)
-	config, err := database.New(database.TracedD()).GetIntegratorConfig(ctx, oaTxn.IntegratorID.UUID)
-
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
+		return
+	}
+
+	config, err := database.New(database.TracedD()).GetIntegratorConfig(ctx, oaTxn.IntegratorID.UUID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		go sendEmptyFinalMessage(tracing.DetachedContext(ctx), metadata)
 		return
 	}
 
@@ -284,12 +297,13 @@ func handleIdentificationExit(ctx context.Context, job *Job, metadata *RequestMe
 	})
 
 	go func() {
-		cfg, err := database.New(database.TracedD()).GetIntegratorConfigByName(ctx, sql.NullString{String: config.Name.String, Valid: true})
+		bgCtx := tracing.DetachedContext(ctx)
+		cfg, err := database.New(database.TracedD()).GetIntegratorConfigByName(bgCtx, sql.NullString{String: config.Name.String, Valid: true})
 		if err != nil {
-			go sendEmptyFinalMessage(ctx, metadata)
+			go sendEmptyFinalMessage(bgCtx, metadata)
 			return
 		}
-		sendFinalMessageCustomer(ctx, metadata, FMCReq{
+		sendFinalMessageCustomer(bgCtx, metadata, FMCReq{
 			Identifier:          Identifier{Name: oaTxn.Lpn.String},
 			BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
 			CustomerInformation: &CustomerInformation{Customer: Customer{
@@ -311,8 +325,10 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 	)
 	defer span.End()
 
+	bgCtx := tracing.DetachedContext(ctx)
+
 	if job.BusinessTransaction == nil {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 	btid := job.BusinessTransaction.ID
@@ -325,7 +341,7 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
@@ -336,7 +352,7 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
@@ -361,7 +377,7 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
@@ -371,7 +387,7 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 	}}
 
 	sendZeroAmount := func() {
-		sendFinalMessageCustomer(ctx, metadata, FMCReq{
+		sendFinalMessageCustomer(bgCtx, metadata, FMCReq{
 			Identifier:          Identifier{Name: oaTxn.Lpn.String},
 			BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
 			CustomerInformation: customerInformation,
@@ -458,7 +474,7 @@ func handlePaymentExit(ctx context.Context, job *Job, metadata *RequestMetadata)
 		IntegratorID:          oaTxn.IntegratorID,
 	})
 
-	go sendFinalMessageCustomer(ctx, metadata, FMCReq{
+	go sendFinalMessageCustomer(bgCtx, metadata, FMCReq{
 		Identifier:          Identifier{Name: oaTxn.Lpn.String},
 		BusinessTransaction: &BusinessTransaction{ID: oaTxn.Businesstransactionid},
 		CustomerInformation: customerInformation,
@@ -481,10 +497,11 @@ func handleLeaveLoopExit(ctx context.Context, job *Job, metadata *RequestMetadat
 	)
 	defer span.End()
 
+	bgCtx := tracing.DetachedContext(ctx)
 	lpn := job.MediaDataList.Identifier.Name
 
 	if job.BusinessTransaction == nil {
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
@@ -492,6 +509,12 @@ func handleLeaveLoopExit(ctx context.Context, job *Job, metadata *RequestMetadat
 	span.SetAttributes(tracing.TransactionIDKey.String(btid))
 
 	oaTxn, err := database.New(database.TracedD()).GetLatestOATransaction(ctx, btid)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		go sendEmptyFinalMessage(bgCtx, metadata)
+		return
+	}
 
 	var extra map[string]any
 
@@ -499,11 +522,17 @@ func handleLeaveLoopExit(ctx context.Context, job *Job, metadata *RequestMetadat
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
 	cfg, err := database.New(database.TracedD()).GetIntegratorConfig(ctx, oaTxn.IntegratorID.UUID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		go sendEmptyFinalMessage(bgCtx, metadata)
+		return
+	}
 
 	if extra["steps"] != "payment_exit_done" {
 		arg := integrator.TransactionArg{
@@ -533,7 +562,7 @@ func handleLeaveLoopExit(ctx context.Context, job *Job, metadata *RequestMetadat
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		go sendEmptyFinalMessage(ctx, metadata)
+		go sendEmptyFinalMessage(bgCtx, metadata)
 		return
 	}
 
@@ -550,7 +579,7 @@ func handleLeaveLoopExit(ctx context.Context, job *Job, metadata *RequestMetadat
 		IntegratorID:          oaTxn.IntegratorID,
 	})
 
-	go sendEmptyFinalMessage(ctx, metadata)
+	go sendEmptyFinalMessage(bgCtx, metadata)
 }
 
 type FMCReq struct {
@@ -578,7 +607,7 @@ func sendFinalMessageCustomer(ctx context.Context, metadata *RequestMetadata, in
 	})
 
 	if err != nil {
-		fmt.Println("Error get config", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error get config: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -610,7 +639,7 @@ func sendFinalMessageCustomer(ctx context.Context, metadata *RequestMetadata, in
 		BusinessTransaction: in.BusinessTransaction,
 	})
 	if err != nil {
-		fmt.Println("Error marshaling XML data:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error marshaling XML data: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -618,7 +647,7 @@ func sendFinalMessageCustomer(ctx context.Context, metadata *RequestMetadata, in
 
 	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error creating request: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -629,7 +658,7 @@ func sendFinalMessageCustomer(ctx context.Context, metadata *RequestMetadata, in
 
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error sending request: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -654,7 +683,7 @@ func sendEmptyFinalMessage(ctx context.Context, metadata *RequestMetadata) {
 	})
 
 	if err != nil {
-		fmt.Println("Error get config", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error get config: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -662,7 +691,7 @@ func sendEmptyFinalMessage(ctx context.Context, metadata *RequestMetadata) {
 
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{})
 	if err != nil {
-		fmt.Println("Error marshaling XML data:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error marshaling XML data: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -672,7 +701,7 @@ func sendEmptyFinalMessage(ctx context.Context, metadata *RequestMetadata) {
 	defer cancel()
 	req, err := http.NewRequestWithContext(reqCtx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error creating request: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -682,7 +711,7 @@ func sendEmptyFinalMessage(ctx context.Context, metadata *RequestMetadata) {
 
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error sending request: %v", err), nil)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return
@@ -691,18 +720,27 @@ func sendEmptyFinalMessage(ctx context.Context, metadata *RequestMetadata) {
 }
 
 func CheckSystemAvailability(facility, device string) error {
-	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
+	ctx, span := tracing.Tracer().Start(context.Background(), "snb.CheckSystemAvailability",
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			tracing.FacilityKey.String(facility),
+			tracing.DeviceKey.String(device),
+		),
+	)
+	defer span.End()
+
+	config, err := database.New(database.TracedD()).GetSnbConfigByFacilityAndDevice(ctx, database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   device,
 		Facility: facility,
 	})
 
 	if err != nil {
-		fmt.Println("Error get config", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error get config: %v", err), nil)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
-	// Fake request body. Request body is required for this endpoint.
-	// We don't really care about the response. We're good if there is response.
 	xmlOut := []byte(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?><version>
 	<customerVersion>%v</customerVersion>
 	<sbAuthorizationServiceVersion>2.5.6</sbAuthorizationServiceVersion>
@@ -710,12 +748,14 @@ func CheckSystemAvailability(facility, device string) error {
 	</configuration>
 	</version>`, viper.GetString("app.version")))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
+	req, err := http.NewRequestWithContext(reqCtx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error creating request: %v", err), nil)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	req.Header.Set("Content-Type", "application/xml")
@@ -723,7 +763,9 @@ func CheckSystemAvailability(facility, device string) error {
 
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.LogWithContext(ctx, "error", fmt.Sprintf("Error sending request: %v", err), nil)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	defer resp.Body.Close()

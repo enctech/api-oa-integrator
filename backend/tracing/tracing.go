@@ -79,3 +79,11 @@ func Tracer() trace.Tracer {
 	}
 	return tracer
 }
+
+// DetachedContext creates a new background context that preserves the trace
+// context from the parent but won't be cancelled when the parent is cancelled.
+// Use this for goroutines that should complete regardless of request lifecycle.
+func DetachedContext(ctx context.Context) context.Context {
+	span := trace.SpanFromContext(ctx)
+	return trace.ContextWithSpan(context.Background(), span)
+}
