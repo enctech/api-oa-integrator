@@ -18,11 +18,10 @@
 
 ### Application Changes
 
-- **Optimized GetLogs query performance** ([PR #2](https://github.com/enctech/api-oa-integrator/pull/2))
-  - Added index on `logs.created_at` for faster sorting and range queries
-  - Reordered query to filter by date first (uses index)
-  - Default date range changed to last 1 hour (prevents full table scan)
-  - Configured database connection pool limits
+- **Temporarily disabled logs query** ([PR #3](https://github.com/enctech/api-oa-integrator/pull/3))
+  - Disabled logs query endpoint to prevent server overload
+  - Disabled logging to database
+  - Shows maintenance message on logs page
 
 ## 2026-01-20
 
