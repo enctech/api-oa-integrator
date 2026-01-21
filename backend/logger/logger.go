@@ -191,7 +191,8 @@ func LogData(level string, msg string, fields map[string]interface{}) {
 			fields:    fields,
 			timestamp: time.Now().UTC().Round(time.Microsecond),
 		}
-		batcher.add(entry)
+		_ = entry // Temporarily disabled - logs table is too large, see PR #2
+		// batcher.add(entry)
 	}
 }
 
