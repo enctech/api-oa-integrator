@@ -48,61 +48,45 @@
 
 ### Deployment
 
-### docker build from local
+SSH into the server and run:
 
-you might need to setup your github Personal Access Token (PAT) first and then use it with docker login ghcr.io, please refer to https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic
-
-The image tag depends on the tag set inside `docker-compose.yaml`, make sure to update that first before building the image.
-
-After that, go to the root of the repo and run to build and push the image:
-```
-docker buildx bake --push
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker compose build backend web && docker compose up -d"
 ```
 
-After that is done, SSH into the server, navigate to the repo directory and run:
+This builds only `backend` and `web` services (caddy rarely changes). To rebuild all services including caddy:
 
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker compose build && docker compose up -d"
 ```
-git pull
+
+For faster parallel builds using docker bake:
+
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker buildx bake backend web && docker compose up -d"
+```
+
+### Initial Setup (New Server)
+
+#### 1. Clone the Repository
+
+```bash
+mkdir -p /root/api-oa-integrator
+cd /root/api-oa-integrator
+git clone https://github.com/enctech/api-oa-integrator.git .
+```
+
+#### 2. Run the Application
+
+```bash
 docker compose up -d
 ```
 
-### Step-by-Step Instructions
+#### 3. Test the Application
 
-#### 1. Create a Directory
-
-Open your Ubuntu terminal and execute the following commands:
-
-1. **Create a directory named `api-oa-integrator` under `/home/Downloads` and navigate to it:**
-    ```sh
-    mkdir -p /home/Downloads/api-oa-integrator
-    cd /home/Downloads/api-oa-integrator
-    ```
-
-#### 2. Clone the Repository
-
-1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/enctech/api-oa-integrator.git
-    ```
-    When prompted, enter the following credentials:
-    ```
-    Username for 'https://github.com': enctech
-    Password for 'https://enctech@github.com': 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
-    ```
-    **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
-
-#### 6. Run the Application
-
-1. **Start the application using the `make run_application` command:**
-    ```sh
-    make run_application
-    ```
-
-#### 7. Test the Application
-
-1. **Open your web browser and navigate to:**
-    - [https://localhost:3000](https://localhost:3000) or
-    - [https://[ipaddress]:3000](https://[ipaddress]:3000)
+Open your web browser and navigate to:
+- [https://localhost:3000](https://localhost:3000) or
+- [https://[ipaddress]:3000](https://[ipaddress]:3000)
 
 
 ## Application Architecture
