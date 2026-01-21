@@ -42,7 +42,10 @@ type Response struct {
 //	@Produce		application/json
 //	@Router			/transactions/logs [get]
 func (con controller) getLogs(c echo.Context) error {
-	after, _ := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	after, err := time.Parse(time.RFC3339, c.QueryParam("startAt"))
+	if err != nil {
+		after = time.Now().AddDate(0, 0, -1) // Default: last 24 hours
+	}
 	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
 	if err != nil {
 		before = time.Now()

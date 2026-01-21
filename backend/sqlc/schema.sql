@@ -7,6 +7,8 @@ create table logs
     created_at timestamp not null default NOW()
 );
 
+create index idx_logs_created_at on logs (created_at desc);
+
 create table snb_config
 (
     id       uuid primary key,

@@ -12,9 +12,9 @@ returning *;
 -- name: GetLogs :many
 select *
 from logs
-where message like concat('%', sqlc.arg(message)::text, '%')
-  and fields::text like concat('%', sqlc.arg(fields)::text, '%')
-  and created_at >= sqlc.arg(after)
+where created_at >= sqlc.arg(after)
   and created_at <= sqlc.arg(before)
+  and (sqlc.arg(message)::text = '' or message ilike concat('%', sqlc.arg(message)::text, '%'))
+  and (sqlc.arg(fields)::text = '' or fields::text ilike concat('%', sqlc.arg(fields)::text, '%'))
 order by created_at desc
 limit $1 offset $2;
