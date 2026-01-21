@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -30,6 +32,12 @@ func InitDatabase() error {
 				zap.L().Sugar().With("URL", viper.GetString("database.url")).Errorf("failed ping db %v", err)
 				return err
 			}
+
+			// Configure connection pool
+			db.SetMaxOpenConns(15)
+			db.SetMaxIdleConns(5)
+			db.SetConnMaxLifetime(5 * time.Minute)
+
 			driver, err := postgres.WithInstance(db, &postgres.Config{})
 			if err != nil {
 				zap.L().Sugar().Errorf("failed postgres.WithInstance %v", err)
