@@ -44,7 +44,7 @@ type Response struct {
 func (con controller) getLogs(c echo.Context) error {
 	after, err := time.Parse(time.RFC3339, c.QueryParam("startAt"))
 	if err != nil {
-		after = time.Now().AddDate(0, 0, -1) // Default: last 24 hours
+		after = time.Now().Add(-1 * time.Hour) // Default: last 1 hour
 	}
 	before, err := time.Parse(time.RFC3339, c.QueryParam("endAt"))
 	if err != nil {

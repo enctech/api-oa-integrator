@@ -40,12 +40,12 @@ const LogsPage = () => {
       defaultValues: {
         message: currentQueryParameters.get("message") || "",
         field: currentQueryParameters.get("field") || "",
-        startAt: dayjs(
-          moment(currentQueryParameters.get("startAt")).local().toDate(),
-        ),
-        endAt: dayjs(
-          moment(currentQueryParameters.get("endAt")).local().toDate(),
-        ),
+        startAt: currentQueryParameters.get("startAt")
+          ? dayjs(moment(currentQueryParameters.get("startAt")).local().toDate())
+          : dayjs().subtract(1, "hour"),
+        endAt: currentQueryParameters.get("endAt")
+          ? dayjs(moment(currentQueryParameters.get("endAt")).local().toDate())
+          : dayjs(),
       },
     });
 
@@ -102,18 +102,18 @@ const LogsPage = () => {
   useEffect(() => {
     newParams.current.set("page", "0");
     newParams.current.set("perPage", "100");
-    if (currentQueryParameters.get("startAt")) {
-      newParams.current.set(
-        "startAt",
-        moment(currentQueryParameters.get("startAt")).utc().toISOString(),
-      );
-    }
-    if (currentQueryParameters.get("endAt")) {
-      newParams.current.set(
-        "endAt",
-        moment(currentQueryParameters.get("endAt")).utc().toISOString(),
-      );
-    }
+    newParams.current.set(
+      "startAt",
+      currentQueryParameters.get("startAt")
+        ? moment(currentQueryParameters.get("startAt")).utc().toISOString()
+        : dayjs().subtract(1, "hour").toISOString(),
+    );
+    newParams.current.set(
+      "endAt",
+      currentQueryParameters.get("endAt")
+        ? moment(currentQueryParameters.get("endAt")).utc().toISOString()
+        : dayjs().toISOString(),
+    );
     newParams.current.set(
       "message",
       currentQueryParameters.get("message") || "",
