@@ -4,10 +4,12 @@ import (
 	"crypto/tls"
 	"net/http"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var GlobalInsecureHttpClient = &http.Client{
-	Transport: &LoggingRoundTripper{
+	Transport: otelhttp.NewTransport(&LoggingRoundTripper{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -17,5 +19,5 @@ var GlobalInsecureHttpClient = &http.Client{
 			MaxConnsPerHost:     100,
 			IdleConnTimeout:     90 * time.Second,
 		},
-	},
+	}),
 }

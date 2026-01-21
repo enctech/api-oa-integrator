@@ -8,14 +8,17 @@ import (
 	"api-oa-integrator/internal/modules/oa"
 	"api-oa-integrator/internal/modules/transactions"
 	"fmt"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 )
 
 func InitServer() {
 	e := echo.New()
+	e.Use(otelecho.Middleware("api-oa-integrator"))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())

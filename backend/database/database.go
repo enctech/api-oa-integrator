@@ -1,15 +1,17 @@
 package database
 
 import (
+	"api-oa-integrator/tracing"
 	"database/sql"
 	"fmt"
+	"sync"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"sync"
 )
 
 var lock = &sync.Mutex{}
@@ -58,4 +60,8 @@ func InitDatabase() error {
 
 func D() *sql.DB {
 	return singleInstance
+}
+
+func TracedD() DBTX {
+	return tracing.NewTracedDBTX(singleInstance)
 }

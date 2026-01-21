@@ -5,6 +5,8 @@ import (
 	_ "api-oa-integrator/docs"
 	"api-oa-integrator/internal"
 	"api-oa-integrator/logger"
+	"api-oa-integrator/tracing"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -56,18 +58,21 @@ func init() {
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token.
 func main() {
-
-	err := database.InitDatabase()
-
-	if err != nil {
-		panic(fmt.Sprintf("init database error %v", err))
-		return
-	}
+	ctx := context.Background()
 
 	zapLogger := logger.CreateLogger()
 	zap.ReplaceGlobals(zapLogger)
 
-	// Initialize the database
+	tp, err := tracing.Init(ctx)
+	if err != nil {
+		zap.L().Warn("Failed to initialize tracing", zap.Error(err))
+	}
+
+	err = database.InitDatabase()
+	if err != nil {
+		panic(fmt.Sprintf("init database error %v", err))
+	}
+
 	db := database.D()
 
 	logger.InitBatcher(db, 50, 5*time.Second)
@@ -75,6 +80,9 @@ func main() {
 	fmt.Println(viper.GetString("database.url"))
 
 	defer func(zapLogger *zap.Logger) {
+		if tp != nil {
+			_ = tp.Shutdown(ctx)
+		}
 		logger.Shutdown()
 		_ = zapLogger.Sync()
 	}(zapLogger)

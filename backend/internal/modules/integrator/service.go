@@ -4,6 +4,7 @@ import (
 	"api-oa-integrator/database"
 	"api-oa-integrator/logger"
 	"api-oa-integrator/tng"
+	"api-oa-integrator/tracing"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -13,14 +14,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var Integrators = []string{"tng"}
 
 type Process interface {
-	VerifyVehicle(plateNumber, entryLane string) error
-	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error)
-	VoidTransaction(plateNumber, transactionId string) error
+	VerifyVehicle(ctx context.Context, plateNumber, entryLane string) error
+	PerformTransaction(ctx context.Context, locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error)
+	VoidTransaction(ctx context.Context, plateNumber, transactionId string) error
 	CancelEntry() error
 }
 
@@ -45,16 +48,33 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	}
 }
 
-func VerifyVehicle(client, locationId, plateNumber, lane string) error {
+func VerifyVehicle(ctx context.Context, client, locationId, plateNumber, lane string) error {
+	ctx, span := tracing.Tracer().Start(ctx, "integrator.VerifyVehicle",
+		trace.WithAttributes(
+			tracing.VendorKey.String(client),
+			tracing.PlateNumberKey.String(plateNumber),
+			tracing.FacilityKey.String(locationId),
+			tracing.EntryLaneKey.String(lane),
+		),
+	)
+	defer span.End()
+
 	if plateNumber == "" {
-		return errors.New("empty plate number")
+		err := errors.New("empty plate number")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	integratorConfig, _, err := getConfigFromIntegratorBasedOnIntegrator(client, locationId)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = integratorConfig.VerifyVehicle(plateNumber, lane)
+	err = integratorConfig.VerifyVehicle(ctx, plateNumber, lane)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	return nil
@@ -78,16 +98,34 @@ type TransactionArg struct {
 	Amount                float64
 }
 
-func PerformTransaction(arg TransactionArg) error {
-	logger.LogData("info", "PerformTransaction", map[string]interface{}{"plateNumber": arg.LPN})
+func PerformTransaction(ctx context.Context, arg TransactionArg) error {
+	ctx, span := tracing.Tracer().Start(ctx, "integrator.PerformTransaction",
+		trace.WithAttributes(
+			tracing.TransactionIDKey.String(arg.BusinessTransactionId),
+			tracing.VendorKey.String(arg.Client),
+			tracing.FacilityKey.String(arg.Facility),
+			tracing.PlateNumberKey.String(arg.LPN),
+			tracing.EntryLaneKey.String(arg.EntryLane),
+			tracing.ExitLaneKey.String(arg.ExitLane),
+			tracing.AmountKey.Float64(arg.Amount),
+		),
+	)
+	defer span.End()
+
+	logger.LogWithContext(ctx, "info", "PerformTransaction", map[string]interface{}{"plateNumber": arg.LPN})
 	if arg.LPN == "" {
-		return errors.New("empty plate number")
+		err := errors.New("empty plate number")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	integratorProcess, integratorConfig, err := getConfigFromIntegratorBasedOnIntegrator(arg.Client, arg.Facility)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	data, taxData, customStatus, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
+	data, taxData, customStatus, txnErr := integratorProcess.PerformTransaction(ctx, arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
 	status := "success"
 	if customStatus != nil {
 		status = *customStatus
@@ -96,11 +134,13 @@ func PerformTransaction(arg TransactionArg) error {
 	if txnErr != nil {
 		status = "fail"
 		errorMessage = txnErr.Error()
+		span.RecordError(txnErr)
+		span.SetStatus(codes.Error, txnErr.Error())
 	}
 	jsonStr, err := json.Marshal(data)
 	taxJsonStr, err := json.Marshal(taxData)
 
-	_, err = database.New(database.D()).CreateIntegratorTransaction(context.Background(), database.CreateIntegratorTransactionParams{
+	_, err = database.New(database.TracedD()).CreateIntegratorTransaction(ctx, database.CreateIntegratorTransactionParams{
 		Lpn:                   sql.NullString{String: arg.LPN, Valid: true},
 		BusinessTransactionID: uuid.MustParse(arg.BusinessTransactionId),
 		Extra:                 pqtype.NullRawMessage{Valid: err == nil, RawMessage: jsonStr},
