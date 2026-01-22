@@ -72,9 +72,13 @@ func main() {
 
 	logger.InitBatcher(db, 50, 5*time.Second)
 
+	// Initialize log cleaner: keeps logs for 100 days, runs cleanup every 12 hours
+	logger.InitCleaner(db, 100*24*time.Hour, 12*time.Hour)
+
 	fmt.Println(viper.GetString("database.url"))
 
 	defer func(zapLogger *zap.Logger) {
+		logger.StopCleaner()
 		logger.Shutdown()
 		_ = zapLogger.Sync()
 	}(zapLogger)
