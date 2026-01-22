@@ -89,8 +89,10 @@ const LogsPage = () => {
         ),
       }),
     {
-      enabled: false, // Temporarily disabled - query is too slow, see PR #2
-      refetchInterval: 5000,
+      refetchInterval: (data) => {
+        // Only refetch 5 seconds after data is received
+        return data ? 5000 : false;
+      },
     },
   );
 
@@ -123,18 +125,6 @@ const LogsPage = () => {
 
     setSearchParams(newParams.current);
   }, []);
-
-  // Temporarily disabled - logs query is too slow
-  return (
-    <div className="p-4 px-8">
-      <Paper className="p-8 text-center">
-        <h2 className="text-xl font-semibold mb-2">Logs Temporarily Unavailable</h2>
-        <p className="text-gray-600">
-          This page is under maintenance to improve performance. Please check back later.
-        </p>
-      </Paper>
-    </div>
-  );
 
   return (
     <div className="p-4 px-8">
