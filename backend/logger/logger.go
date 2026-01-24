@@ -40,6 +40,11 @@ var (
 // InitBatcher initializes the log batcher (call once at startup)
 func InitBatcher(db *sql.DB, batchSize int, flushDelay time.Duration) {
 	batcherOnce.Do(func() {
+		if db == nil {
+			fmt.Printf("[LOG_BATCHER] WARNING: InitBatcher called with nil db - logs will NOT be persisted to database\n")
+		} else {
+			fmt.Printf("[LOG_BATCHER] InitBatcher initialized with batchSize=%d, flushDelay=%v\n", batchSize, flushDelay)
+		}
 		batcher = &LogBatcher{
 			buffer:     make([]logEntry, 0, batchSize),
 			batchSize:  batchSize,
@@ -69,9 +74,9 @@ func (b *LogBatcher) start() {
 }
 
 func (b *LogBatcher) add(entry logEntry) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	var shouldFlush bool
 
+	b.mu.Lock()
 	b.buffer = append(b.buffer, entry)
 
 	// Reset or create timer
@@ -82,11 +87,17 @@ func (b *LogBatcher) add(entry logEntry) {
 		b.flush()
 	})
 
-	// Flush if batch size reached
+	// Check if batch size reached
 	if len(b.buffer) >= b.batchSize {
 		if b.flushTimer != nil {
 			b.flushTimer.Stop()
 		}
+		shouldFlush = true
+	}
+	b.mu.Unlock()
+
+	// Flush outside the lock to avoid deadlock
+	if shouldFlush {
 		b.flush()
 	}
 }
@@ -122,7 +133,7 @@ func (b *LogBatcher) bulkInsert(ctx context.Context, entries []logEntry) error {
 	}
 
 	// Build bulk insert query
-	query := "INSERT INTO logs (level, message, fields, created_at) VALUES "
+	query := "INSERT INTO logs (level, message, fields, created_at) VALUES"
 	values := []interface{}{}
 
 	for i, entry := range entries {
