@@ -42,8 +42,6 @@ func InitBatcher(db *sql.DB, batchSize int, flushDelay time.Duration) {
 	batcherOnce.Do(func() {
 		if db == nil {
 			fmt.Printf("[LOG_BATCHER] WARNING: InitBatcher called with nil db - logs will NOT be persisted to database\n")
-		} else {
-			fmt.Printf("[LOG_BATCHER] InitBatcher initialized with batchSize=%d, flushDelay=%v\n", batchSize, flushDelay)
 		}
 		batcher = &LogBatcher{
 			buffer:     make([]logEntry, 0, batchSize),
@@ -115,8 +113,6 @@ func (b *LogBatcher) flush() {
 	b.buffer = b.buffer[:0]
 	b.mu.Unlock()
 
-	fmt.Printf("[LOG_BATCHER] Flushing %d log entries to database\n", len(entries))
-
 	// Insert in batch
 	if b.db == nil {
 		fmt.Printf("[LOG_BATCHER] WARNING: db is nil, skipping insert of %d entries\n", len(entries))
@@ -129,8 +125,6 @@ func (b *LogBatcher) flush() {
 	err := b.bulkInsert(ctx, entries)
 	if err != nil {
 		fmt.Printf("[LOG_BATCHER] ERROR: failed to batch insert logs: %v\n", err)
-	} else {
-		fmt.Printf("[LOG_BATCHER] Successfully inserted %d log entries\n", len(entries))
 	}
 }
 
@@ -164,8 +158,6 @@ func (b *LogBatcher) bulkInsert(ctx context.Context, entries []logEntry) error {
 			entry.timestamp,
 		)
 	}
-
-	fmt.Printf("[LOG_BATCHER] Executing query with %d params: %s\n", len(values), query)
 
 	_, err := b.db.ExecContext(ctx, query, values...)
 	return err
