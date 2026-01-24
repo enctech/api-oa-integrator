@@ -385,7 +385,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+	_, err = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
 		Facility:              sql.NullString{String: metadata.facility, Valid: true},
@@ -397,6 +397,9 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
 		IntegratorID:          oaTxn.IntegratorID,
 	})
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("failed to save payment_exit_done for btid=%s: %v", btid, err), nil)
+	}
 
 	go sendFinalMessageCustomer(metadata, FMCReq{
 		Identifier:          Identifier{Name: oaTxn.Lpn.String},
@@ -438,6 +441,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
 
 	if extra["steps"] != "payment_exit_done" {
+		logger.LogData("warn", fmt.Sprintf("handleLeaveLoopExit: steps is '%v' (not payment_exit_done), performing 0-amount transaction for btid=%s", extra["steps"], btid), nil)
 		arg := integrator.TransactionArg{
 			LPN:                   lpn,
 			EntryLane:             oaTxn.EntryLane.String,
