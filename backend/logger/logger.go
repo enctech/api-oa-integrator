@@ -115,15 +115,22 @@ func (b *LogBatcher) flush() {
 	b.buffer = b.buffer[:0]
 	b.mu.Unlock()
 
-	// Insert in batch
-	if b.db != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+	fmt.Printf("[LOG_BATCHER] Flushing %d log entries to database\n", len(entries))
 
-		err := b.bulkInsert(ctx, entries)
-		if err != nil {
-			fmt.Printf("failed to batch insert logs: %v\n", err)
-		}
+	// Insert in batch
+	if b.db == nil {
+		fmt.Printf("[LOG_BATCHER] WARNING: db is nil, skipping insert of %d entries\n", len(entries))
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := b.bulkInsert(ctx, entries)
+	if err != nil {
+		fmt.Printf("[LOG_BATCHER] ERROR: failed to batch insert logs: %v\n", err)
+	} else {
+		fmt.Printf("[LOG_BATCHER] Successfully inserted %d log entries\n", len(entries))
 	}
 }
 
@@ -133,7 +140,7 @@ func (b *LogBatcher) bulkInsert(ctx context.Context, entries []logEntry) error {
 	}
 
 	// Build bulk insert query
-	query := "INSERT INTO logs (level, message, fields, created_at) VALUES"
+	query := "INSERT INTO logs (level, message, fields, created_at) VALUES "
 	values := []interface{}{}
 
 	for i, entry := range entries {
@@ -145,7 +152,11 @@ func (b *LogBatcher) bulkInsert(ctx context.Context, entries []logEntry) error {
 		query += fmt.Sprintf("($%d, $%d, $%d, $%d)",
 			paramOffset+1, paramOffset+2, paramOffset+3, paramOffset+4)
 
-		jsonString, _ := json.Marshal(entry.fields)
+		jsonString, err := json.Marshal(entry.fields)
+		if err != nil {
+			fmt.Printf("[LOG_BATCHER] WARNING: failed to marshal fields for entry %d: %v\n", i, err)
+			jsonString = []byte("{}")
+		}
 		values = append(values,
 			sql.NullString{String: entry.level, Valid: true},
 			sql.NullString{String: entry.message, Valid: true},
@@ -153,6 +164,8 @@ func (b *LogBatcher) bulkInsert(ctx context.Context, entries []logEntry) error {
 			entry.timestamp,
 		)
 	}
+
+	fmt.Printf("[LOG_BATCHER] Executing query with %d params: %s\n", len(values), query)
 
 	_, err := b.db.ExecContext(ctx, query, values...)
 	return err
@@ -189,21 +202,24 @@ func LogData(level string, msg string, fields map[string]interface{}) {
 	}
 
 	// Add to batch for DB insertion
-	if batcher != nil {
-		if fields == nil {
-			fields = map[string]interface{}{
-				"timestamp": time.Now().UTC().Round(time.Microsecond),
-			}
-		}
-
-		entry := logEntry{
-			level:     level,
-			message:   msg,
-			fields:    fields,
-			timestamp: time.Now().UTC().Round(time.Microsecond),
-		}
-		batcher.add(entry)
+	if batcher == nil {
+		fmt.Printf("[LOG_BATCHER] WARNING: batcher is nil - InitBatcher was never called, log not persisted: %s\n", msg)
+		return
 	}
+
+	if fields == nil {
+		fields = map[string]interface{}{
+			"timestamp": time.Now().UTC().Round(time.Microsecond),
+		}
+	}
+
+	entry := logEntry{
+		level:     level,
+		message:   msg,
+		fields:    fields,
+		timestamp: time.Now().UTC().Round(time.Microsecond),
+	}
+	batcher.add(entry)
 }
 
 func CreateLogger() *zap.Logger {
