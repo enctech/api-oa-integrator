@@ -1,4 +1,4 @@
-package logger
+package database
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type LogCleaner struct {
+type DataCleaner struct {
 	db        *sql.DB
 	retention time.Duration
 	interval  time.Duration
@@ -17,16 +17,22 @@ type LogCleaner struct {
 }
 
 var (
-	cleaner     *LogCleaner
+	cleaner     *DataCleaner
 	cleanerOnce sync.Once
 )
 
-// InitCleaner initializes the log cleaner that runs on startup and periodically
-// retention: how long to keep logs (e.g., 100 days)
+var tables = []string{
+	"logs",
+	"oa_transactions",
+	"integrator_transactions",
+}
+
+// InitCleaner initializes the data cleaner that runs on startup and periodically
+// retention: how long to keep data (e.g., 100 days)
 // interval: how often to run cleanup (e.g., 12 hours for twice daily)
 func InitCleaner(db *sql.DB, retention time.Duration, interval time.Duration) {
 	cleanerOnce.Do(func() {
-		cleaner = &LogCleaner{
+		cleaner = &DataCleaner{
 			db:        db,
 			retention: retention,
 			interval:  interval,
@@ -36,7 +42,7 @@ func InitCleaner(db *sql.DB, retention time.Duration, interval time.Duration) {
 	})
 }
 
-func (c *LogCleaner) start() {
+func (c *DataCleaner) start() {
 	// Run cleanup immediately on startup
 	c.cleanup()
 
@@ -58,7 +64,7 @@ func (c *LogCleaner) start() {
 	}()
 }
 
-func (c *LogCleaner) cleanup() {
+func (c *DataCleaner) cleanup() {
 	if c.db == nil {
 		return
 	}
@@ -68,16 +74,18 @@ func (c *LogCleaner) cleanup() {
 
 	cutoff := time.Now().Add(-c.retention)
 
-	result, err := c.db.ExecContext(ctx,
-		"DELETE FROM logs WHERE created_at < $1", cutoff)
+	for _, table := range tables {
+		result, err := c.db.ExecContext(ctx,
+			fmt.Sprintf("DELETE FROM %s WHERE created_at < $1", table), cutoff)
 
-	if err != nil {
-		fmt.Printf("log cleanup failed: %v\n", err)
-		return
-	}
+		if err != nil {
+			fmt.Printf("%s cleanup failed: %v\n", table, err)
+			continue
+		}
 
-	if rowsAffected, err := result.RowsAffected(); err == nil && rowsAffected > 0 {
-		fmt.Printf("log cleanup: deleted %d old log entries\n", rowsAffected)
+		if rowsAffected, err := result.RowsAffected(); err == nil && rowsAffected > 0 {
+			fmt.Printf("%s cleanup: deleted %d old entries\n", table, rowsAffected)
+		}
 	}
 }
 
