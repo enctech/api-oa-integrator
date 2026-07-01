@@ -605,7 +605,7 @@ func CheckSystemAvailability(facility, device string) error {
 	</configuration>
 	</version>`, viper.GetString("app.version")))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
