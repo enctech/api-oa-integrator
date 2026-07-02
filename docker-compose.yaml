@@ -22,7 +22,7 @@ services:
     depends_on:
       - api-oa-integrator
   oa-integrator-db:
-    image: postgres:latest
+    image: postgres:16
     container_name: oa-integrator-db
     restart: always
     environment:
