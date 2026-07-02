@@ -20,7 +20,8 @@ import (
 
 type Config struct {
 	database.IntegratorConfig
-	PlazaId string
+	PlazaId  string
+	ClientId string // overrides c.ClientID.String when set from plaza mapping
 }
 
 const statusCodeSuccess = "000"
@@ -49,7 +50,7 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 		"header": map[string]any{
 			"requestId": uuid.New().String(),
 			"timestamp": time.Now().Local().Format(time.RFC3339),
-			"clientId":  c.ClientID.String,
+			"clientId":  c.ClientId,
 			"function":  "falcon.device.status",
 			"version":   viper.GetString("app.version"),
 		},
@@ -148,7 +149,7 @@ func (c Config) VoidTransaction(plateNumber, transactionId string) error {
 		"header": map[string]any{
 			"requestId": uuid.New().String(),
 			"timestamp": time.Now().Local().Format(time.RFC3339),
-			"clientId":  c.ClientID.String,
+			"clientId":  c.ClientId,
 			"function":  "falcon.parking.cancel.transaction.order",
 			"version":   viper.GetString("app.version"),
 		},
@@ -254,7 +255,7 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"header": map[string]any{
 			"requestId": uuid.New().String(),
 			"timestamp": time.Now().Local().Format(time.RFC3339),
-			"clientId":  c.ClientID.String,
+			"clientId":  c.ClientId,
 			"function":  "falcon.parking.transaction",
 			"version":   viper.GetString("app.version"),
 		},

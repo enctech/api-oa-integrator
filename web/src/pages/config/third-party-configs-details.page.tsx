@@ -44,7 +44,7 @@ interface FormData {
   surcharge: number;
   surchargeType: SurchargeType;
   isInsecure: boolean;
-  plazaIdMappers: { field1: string; field2: string }[];
+  plazaIdMappers: { field1: string; field2: string; field3: string }[];
   extra: any[];
 }
 
@@ -140,13 +140,26 @@ const ThirdPartyConfigsDetailsPage = () => {
     if (data.plazaIdMap) {
       const keys = Object.keys(data.plazaIdMap);
       keys.forEach((key, index) => {
-        update(index, {
-          field1: key,
-          field2: new Map(Object.entries(data.plazaIdMap)).get(key) || "",
-        });
+        const mapping = (data.plazaIdMap as any)[key];
+        // Handle both old format (string) and new format (object)
+        if (typeof mapping === "string") {
+          // Old format: value is just the vendorLocationId
+          update(index, {
+            field1: key,
+            field2: mapping,
+            field3: "",
+          });
+        } else {
+          // New format: value is an object with vendorLocationId and clientId
+          update(index, {
+            field1: key,
+            field2: mapping?.vendorLocationId || "",
+            field3: mapping?.clientId || "",
+          });
+        }
       });
     } else {
-      update(0, { field1: "", field2: "" });
+      update(0, { field1: "", field2: "", field3: "" });
     }
 
     if (data.extra) {
@@ -165,9 +178,12 @@ const ThirdPartyConfigsDetailsPage = () => {
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     console.log(data);
-    const plazaIdMap: Map<string, string> = new Map();
+    const plazaIdMap: Map<string, { vendorLocationId: string; clientId: string }> = new Map();
     data.plazaIdMappers.forEach((item) => {
-      plazaIdMap.set(item.field1, item.field2);
+      plazaIdMap.set(item.field1, {
+        vendorLocationId: item.field2,
+        clientId: item.field3 || "",
+      });
     });
 
     if (id == "new") {
@@ -563,7 +579,7 @@ const ThirdPartyConfigsDetailsPage = () => {
           {data &&
             fields.map((field, index) => (
               <div
-                key={`${field.id}-${field.field1}-${field.field2}`}
+                key={`${field.id}-${field.field1}-${field.field2}-${field.field3}`}
                 className="flex"
               >
                 <div>
@@ -592,6 +608,28 @@ const ThirdPartyConfigsDetailsPage = () => {
                   />
                 </div>
                 <div className="w-8" />
+                <div>
+                  <div>
+                    Client ID
+                    <Tooltip
+                      className="ml-2"
+                      title="Optional. If empty, uses the global Client ID above."
+                    >
+                      <InfoIcon fontSize="small" />
+                    </Tooltip>
+                  </div>
+                  <TextField
+                    disabled={!isEditing}
+                    placeholder="(uses global)"
+                    sx={{
+                      "& .MuiInputBase-input.Mui-disabled": {
+                        WebkitTextFillColor: "#000000",
+                      },
+                    }}
+                    {...register(`plazaIdMappers.${index}.field3` as const)}
+                  />
+                </div>
+                <div className="w-8" />
                 {isEditing && (
                   <Button type="button" onClick={() => remove(index)}>
                     Remove
@@ -602,7 +640,7 @@ const ThirdPartyConfigsDetailsPage = () => {
           {isEditing && (
             <Button
               type="button"
-              onClick={() => append({ field1: "", field2: "" })}
+              onClick={() => append({ field1: "", field2: "", field3: "" })}
             >
               Add Field
             </Button>

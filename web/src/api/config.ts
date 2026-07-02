@@ -72,6 +72,11 @@ export const deleteOAConfig = async (id: string) => {
 
 export type SurchargeType = "percentage" | "exact";
 
+export interface PlazaMapping {
+  vendorLocationId: string;
+  clientId?: string;
+}
+
 export interface IntegratorConfigs {
   id?: string;
   clientId: string;
@@ -82,7 +87,7 @@ export interface IntegratorConfigs {
   integratorName?: string;
   url: string;
   insecureSkipVerify: boolean;
-  plazaIdMap: Map<string, string>;
+  plazaIdMap: Map<string, PlazaMapping>;
   extra: Map<string, string>;
   taxRate: number;
   surcharge: number;
