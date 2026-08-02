@@ -6,13 +6,16 @@ WORKDIR /usr/src/app
 
 RUN mkdir cert
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+# Install pnpm first so this layer is not invalidated by app changes.
+# Pinned to 9.x to match the lockfileVersion 9.0 in pnpm-lock.yaml.
+RUN npm install -g pnpm@9
 
-RUN npm install -g pnpm
+# Copy only the manifest and lockfile so dependency install is cached
+# and is not invalidated by unrelated source changes.
+COPY package.json pnpm-lock.yaml ./
 
-# Install app dependencies
-RUN pnpm install -d
+# Install app dependencies straight from the lockfile (no registry re-resolution)
+RUN pnpm install --frozen-lockfile
 
 # Copy the rest of the application code to the working directory
 COPY . .

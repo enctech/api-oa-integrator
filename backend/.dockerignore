@@ -1,0 +1,6 @@
+.git
+*.log
+*.logs
+api-oa-integrator
+.env
+.envrc
