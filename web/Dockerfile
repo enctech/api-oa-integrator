@@ -6,22 +6,20 @@ WORKDIR /usr/src/app
 
 RUN mkdir cert
 
-# Install pnpm first so this layer is not invalidated by app changes.
-# Pinned to 9.x to match the lockfileVersion 9.0 in pnpm-lock.yaml.
-RUN npm install -g pnpm@9
-
 # Copy only the manifest and lockfile so dependency install is cached
 # and is not invalidated by unrelated source changes.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json package-lock.json ./
 
-# Install app dependencies straight from the lockfile (no registry re-resolution)
-RUN pnpm install --frozen-lockfile
+# Install app dependencies straight from the lockfile.
+# npm ci is reproducible and skips resolution entirely; it fails loudly if
+# package.json and package-lock.json ever drift apart.
+RUN npm ci
 
 # Copy the rest of the application code to the working directory
 COPY . .
 
 # Build the app
-RUN pnpm run build
+RUN npm run build
 
 # Expose the port that the app will run on
 EXPOSE 3000
