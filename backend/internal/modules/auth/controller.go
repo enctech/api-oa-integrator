@@ -12,7 +12,7 @@ import (
 type controller struct {
 }
 
-func InitController(e *echo.Echo) {
+func InitController(e *echo.Group) {
 	g := e.Group("auth")
 	c := controller{}
 	g.GET("/", func(c echo.Context) error {

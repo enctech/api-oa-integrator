@@ -4,26 +4,61 @@ import (
 	"api-oa-integrator/logger"
 	"encoding/xml"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/spf13/viper"
 )
 
 type controller struct {
 }
 
-func InitController(e *echo.Echo) {
+func isValidUser(username, password string) bool {
+	identifications := []struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}{
+		{
+			Username: "aKr71dJ1~P_",
+			Password: "cpVh19{3L92H",
+		},
+		{
+			Username: "K6k6zm8JFW6X",
+			Password: "3Xv7Kx8hNkIg",
+		},
+		{
+			Username: "ujLDT9KAYQ",
+			Password: "kmJVWU2Qoc",
+		},
+	}
+	for _, id := range identifications {
+		if username == id.Username && password == fmt.Sprintf(":%v", id.Password) {
+			return true
+		}
+	}
+	return false
+}
+
+func InitController(e *echo.Group) {
 	g := e.Group("oa")
 	c := controller{}
+	g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		if isValidUser(username, password) {
+			return true, nil
+		}
+		return false, nil
+	}))
 	g.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
-	g.PUT("/:vendor/AuthorizationService3rdParty/version", c.version)
-	g.PUT("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
-	g.PUT("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
-	g.POST("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
-	g.POST("/:vendor/AuthorizationService3rdParty/:facility/:device/:jobId", c.createJob)
+	g.PUT("/AuthorizationService3rdParty/version", c.version)
+	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/cancel", c.cancel)
+	g.PUT("/AuthorizationService3rdParty/:facility/:device/:jobId/finalmessage", c.finalMessage)
+	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/medialist", c.mediaList)
+	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId/fake", c.fakeTest)
+	g.POST("/AuthorizationService3rdParty/:facility/:device/:jobId", c.createJob)
 }
 
 // version godoc
@@ -33,9 +68,8 @@ func InitController(e *echo.Echo) {
 //	@Tags			oa
 //	@Accept			application/xml
 //	@Produce		application/xml
-//	@Param			vendor	path	string					true	"Vendor"
 //	@Param			request	body	VersionRequestWrapper	false	"Request Body"
-//	@Router			/oa/{vendor}/AuthorizationService3rdParty/version [put]
+//	@Router			/oa/AuthorizationService3rdParty/version [put]
 func (con controller) version(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -67,9 +101,8 @@ func (con controller) version(c echo.Context) error {
 //	@Param			facility	path	string				true	"Facility"
 //	@Param			device		path	string				true	"Device"
 //	@Param			jobId		path	string				true	"Job ID"
-//	@Param			vendor		path	string				true	"Vendor"
 //	@Param			request		body	CancelJobWrapper	false	"Request Body"
-//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel [put]
+//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel [put]
 func (con controller) cancel(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -100,9 +133,8 @@ func (con controller) cancel(c echo.Context) error {
 //	@Param			facility	path	string					true	"Facility"
 //	@Param			device		path	string					true	"Device"
 //	@Param			jobId		path	string					true	"Job ID"
-//	@Param			vendor		path	string					true	"Vendor"
 //	@Param			request		body	FinalMessageSBWrapper	false	"Request Body"
-//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage [put]
+//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage [put]
 func (con controller) finalMessage(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -134,9 +166,8 @@ func (con controller) finalMessage(c echo.Context) error {
 //	@Param			facility	path	string				true	"Facility"
 //	@Param			device		path	string				true	"Device"
 //	@Param			jobId		path	string				true	"Job ID"
-//	@Param			vendor		path	string				true	"Vendor"
 //	@Param			request		body	MediaDataWrapper	false	"Request Body"
-//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist [post]
+//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist [post]
 func (con controller) mediaList(c echo.Context) error {
 	go func() {
 		body, err := io.ReadAll(c.Request().Body)
@@ -167,15 +198,13 @@ func (con controller) mediaList(c echo.Context) error {
 //	@Param			facility	path	string		true	"Facility"
 //	@Param			device		path	string		true	"Device"
 //	@Param			jobId		path	string		true	"Job ID"
-//	@Param			vendor		path	string		true	"Vendor"
 //	@Param			request		body	JobWrapper	false	"Request Body"
-//	@Router			/oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId} [post]
+//	@Router			/oa/AuthorizationService3rdParty/{facility}/{device}/{jobId} [post]
 func (con controller) createJob(c echo.Context) error {
 	rm := &RequestMetadata{
 		facility: c.Param("facility"),
 		device:   c.Param("device"),
 		jobId:    c.Param("jobId"),
-		vendor:   c.Param("vendor"),
 	}
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
@@ -211,6 +240,19 @@ func (con controller) createJob(c echo.Context) error {
 	if c.Response().Committed {
 		return nil
 	}
+	return c.XML(http.StatusCreated, ConfirmationResponse{
+		ConfirmationDetailStatus: "JOB_CREATED",
+		ConfirmationStatus:       "OK",
+	})
+}
+
+func (con controller) fakeTest(c echo.Context) error {
+	rm := &RequestMetadata{
+		facility: c.Param("facility"),
+		device:   c.Param("device"),
+		jobId:    c.Param("jobId"),
+	}
+	go sendEmptyFinalMessage(rm)
 	return c.XML(http.StatusCreated, ConfirmationResponse{
 		ConfirmationDetailStatus: "JOB_CREATED",
 		ConfirmationStatus:       "OK",

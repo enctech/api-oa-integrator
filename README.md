@@ -48,104 +48,45 @@
 
 ### Deployment
 
-# Step-by-Step Instructions
+SSH into the server and run:
 
-## 1. Create a Directory
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker compose build backend web && docker compose up -d"
+```
 
-Open your Ubuntu terminal and execute the following commands:
+This builds only `backend` and `web` services (caddy rarely changes). To rebuild all services including caddy:
 
-1. **Create a directory named `api-oa-integrator` under `/home/Downloads` and navigate to it:**
-    ```sh
-    mkdir -p /home/Downloads/api-oa-integrator
-    cd /home/Downloads/api-oa-integrator
-    ```
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker compose build && docker compose up -d"
+```
 
-## 2. Clone the Repository
+For faster parallel builds using docker bake:
 
-1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/enctech/api-oa-integrator.git
-    ```
-    When prompted, enter the following credentials:
-    ```
-    Username for 'https://github.com': enctech
-    Password for 'https://enctech@github.com': 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
-    ```
-    **Note:** If you encounter permission issues, please get a personal access token from enctech Admin.
+```bash
+ssh enctech "cd /root/api-oa-integrator && git pull && docker buildx bake backend web && docker compose up -d"
+```
 
-## 3. Navigate to the `cert` Folder
+### Initial Setup (New Server)
 
-1. **Navigate to the `cert` folder within the cloned repository:**
-    ```sh
-    cd /home/Downloads/api-oa-integrator/api-oa-integrator/cert
-    ```
+#### 1. Clone the Repository
 
-## 4. Update SSL Certificate
+```bash
+mkdir -p /root/api-oa-integrator
+cd /root/api-oa-integrator
+git clone https://github.com/enctech/api-oa-integrator.git .
+```
 
-1. **Update or create the SSL certificate:**
-    - To create a new certificate, you can use a tool like `openssl`:
-        ```sh
-        openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout cert.key -out cert.crt
-        ```
-    - During the creation process, use the following details:
-        ```
-        Country Name (2 letter code) [AU]:MY
-        State or Province Name (full name) [Some-State]:Selangor
-        Locality Name (eg, city) []:Puchong
-        Organization Name (eg, company) [Internet Widgits Pty Ltd]:Enctech Services Sdn Bhd
-        Organizational Unit Name (eg, section) []:Parking
-        Common Name (e.g. server FQDN or YOUR name) []:enctech.com
-        Email Address []:enctech@gmail.com
-        ```
+#### 2. Run the Application
 
-## 5. Copy the Certificate
+```bash
+docker compose up -d
+```
 
-1. **Navigate back to the root of the cloned repository:**
-    ```sh
-    cd /home/Downloads/api-oa-integrator/api-oa-integrator
-    ```
+#### 3. Test the Application
 
-2. **Run the `make copy_cert` command to copy the certificate to the backend and frontend folders:**
-    ```sh
-    make copy_cert
-    ```
-
-## 6. Run the Application
-
-1. **Start the application using the `make run_application` command:**
-    ```sh
-    make run_application
-    ```
-
-    This command will perform the following steps:
-    - **Update the repository:**
-        ```sh
-        make update
-        ```
-    - **Build the new version:**
-        ```sh
-        make build_new
-        ```
-    - **Clear old images:**
-        ```sh
-        make clear_images
-        ```
-    - **Pull the latest changes from the repository:**
-        ```sh
-        git pull
-        ```
-        When prompted, enter the following credentials:
-        ```
-        Username for 'https://github.com': enctech
-        Password for 'https://enctech@github.com': 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
-        ```
-    **Note:** This command will start the application and can also be used to restart it for updates.
-
-## 7. Test the Application
-
-1. **Open your web browser and navigate to:**
-    - [https://localhost:3000](https://localhost:3000) or
-    - [https://[ipaddress]:3000](https://[ipaddress]:3000)
+Open your web browser and navigate to:
+- [https://localhost:3000](https://localhost:3000) or
+- [https://[ipaddress]:3000](https://[ipaddress]:3000)
 
 
 ## Application Architecture

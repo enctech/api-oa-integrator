@@ -7,10 +7,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 func createSnbConfig(ctx context.Context, in SnbConfig) (SnbConfig, error) {
@@ -126,8 +127,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		return IntegratorConfig{}, err
 	}
 
-	var plazaId map[string]string
-	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+	plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	surchRes, err := strconv.ParseFloat(strings.TrimSpace(config.Surcharge.String), 64)
@@ -147,7 +147,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
 		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         in.PlazaIdMap,
+		PlazaIdMap:         plazaId,
 		Url:                config.Url.String,
 		Extra:              extra,
 		SurchargeType:      config.SurchangeType.SurchargeType,
@@ -165,11 +165,10 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 		return out, err
 	}
 	for _, config := range configs {
-		var plazaId map[string]string
-		_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+		plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
 
 		var extra map[string]string
-		_ = json.Unmarshal(config.Extra.RawMessage, &plazaId)
+		_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 		out = append(out, IntegratorConfig{
 			DisplayName:        config.DisplayName.String,
 			IntegratorName:     config.IntegratorName.String,
@@ -195,8 +194,7 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 		logger.LogData("error", fmt.Sprintf("error get integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
-	var plazaId map[string]string
-	_ = json.Unmarshal(config.PlazaIDMap.RawMessage, &plazaId)
+	plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
 
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
@@ -286,5 +284,32 @@ func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
 		logger.LogData("error", fmt.Sprintf("error delete integrator config %v", err), nil)
 		return err
 	}
+	return nil
+}
+
+// parsePlazaIdMap handles both old format (map[string]string) and new format (map[string]PlazaMapping)
+func parsePlazaIdMap(raw []byte) map[string]PlazaMapping {
+	// Try new format first
+	var newFormat map[string]PlazaMapping
+	if err := json.Unmarshal(raw, &newFormat); err == nil && len(newFormat) > 0 {
+		// Check if it actually parsed correctly (not empty VendorLocationId)
+		for _, v := range newFormat {
+			if v.VendorLocationId != "" {
+				return newFormat
+			}
+			break
+		}
+	}
+
+	// Fall back to old format (map[string]string)
+	var oldFormat map[string]string
+	if err := json.Unmarshal(raw, &oldFormat); err == nil {
+		result := make(map[string]PlazaMapping)
+		for k, v := range oldFormat {
+			result[k] = PlazaMapping{VendorLocationId: v}
+		}
+		return result
+	}
+
 	return nil
 }

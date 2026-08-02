@@ -1,3 +1,4 @@
+basePath: /api/
 definitions:
   auth.CreateUserRequest:
     properties:
@@ -578,7 +579,7 @@ paths:
       summary: Get all integrator status
       tags:
       - misc
-  /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}:
     post:
       consumes:
       - application/xml
@@ -600,11 +601,6 @@ paths:
         name: jobId
         required: true
         type: string
-      - description: Vendor
-        in: path
-        name: vendor
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request
@@ -616,7 +612,7 @@ paths:
       summary: S&B creates new job
       tags:
       - oa
-  /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/cancel:
     put:
       consumes:
       - application/xml
@@ -638,11 +634,6 @@ paths:
         name: jobId
         required: true
         type: string
-      - description: Vendor
-        in: path
-        name: vendor
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request
@@ -654,7 +645,7 @@ paths:
       summary: Cancels a running job
       tags:
       - oa
-  /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/finalmessage:
     put:
       consumes:
       - application/xml
@@ -676,11 +667,6 @@ paths:
         name: jobId
         required: true
         type: string
-      - description: Vendor
-        in: path
-        name: vendor
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request
@@ -692,7 +678,7 @@ paths:
       summary: Receive Final Message from S&B
       tags:
       - oa
-  /oa/{vendor}/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist:
+  /oa/AuthorizationService3rdParty/{facility}/{device}/{jobId}/medialist:
     post:
       consumes:
       - application/xml
@@ -714,11 +700,6 @@ paths:
         name: jobId
         required: true
         type: string
-      - description: Vendor
-        in: path
-        name: vendor
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request
@@ -730,17 +711,12 @@ paths:
       summary: Creates new media data
       tags:
       - oa
-  /oa/{vendor}/AuthorizationService3rdParty/version:
+  /oa/AuthorizationService3rdParty/version:
     put:
       consumes:
       - application/xml
       description: get the version and configuration available
       parameters:
-      - description: Vendor
-        in: path
-        name: vendor
-        required: true
-        type: string
       - description: Request Body
         in: body
         name: request

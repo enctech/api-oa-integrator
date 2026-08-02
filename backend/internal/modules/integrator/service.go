@@ -9,16 +9,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
-	"time"
 )
 
 var Integrators = []string{"tng"}
 
 type Process interface {
 	VerifyVehicle(plateNumber, entryLane string) error
-	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error)
+	PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error)
+	VoidTransaction(plateNumber, transactionId string) error
+	CancelEntry() error
 }
 
 func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Process, database.IntegratorConfig, error) {
@@ -31,9 +34,34 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	if err != nil {
 		return nil, database.IntegratorConfig{}, err
 	}
+	if plazaIdMap[locationId] == nil || plazaIdMap[locationId] == "" {
+		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("plazaId not found for locationId %v", locationId))
+	}
+
+	// Extract vendorLocationId and clientId from the mapping
+	// Supports both old format (string) and new format (object with vendorLocationId and clientId)
+	var vendorLocationId string
+	clientId := cfg.ClientID.String // default to global clientId
+
+	switch v := plazaIdMap[locationId].(type) {
+	case string:
+		// Old format: value is just the vendorLocationId string
+		vendorLocationId = v
+	case map[string]any:
+		// New format: value is an object with vendorLocationId and optional clientId
+		if vid, ok := v["vendorLocationId"].(string); ok {
+			vendorLocationId = vid
+		}
+		if cid, ok := v["clientId"].(string); ok && cid != "" {
+			clientId = cid
+		}
+	default:
+		vendorLocationId = fmt.Sprintf("%v", v)
+	}
+
 	switch cfg.IntegratorName.String {
 	case "tng":
-		return tng.Config{IntegratorConfig: cfg, PlazaId: fmt.Sprintf("%v", plazaIdMap[locationId])}, cfg, nil
+		return tng.Config{IntegratorConfig: cfg, PlazaId: vendorLocationId, ClientId: clientId}, cfg, nil
 	default:
 		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("integrator %v not found", cfg.IntegratorName.String))
 	}
@@ -52,6 +80,13 @@ func VerifyVehicle(client, locationId, plateNumber, lane string) error {
 		return err
 	}
 	return nil
+}
+
+func CancelEntry(client, locationId string) {
+	integratorConfig, _, _ := getConfigFromIntegratorBasedOnIntegrator(client, locationId)
+	if integratorConfig != nil {
+		_ = integratorConfig.CancelEntry()
+	}
 }
 
 type TransactionArg struct {
@@ -74,8 +109,11 @@ func PerformTransaction(arg TransactionArg) error {
 	if err != nil {
 		return err
 	}
-	data, taxData, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
+	data, taxData, customStatus, txnErr := integratorProcess.PerformTransaction(arg.Facility, arg.LPN, arg.EntryLane, arg.ExitLane, arg.EntryAt, arg.Amount)
 	status := "success"
+	if customStatus != nil {
+		status = *customStatus
+	}
 	errorMessage := ""
 	if txnErr != nil {
 		status = "fail"

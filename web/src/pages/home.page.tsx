@@ -24,13 +24,17 @@ import { statusMapper } from "./oa-transactions.page";
 
 const HomePage = () => {
   const { data } = useQuery("misc", misc, {
-    refetchInterval: 1000 * 5,
+    refetchInterval: (data) => {
+      return data ? 1000 * 5 : false;
+    },
   });
   const { data: integratorData } = useQuery(
     "integratorStatus",
     integratorStatus,
     {
-      refetchInterval: 1000 * 60,
+      refetchInterval: (data) => {
+        return data ? 1000 * 60 : false;
+      },
     },
   );
   return (
@@ -153,7 +157,9 @@ const LatestTransactions = () => {
         perPage: 10,
       }),
     {
-      refetchInterval: 5000,
+      refetchInterval: (data) => {
+        return data ? 1000 * 5 : false;
+      },
     },
   );
   return (

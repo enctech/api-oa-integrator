@@ -7,19 +7,20 @@ import (
 	"api-oa-integrator/utils"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"maps"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"github.com/sqlc-dev/pqtype"
-	"maps"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetadata) {
@@ -56,38 +57,64 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		return
 	}
 
-	err = integrator.VerifyVehicle(metadata.vendor, metadata.facility, lpn, lane)
+	configs, err := database.New(database.D()).GetIntegratorConfigs(context.Background())
 	if err != nil {
-		logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), nil)
-
-		jsonStr, err := json.Marshal(map[string]any{
-			"steps": "identification_entry_error",
-			"error": err.Error(),
-		})
-		if err != nil {
-			logger.LogData("error", fmt.Sprintf("Error marshal %v", err), nil)
-			go sendEmptyFinalMessage(metadata)
-			return
-		}
-		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
-			Businesstransactionid: data.Businesstransactionid,
-			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
-		})
-		if err != nil {
-			logger.LogData("error", fmt.Sprintf("Error UpdateOATransaction %v", err), nil)
-			go sendEmptyFinalMessage(metadata)
-			return
-		}
+		logger.LogData("error", fmt.Sprintf("Error create oa transaction %v", err), nil)
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
+	var wg sync.WaitGroup
+	vendorChannel := make(chan string, 1)
+
+	for i := range configs {
+		wg.Add(1)
+		go func(vendorName string) {
+			defer wg.Done()
+			err = integrator.VerifyVehicle(vendorName, metadata.facility, lpn, lane)
+
+			if err != nil {
+				logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), map[string]interface{}{
+					"lpn":        lpn,
+					"vendorName": vendorName,
+					"facility":   metadata.facility,
+				})
+			} else {
+				select {
+				case vendorChannel <- vendorName:
+				default: // Ignore if already filled
+				}
+			}
+		}(configs[i].Name.String)
+	}
+
+	wg.Wait()
+	close(vendorChannel)
+
+	var successfulVendor string
+	select {
+	case successfulVendor = <-vendorChannel:
+		fmt.Printf("Success from: %s\n", successfulVendor)
+	default:
+		sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
-		if err != nil {
+		for _, cfg := range configs {
+			vendor := cfg.Name.String
+			if vendor != successfulVendor {
+				go integrator.CancelEntry(vendor, metadata.facility)
+			}
+		}
+	}()
+
+	go func() {
+		if successfulVendor == "" {
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
+
 		jsonStr, err := json.Marshal(map[string]any{
 			"steps": "identification_entry_done",
 		})
@@ -96,9 +123,17 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			go sendEmptyFinalMessage(metadata)
 			return
 		}
+
+		config, err := utils.FirstWhere(configs, func(config database.IntegratorConfig) bool {
+			return config.Name.String == successfulVendor
+		})
+
 		_, err = database.New(database.D()).UpdateOATransaction(context.Background(), database.UpdateOATransactionParams{
 			Businesstransactionid: data.Businesstransactionid,
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
+			IntegratorID: uuid.NullUUID{
+				UUID: config.ID, Valid: true,
+			},
 		})
 		sendFinalMessageCustomer(metadata, FMCReq{
 			Identifier:          Identifier{Name: lpn},
@@ -106,11 +141,11 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 			CustomerInformation: &CustomerInformation{
 				Customer: Customer{
 					CustomerId:    data.Customerid.String,
-					CustomerGroup: cfg.Name.String,
+					CustomerGroup: successfulVendor,
 				},
 			},
 			PaymentInformation: BuildPaymentInformation(nil),
-		})
+		}, successfulVendor)
 	}()
 
 	if c.Request().Header.Get("istest") != "" {
@@ -154,6 +189,7 @@ func handleLeaveLoopEntry(job *Job, metadata *RequestMetadata) {
 		Customerid:            sql.NullString{String: oaTxn.Customerid.String, Valid: true},
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 	go sendEmptyFinalMessage(metadata)
 }
@@ -185,6 +221,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 	lane := job.TimeAndPlace.Device.DeviceNumber
 	btid := job.BusinessTransaction.ID
 	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
+	config, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
 
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
@@ -201,10 +238,11 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: lane, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	go func() {
-		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+		cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: config.Name.String, Valid: true})
 		if err != nil {
 			go sendEmptyFinalMessage(metadata)
 			return
@@ -217,7 +255,7 @@ func handleIdentificationExit(job *Job, metadata *RequestMetadata) {
 				CustomerGroup: cfg.Name.String,
 			}},
 			PaymentInformation: BuildPaymentInformation(nil),
-		})
+		}, cfg.Name.String)
 	}()
 }
 
@@ -245,6 +283,14 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 
 	oaTxn, err := database.New(database.D()).GetLatestOATransaction(context.Background(), btid)
 
+	if err != nil {
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
+	var extra map[string]string
+	_ = json.Unmarshal(oaTxn.Extra.RawMessage, &extra)
+
 	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
@@ -255,16 +301,15 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
-	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
+	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
+
 	if err != nil {
 		go sendEmptyFinalMessage(metadata)
 		return
 	}
-	amountConv := amount / 100
-
-	cfg, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
 
 	customerInformation := &CustomerInformation{Customer: Customer{
 		CustomerId:    oaTxn.Customerid.String,
@@ -282,7 +327,21 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 					Amount:  "0",
 				},
 			}),
-		})
+		}, cfg.Name.String)
+	}
+
+	amount, err := strconv.ParseFloat(job.PaymentData.OriginalAmount.Amount, 64)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("failed to ParseFloat %v", err), nil)
+		go sendZeroAmount()
+		return
+	}
+	amountConv := amount / 100
+
+	if extra["steps"] != "identification_exit_done" && extra["steps"] != "leave_loop_entry_done" {
+		logger.LogData("error", "previous step is not either identification_exit_done or leave_loop_entry_done", nil)
+		go sendZeroAmount()
+		return
 	}
 
 	arg := integrator.TransactionArg{
@@ -292,7 +351,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Amount:                amountConv,
 		EntryAt:               oaTxn.CreatedAt,
 		BusinessTransactionId: btid,
-		Client:                metadata.vendor,
+		Client:                cfg.Name.String,
 		Facility:              metadata.facility,
 	}
 	err = integrator.PerformTransaction(arg)
@@ -312,6 +371,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 			Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 			EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 			ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+			IntegratorID:          oaTxn.IntegratorID,
 		})
 		return
 	}
@@ -325,7 +385,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
-	_, _ = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
+	_, err = database.New(database.D()).CreateOATransaction(context.Background(), database.CreateOATransactionParams{
 		Businesstransactionid: btid,
 		Device:                sql.NullString{String: metadata.device, Valid: true},
 		Facility:              sql.NullString{String: metadata.facility, Valid: true},
@@ -335,7 +395,11 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("failed to save payment_exit_done for btid=%s: %v", btid, err), nil)
+	}
 
 	go sendFinalMessageCustomer(metadata, FMCReq{
 		Identifier:          Identifier{Name: oaTxn.Lpn.String},
@@ -347,7 +411,7 @@ func handlePaymentExit(job *Job, metadata *RequestMetadata) {
 				Amount:  job.PaymentData.OriginalAmount.Amount,
 			},
 		}),
-	})
+	}, cfg.Name.String)
 }
 
 func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
@@ -374,7 +438,10 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		return
 	}
 
+	cfg, err := database.New(database.D()).GetIntegratorConfig(context.Background(), oaTxn.IntegratorID.UUID)
+
 	if extra["steps"] != "payment_exit_done" {
+		logger.LogData("warn", fmt.Sprintf("handleLeaveLoopExit: steps is '%v' (not payment_exit_done), performing 0-amount transaction for btid=%s", extra["steps"], btid), nil)
 		arg := integrator.TransactionArg{
 			LPN:                   lpn,
 			EntryLane:             oaTxn.EntryLane.String,
@@ -382,7 +449,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 			Amount:                0.00,
 			EntryAt:               oaTxn.CreatedAt,
 			BusinessTransactionId: btid,
-			Client:                metadata.vendor,
+			Client:                cfg.Name.String,
 			Facility:              metadata.facility,
 		}
 		err = integrator.PerformTransaction(arg)
@@ -411,6 +478,7 @@ func handleLeaveLoopExit(job *Job, metadata *RequestMetadata) {
 		Extra:                 pqtype.NullRawMessage{Valid: true, RawMessage: jsonStr},
 		EntryLane:             sql.NullString{String: oaTxn.EntryLane.String, Valid: true},
 		ExitLane:              sql.NullString{String: oaTxn.ExitLane.String, Valid: true},
+		IntegratorID:          oaTxn.IntegratorID,
 	})
 
 	go sendEmptyFinalMessage(metadata)
@@ -423,7 +491,7 @@ type FMCReq struct {
 	Identifier          Identifier
 }
 
-func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
+func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName string) {
 	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   metadata.device,
 		Facility: metadata.facility,
@@ -434,11 +502,11 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 		return
 	}
 
-	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: metadata.vendor, Valid: true})
+	vendor, err := database.New(database.D()).GetIntegratorConfigByName(context.Background(), sql.NullString{String: vendorName, Valid: true})
 
 	var counting *string = nil
 	if in.PaymentInformation != nil {
-		_counting := "RESERVED"
+		_counting := "NON-RESERVED"
 		counting = &_counting
 	}
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{
@@ -473,14 +541,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq) {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
@@ -506,7 +567,9 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 		return
 	}
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return
@@ -514,17 +577,7 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-	if err != nil {
-		return
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
@@ -552,7 +605,10 @@ func CheckSystemAvailability(facility, device string) error {
 	</configuration>
 	</version>`, viper.GetString("app.version")))
 
-	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/version", config.Endpoint.String), bytes.NewBuffer(xmlOut))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return err
@@ -560,19 +616,7 @@ func CheckSystemAvailability(facility, device string) error {
 	req.Header.Set("Content-Type", "application/xml")
 	req.SetBasicAuth(config.Username.String, config.Password.String)
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-	client.Transport = &utils.LoggingRoundTripper{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return err

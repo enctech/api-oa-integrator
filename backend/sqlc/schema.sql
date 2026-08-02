@@ -52,6 +52,7 @@ create table integrator_config
 create table oa_transactions
 (
     id                    uuid primary key,
+    integrator_id         uuid,
     businessTransactionId varchar   not null unique,
     lpn                   varchar,
     customerId            varchar,

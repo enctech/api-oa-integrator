@@ -36,7 +36,7 @@ func InitDatabase() error {
 				return err
 			}
 			m, err := migrate.NewWithDatabaseInstance(
-				"file://./database/migrations",
+				"file://"+viper.GetString("migrations"),
 				"postgres", driver)
 			if err != nil {
 				zap.L().Sugar().Errorf("failed NewWithDatabaseInstance up %v", err)

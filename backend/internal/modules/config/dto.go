@@ -12,19 +12,24 @@ type SnbConfig struct {
 	Devices    []string `json:"devices"`
 }
 
+type PlazaMapping struct {
+	VendorLocationId string `json:"vendorLocationId"`
+	ClientId         string `json:"clientId,omitempty"`
+}
+
 type IntegratorConfig struct {
-	Id                 string                 `json:"id,omitempty"`
-	ClientId           string                 `json:"clientId,omitempty"`
-	ProviderId         int32                  `json:"providerId,omitempty"`
-	ServiceProviderId  string                 `json:"serviceProviderId,omitempty"`
-	Name               string                 `json:"name,omitempty"`
-	DisplayName        string                 `json:"displayName,omitempty"`
-	IntegratorName     string                 `json:"integratorName,omitempty"`
-	Url                string                 `json:"url,omitempty"`
-	InsecureSkipVerify bool                   `json:"insecureSkipVerify,omitempty"`
-	PlazaIdMap         map[string]string      `json:"plazaIdMap,omitempty"`
-	Extra              map[string]string      `json:"extra,omitempty"`
-	TaxRate            float64                `json:"taxRate"`
-	Surcharge          float64                `json:"surcharge"`
-	SurchargeType      database.SurchargeType `json:"surchargeType,omitempty"`
+	Id                 string                  `json:"id,omitempty"`
+	ClientId           string                  `json:"clientId,omitempty"`
+	ProviderId         int32                   `json:"providerId,omitempty"`
+	ServiceProviderId  string                  `json:"serviceProviderId,omitempty"`
+	Name               string                  `json:"name,omitempty"`
+	DisplayName        string                  `json:"displayName,omitempty"`
+	IntegratorName     string                  `json:"integratorName,omitempty"`
+	Url                string                  `json:"url,omitempty"`
+	InsecureSkipVerify bool                    `json:"insecureSkipVerify,omitempty"`
+	PlazaIdMap         map[string]PlazaMapping `json:"plazaIdMap,omitempty"`
+	Extra              map[string]string       `json:"extra,omitempty"`
+	TaxRate            float64                 `json:"taxRate"`
+	Surcharge          float64                 `json:"surcharge"`
+	SurchargeType      database.SurchargeType  `json:"surchargeType,omitempty"`
 }

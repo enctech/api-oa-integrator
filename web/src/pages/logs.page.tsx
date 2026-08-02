@@ -89,7 +89,10 @@ const LogsPage = () => {
         ),
       }),
     {
-      refetchInterval: 5000,
+      refetchInterval: (data) => {
+        // Only refetch 5 seconds after data is received
+        return data ? 5000 : false;
+      },
     },
   );
 
@@ -230,7 +233,7 @@ const LogsPage = () => {
                   <div className="w-[5rem]">
                     {moment(row.createdAt)
                       .local()
-                      .format("DD/MM/yyyy hh:mm:ss A")}
+                      .format("DD/MM/yyyy hh:mm:ss.SSSSSS A")}
                   </div>
                 </TableCell>
                 <TableCell>

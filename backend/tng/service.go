@@ -5,22 +5,30 @@ import (
 	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
-	"crypto/tls"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"maps"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 type Config struct {
 	database.IntegratorConfig
-	PlazaId string
+	PlazaId  string
+	ClientId string // overrides c.ClientID.String when set from plaza mapping
 }
+
+const statusCodeSuccess = "000"
+const statusCodeDuplicateTransaction = "998"
+const timeOut = time.Second * 5
+const transactionTimeOut = time.Second * 3
+const voidDelayDuration = time.Second * 5
 
 func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 	logger.LogData("info", "VerifyVehicle", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
@@ -31,10 +39,6 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
-	signature := createSignature(extra["sshKey"])
-	if signature == "" {
-		return errors.New("tng error: empty signature")
-	}
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -43,56 +47,74 @@ func (c Config) VerifyVehicle(plateNumber, entryLane string) error {
 
 	logger.LogData("info", fmt.Sprintf("current time: %v", time.Now().Local().Format(time.RFC3339)), map[string]interface{}{})
 	reqBody := map[string]interface{}{
-		"request": map[string]any{
-			"header": map[string]any{
-				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Local().Format(time.RFC3339),
-				"clientId":  c.ClientID.String,
-				"function":  "falcon.device.status",
-				"version":   viper.GetString("app.version"),
-			},
-			"body": map[string]any{
-				"deviceInfo": map[string]any{
-					"deviceType": deviceTypeLPR,
-					"deviceNo":   plateNumber,
-				},
-				"entryTimestamp": time.Now().Local().Format(time.RFC3339),
-				"entrySPId":      c.SpID.String,
-				"entryPlazaId":   c.PlazaId,
-				"entryLaneId":    entryLane,
-				"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
-			},
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientId,
+			"function":  "falcon.device.status",
+			"version":   viper.GetString("app.version"),
 		},
+		"body": map[string]any{
+			"deviceInfo": map[string]any{
+				"deviceType": deviceTypeLPR,
+				"deviceNo":   plateNumber,
+			},
+			"entryTimestamp": time.Now().Local().Format(time.RFC3339),
+			"entrySPId":      c.SpID.String,
+			"entryPlazaId":   c.PlazaId,
+			"entryLaneId":    entryLane,
+			"extendInfo":     fmt.Sprintf("%v", string(extendInfo)),
+		},
+	}
+
+	originalRequestData, err := json.Marshal(reqBody)
+	signer, err := NewSigner(extra["sshKey"])
+	if err != nil {
+		return errors.New(fmt.Sprintf("Error creating signer: %v\n", err))
+	}
+	dataToSign := string(originalRequestData)
+	signature, err := signer.Sign(dataToSign)
+	if err != nil {
+		fmt.Printf("Error signing data: %v\n", err)
+		return errors.New(fmt.Sprintf("Error signing data: %v\n", err))
+	}
+
+	if signature == "" {
+		return errors.New("tng error: empty signature")
+	}
+
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
 		"signature": signature,
 	}
-	jsonData, err := json.Marshal(reqBody)
+	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/device/status", c.Url.String), bytes.NewBuffer(jsonData))
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/device/status", c.Url.String), bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 
-	client := &http.Client{}
-	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	resp, err := client.Do(req)
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
+	defer resp.Body.Close()
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return errors.New(fmt.Sprintf("tng error: %v", err))
 	}
-
 	responseBody := data["response"].(map[string]any)["body"]
 	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
 		return errors.New(fmt.Sprintf("tng error: fail to verify vehicle %v", responseBody))
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("tng error: invalid response status")
 	}
@@ -107,18 +129,89 @@ type TransactionArg struct {
 	EntryTime time.Time
 }
 
-func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, error) {
-	logger.LogData("error", "PerformTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-	if plateNumber == "" {
-		return nil, nil, errors.New("tng error: empty plate number")
+func (c Config) VoidTransaction(plateNumber, transactionId string) error {
+	logger.LogData("info", "VoidTransaction", map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+
+	body := map[string]any{
+		"deviceInfo": map[string]any{
+			"deviceType": deviceTypeLPR,
+			"deviceNo":   plateNumber,
+		},
+		"serialNum":         transactionId,
+		"cancelRequestTime": time.Now().Local().Format(time.RFC3339),
+		"extendInfo":        nil,
 	}
 
 	var extra map[string]string
 	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
-	signature := createSignature(extra["sshKey"])
-	if signature == "" {
-		return nil, nil, errors.New("tng error: empty signature")
+
+	reqBody := map[string]interface{}{
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientId,
+			"function":  "falcon.parking.cancel.transaction.order",
+			"version":   viper.GetString("app.version"),
+		},
+		"body": body,
 	}
+
+	originalDataBytes, err := json.Marshal(reqBody)
+	signer, _ := NewSigner(extra["sshKey"])
+	signature, err := signer.Sign(string(originalDataBytes))
+	if signature == "" {
+		return errors.New("tng error: empty signature")
+	}
+
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
+		"signature": signature,
+	}
+
+	jsonData, err := json.Marshal(finalRequest)
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeOut)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/parking/cancel/transaction-order", c.Url.String), bytes.NewBuffer(jsonData))
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
+	if err != nil {
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("tng error: %v", "invalid response status"))
+	}
+	var data map[string]any
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+	responseBody := data["response"].(map[string]any)["body"]
+	statusCode := responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string)
+	if statusCode != statusCodeSuccess && statusCode != statusCodeDuplicateTransaction {
+		return errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
+	}
+	return nil
+}
+
+func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane string, entryAt time.Time, amount float64) (map[string]any, map[string]any, *string, error) {
+	if plateNumber == "" {
+		return nil, nil, nil, errors.New("tng error: empty plate number")
+	}
+
+	var extra map[string]string
+	_ = json.Unmarshal(c.Extra.RawMessage, &extra)
 
 	extendInfo, err := json.Marshal(map[string]any{
 		"vehiclePlateNo": plateNumber,
@@ -135,12 +228,13 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 		"parkingTaxAmt":   tax.parkingTaxAmt,
 	}
 	now := time.Now()
+	serialNum := fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405"))
 	body := map[string]any{
 		"deviceInfo": map[string]any{
 			"deviceType": deviceTypeLPR,
 			"deviceNo":   plateNumber,
 		},
-		"serialNum":       fmt.Sprintf("3%v%v%v%v00", c.SpID.String, c.PlazaId, exitLane, now.Format("20060102150405")),
+		"serialNum":       serialNum,
 		"transactionType": "C", //Complete (Closed System – populate the Entry and Exit information)
 		"entryTimestamp":  entryAt,
 		"entrySPId":       c.SpID.String,
@@ -158,49 +252,68 @@ func (c Config) PerformTransaction(locationId, plateNumber, entryLane, exitLane 
 
 	maps.Copy(body, taxData)
 	reqBody := map[string]interface{}{
-		"request": map[string]any{
-			"header": map[string]any{
-				"requestId": uuid.New().String(),
-				"timestamp": time.Now().Format(time.RFC3339),
-				"clientId":  c.ClientID.String,
-				"function":  "falcon.parking.transaction",
-				"version":   viper.GetString("app.version"),
-			},
-			"body": body,
+		"header": map[string]any{
+			"requestId": uuid.New().String(),
+			"timestamp": time.Now().Local().Format(time.RFC3339),
+			"clientId":  c.ClientId,
+			"function":  "falcon.parking.transaction",
+			"version":   viper.GetString("app.version"),
 		},
-		"signature": signature,
-	}
-	jsonData, err := json.Marshal(reqBody)
-	if err != nil {
-		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
-	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
-	if err != nil {
-		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		"body": body,
 	}
 
-	client := &http.Client{}
-	client.Transport = &utils.LoggingRoundTripper{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-	resp, err := client.Do(req)
+	originalDataBytes, err := json.Marshal(reqBody)
+	signer, _ := NewSigner(extra["sshKey"])
+	signature, err := signer.Sign(string(originalDataBytes))
+	if signature == "" {
+		return nil, nil, nil, errors.New("tng error: empty signature")
+	}
+
+	// Create the final request with both request and signature
+	finalRequest := map[string]interface{}{
+		"request":   reqBody,
+		"signature": signature,
+	}
+
+	jsonData, err := json.Marshal(finalRequest)
 	if err != nil {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		logger.LogData("error", fmt.Sprintf("Error marshaling data to JSON: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), transactionTimeOut)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%v/falcon/parking/transaction", c.Url.String), bytes.NewBuffer(jsonData))
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("Error creating request: %v", err), map[string]interface{}{"plateNumber": plateNumber, "vendor": "tng"})
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
+	}
+
+	resp, err := utils.GlobalInsecureHttpClient.Do(req)
+	if err != nil {
+		time.Sleep(voidDelayDuration)
+		if err := c.VoidTransaction(plateNumber, serialNum); err != nil {
+			return body, taxData, nil, errors.New(fmt.Sprintf("fail to void transaction %v", err))
+		}
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", "invalid response status"))
-	}
 	var data map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return body, taxData, errors.New(fmt.Sprintf("tng error: %v", err))
+		return body, taxData, nil, errors.New(fmt.Sprintf("tng error: %v", err))
 	}
 	responseBody := data["response"].(map[string]any)["body"]
-	if responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string) != "000" {
-		return body, taxData, errors.New(fmt.Sprintf("fail to perform transaction %v", responseBody))
+	statusCode := responseBody.(map[string]any)["responseInfo"].(map[string]any)["responseCode"].(string)
+	if statusCode != statusCodeSuccess && statusCode != statusCodeDuplicateTransaction {
+		return body, taxData, nil, errors.New(fmt.Sprintf("response code is not %v or %v", statusCodeSuccess, statusCodeDuplicateTransaction))
 	}
-	return body, taxData, nil
+	if statusCode == statusCodeDuplicateTransaction {
+		status := "duplicate"
+		return body, taxData, &status, nil
+	}
+	return body, taxData, nil, nil
 }
 
 type TaxCalculation struct {
@@ -219,6 +332,9 @@ func (c Config) calculateTax(txn float64) TaxCalculation {
 	}
 
 	return calculatePercentSurchargeAmount(txn, tax, surcharge)
+}
+func (c Config) CancelEntry() error {
+	return nil
 }
 
 func calculateExactSurchargeAmount(txnAmt, tax, surcharge float64) TaxCalculation {

@@ -6,15 +6,30 @@ import (
 	"api-oa-integrator/internal"
 	"api-oa-integrator/logger"
 	"fmt"
+	"strings"
+	"time"
+
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"strings"
 )
 
 func init() {
+	// Define the --config flag
+	pflag.String("config", "", "Path to the config file")
+	pflag.String("migrations", "./database/migrations", "Path to the migrations folder")
+	pflag.Parse()
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+
+	// Bind the --config flag to viper
+	viper.BindPFlag("config", pflag.Lookup("config"))
+	viper.BindPFlag("migrations", pflag.Lookup("migrations"))
+	if configPath := viper.GetString("config"); configPath != "" {
+		viper.SetConfigFile(configPath)
+	}
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	err := viper.ReadInConfig() // Find and read the config file
@@ -31,6 +46,8 @@ func init() {
 //	@contact.url	http://www.swagger.io/support
 //	@contact.email	support@swagger.io
 
+//	@BasePath	/api/
+
 // @license.name				Apache 2.0
 // @license.url				http://www.apache.org/licenses/LICENSE-2.0.html
 //
@@ -39,20 +56,32 @@ func init() {
 // @name						Authorization
 // @description				Type "Bearer" followed by a space and JWT token.
 func main() {
-	log := logger.CreateLogger()
-	fmt.Println(viper.GetString("database.url"))
 
-	defer func(logger *zap.Logger) {
-		_ = logger.Sync()
-	}(log)
-
-	zap.ReplaceGlobals(log)
 	err := database.InitDatabase()
 
 	if err != nil {
 		panic(fmt.Sprintf("init database error %v", err))
 		return
 	}
+
+	zapLogger := logger.CreateLogger()
+	zap.ReplaceGlobals(zapLogger)
+
+	// Initialize the database
+	db := database.D()
+
+	logger.InitBatcher(db, 50, 5*time.Second)
+
+	// Initialize data cleaner: keeps data for 100 days, runs cleanup every 12 hours
+	database.InitCleaner(db, 100*24*time.Hour, 12*time.Hour)
+
+	fmt.Println(viper.GetString("database.url"))
+
+	defer func(zapLogger *zap.Logger) {
+		database.StopCleaner()
+		logger.Shutdown()
+		_ = zapLogger.Sync()
+	}(zapLogger)
 
 	internal.InitServer()
 }

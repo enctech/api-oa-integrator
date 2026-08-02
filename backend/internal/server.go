@@ -23,13 +23,14 @@ func InitServer() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
-	e.GET("/swagger/*", echoSwagger.WrapHandler)
-	misc.InitController(e)
-	health.InitController(e)
-	oa.InitController(e)
-	auth.InitController(e)
-	config.InitController(e)
-	transactions.InitController(e)
+	g := e.Group("")
+	g.GET("/swagger/*", echoSwagger.WrapHandler)
+	misc.InitController(g)
+	health.InitController(g)
+	oa.InitController(g)
+	auth.InitController(g)
+	config.InitController(g)
+	transactions.InitController(g)
 	if _, err := os.Stat("./cert/certificate.pem"); errors.Is(err, os.ErrNotExist) {
 		e.Logger.Fatal(e.Start(fmt.Sprintf(":%v", viper.GetString("app.port"))))
 	} else {
@@ -61,5 +62,4 @@ func InitServer() {
 		}
 		e.Logger.Fatal(e.StartServer(e.TLSServer))
 	}
-
 }

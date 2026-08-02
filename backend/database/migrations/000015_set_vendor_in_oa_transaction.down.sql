@@ -1,0 +1,1 @@
+ALTER TABLE oa_transactions DROP COLUMN integrator_id;

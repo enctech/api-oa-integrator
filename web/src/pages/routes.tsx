@@ -1,5 +1,5 @@
 import * as React from "react";
-import { styled, useTheme } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import LoginPage from "./login.page";
@@ -15,14 +15,13 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import HomePage from "./home.page";
-import LogsPage from "./logs.page";
 import OAConfigsPage from "./config/oa-configs.page";
 import OaConfigsDetailsPage from "./config/oa-configs-details.page";
 import ThirdPartyConfigsPage from "./config/third-party-configs.page";
 import IntegratorConfigsDetailsPage from "./config/third-party-configs-details.page";
 import OATransactionPage from "./oa-transactions.page";
 import ThirdPartyTransactionsPage from "./third-party-transactions.page";
-import { useSession } from "../context/session-context";
+import { useSession, useSessionGuard } from "../context/session-context";
 import AlertDialog from "../components/dialog";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -39,6 +38,9 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import UsersPage from "./users/users.page";
+import LogsPage from "./logs.page";
+import { AdminOnly } from "../components/auth-guard";
+import { useEffect } from "react";
 
 const drawerWidth = 240;
 
@@ -95,14 +97,16 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 
 function PersistentDrawerRight() {
   const navigation = useNavigate();
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(true);
+  const { session, logout } = useSession();
+  const [open, setOpen] = React.useState(session !== null);
+
+  useEffect(() => {
+    setOpen(session !== null);
+  }, [session]);
 
   const handleDrawerOpen = () => {
     setOpen(!open);
   };
-
-  const { session, logout } = useSession();
 
   const [showLogoutDialog, setShowLogoutDialog] = React.useState(false);
 
@@ -111,14 +115,16 @@ function PersistentDrawerRight() {
       <CssBaseline />
       <AppBar position="fixed" open={open}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerOpen}
-          >
-            <MenuIcon style={{ color: "#141617" }} />
-          </IconButton>
+          <AdminOnly>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerOpen}
+            >
+              <MenuIcon style={{ color: "#141617" }} />
+            </IconButton>
+          </AdminOnly>
           <Typography
             variant="h6"
             noWrap
@@ -320,7 +326,7 @@ function PersistentDrawerRight() {
             key="logout"
             onClick={() => {
               logout();
-              navigation("/");
+              navigation("/login");
               setShowLogoutDialog(false);
             }}
             color="primary"
@@ -337,10 +343,24 @@ function PersistentDrawerRight() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route
+        path="/"
+        element={
+          <AdminGuard>
+            <HomePage />
+          </AdminGuard>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       {/*<Route path="users/*" element={<Users/>}/>*/}
-      <Route path="/logs" element={<LogsPage />} />
+      <Route
+        path="/logs"
+        element={
+          <AdminGuard>
+            <LogsPage />
+          </AdminGuard>
+        }
+      />
       <Route path="/oa-configs" element={<OAConfigsPage />} />
       <Route path="/oa-configs/:id" element={<OaConfigsDetailsPage />} />
       <Route path="/3rd-party-config" element={<ThirdPartyConfigsPage />} />
@@ -348,15 +368,31 @@ function AppRoutes() {
         path="/3rd-party-config/:id"
         element={<IntegratorConfigsDetailsPage />}
       />
-      <Route path="/oa-transactions" element={<OATransactionPage />} />
+      <Route
+        path="/oa-transactions"
+        element={
+          <AdminGuard>
+            <OATransactionPage />
+          </AdminGuard>
+        }
+      />
       <Route path="/users" element={<UsersPage />} />
       <Route
         path="/3rd-party-transactions"
-        element={<ThirdPartyTransactionsPage />}
+        element={
+          <AdminGuard>
+            <ThirdPartyTransactionsPage />
+          </AdminGuard>
+        }
       />
     </Routes>
   );
 }
+
+const AdminGuard = ({ children }: any) => {
+  useSessionGuard();
+  return children;
+};
 
 export default function TopRoutes() {
   return (
