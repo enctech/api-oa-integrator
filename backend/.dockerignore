@@ -1,6 +1,18 @@
 .git
+.gitignore
 *.log
 *.logs
 api-oa-integrator
 .env
 .envrc
+
+# SSH keys must never be baked into the image
+ssh
+ssh.tar.gz
+ssh.zip
+
+# 2.9MB of reference PDFs, not needed to compile
+external-docs
+
+# NOTE: do not ignore ./cert or config.yaml - the binary reads both at
+# runtime from its working directory, and cert/ is what enables HTTPS.
