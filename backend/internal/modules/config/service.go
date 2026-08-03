@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -278,11 +279,28 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 	}, nil
 }
 
+// ErrIntegratorConfigNotFound is returned when the config does not exist or
+// has already been retired.
+var ErrIntegratorConfigNotFound = errors.New("integrator config not found")
+
+// deleteIntegratorConfig retires a config by setting deleted_at rather than
+// removing the row. integrator_transactions and oa_transactions reference it
+// and hold amounts and tax data, so a hard delete would either fail on those
+// foreign keys or destroy financial history.
 func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
-	_, err := database.New(database.D()).DeleteIntegratorConfig(ctx, id)
+	res, err := database.New(database.D()).DeleteIntegratorConfig(ctx, id)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("error delete integrator config %v", err), nil)
 		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("error reading rows affected %v", err), nil)
+		return err
+	}
+	if rows == 0 {
+		return ErrIntegratorConfigNotFound
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"api-oa-integrator/internal/middlewares"
 	"api-oa-integrator/internal/modules/integrator"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -244,10 +245,15 @@ func (con controller) updateIntegratorConfig(c echo.Context) error {
 //	@Param			id	path	string	true	"Id"
 //	@Router			/config/integrator-config/{id} [delete]
 func (con controller) deleteIntegratorConfig(c echo.Context) error {
-	id := uuid.MustParse(c.Param("id"))
-	err := deleteIntegratorConfig(c.Request().Context(), id)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return c.String(http.StatusBadRequest, "")
+		return c.String(http.StatusBadRequest, "Invalid id")
+	}
+	if err := deleteIntegratorConfig(c.Request().Context(), id); err != nil {
+		if errors.Is(err, ErrIntegratorConfigNotFound) {
+			return c.String(http.StatusNotFound, "Integrator config not found")
+		}
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 	return c.JSON(http.StatusOK, "deleted")
 }

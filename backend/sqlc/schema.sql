@@ -46,7 +46,8 @@ create table integrator_config
     surchange_type       SURCHARGE_TYPE,
     insecure_skip_verify boolean            default false,
     created_at           timestamp not null default NOW(),
-    updated_at           timestamp not null default NOW()
+    updated_at           timestamp not null default NOW(),
+    deleted_at           timestamp
 );
 
 create table oa_transactions
