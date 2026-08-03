@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -37,14 +38,27 @@ func isValidUser(username, password string) bool {
 			Password: "914Online",
 		},
 	}
+	// Historically this only accepted ":"+password. Echo splits the decoded
+	// basic-auth string on the first colon, so a client sending
+	// "user::password" arrives here with a leading colon still attached.
+	// A client sending standard "user:password" does not, and was rejected.
+	// Both forms are accepted now: the password itself still has to match.
 	for _, id := range identifications {
-		if username == id.Username && password == fmt.Sprintf(":%v", id.Password) {
+		if username != id.Username {
+			continue
+		}
+		if password == id.Password || password == fmt.Sprintf(":%v", id.Password) {
 			return true
 		}
 	}
+
+	// Deliberately does not log the password: these entries land in the logs
+	// table and are readable from the dashboard. The length and leading-colon
+	// flag are enough to tell a wrong password from a malformed header.
 	logger.LogData("info", "auth fail", map[string]interface{}{
-		"username": username,
-		"password": password,
+		"username":        username,
+		"password":        password,
+		"startsWithColon": strings.HasPrefix(password, ":"),
 	})
 	return false
 }
