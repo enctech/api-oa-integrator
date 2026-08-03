@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(dig enctechpms.com +short)",
+      "Bash(dig NS enctechpms.com +short)",
+      "Bash(curl -sI https://enctechpms.com/)",
+      "Bash(curl -s https://enctechpms.com/)",
+      "Bash(gh repo *)",
+      "Bash(gh run *)",
+      "Bash(curl *)"
+    ]
+  }
+}

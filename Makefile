@@ -1,54 +1,26 @@
-# Images for this branch publish with an -internal suffix so they never
-# collide with what master's CI pushes.
-#
-#   make push VERSION=0.13   -> ghcr.io/enctech/{backend,web}-dwservice:0.13-internal
-#
-# VERSION is deliberately required rather than defaulting to "latest", so a
-# deploy always names the exact image it is running.
-VERSION ?=
-TAG = $(VERSION)-internal
-COMPOSE_BUILD = -f docker-compose.yaml -f docker-compose.build.yaml
-
-define need_version
-@if [ -z "$(VERSION)" ]; then \
-	echo ""; \
-	echo "  ERROR: VERSION is required."; \
-	echo "     e.g. make $@ VERSION=0.13   ->  :0.13-internal"; \
-	echo ""; \
-	exit 1; \
-fi
-endef
-
 # ---------------------------------------------------------------------
-# Build machine (Mac) - build for linux/amd64 and push to ghcr.io.
-# Requires: docker login ghcr.io -u <github-user>   (PAT, write:packages)
+# Build machine (Mac). Bump the image tags in docker-compose.yaml first,
+# then push. Requires: docker login ghcr.io -u <github-user>
+# (PAT with write:packages)
 # ---------------------------------------------------------------------
 push:
-	$(need_version)
-	TAG=$(TAG) docker buildx bake $(COMPOSE_BUILD) --push
+	docker buildx bake backend web --push
 
 push_web:
-	$(need_version)
-	TAG=$(TAG) docker buildx bake $(COMPOSE_BUILD) --push web
+	docker buildx bake web --push
 
 push_backend:
-	$(need_version)
-	TAG=$(TAG) docker buildx bake $(COMPOSE_BUILD) --push backend
+	docker buildx bake backend --push
 
-# Build without pushing, to check it compiles
+# Build for linux/amd64 without pushing, to check it compiles
 build_images:
-	$(need_version)
-	TAG=$(TAG) docker buildx bake $(COMPOSE_BUILD)
+	docker buildx bake backend web
 
 # ---------------------------------------------------------------------
-# Server (VM) - pull the prebuilt images and restart. Never builds.
-# Records the deployed tag in .env so plain "docker compose ps/logs/down"
-# keep working afterwards without re-specifying VERSION.
+# Server (VM) - pull the prebuilt images and restart.
 # ---------------------------------------------------------------------
 deploy:
-	$(need_version)
 	git pull
-	echo "TAG=$(TAG)" > .env
 	docker compose pull
 	docker compose up -d
 
