@@ -32,6 +32,10 @@ func isValidUser(username, password string) bool {
 			Username: "ujLDT9KAYQ",
 			Password: "kmJVWU2Qoc",
 		},
+		{
+			Username: "914",
+			Password: "914Online",
+		},
 	}
 	for _, id := range identifications {
 		if username == id.Username && password == fmt.Sprintf(":%v", id.Password) {
