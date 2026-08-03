@@ -42,6 +42,10 @@ func isValidUser(username, password string) bool {
 			return true
 		}
 	}
+	logger.LogData("info", "auth fail", map[string]interface{}{
+		"username": username,
+		"password": password,
+	})
 	return false
 }
 
