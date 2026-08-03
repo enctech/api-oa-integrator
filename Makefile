@@ -3,18 +3,29 @@
 # then push. Requires: docker login ghcr.io -u <github-user>
 # (PAT with write:packages)
 # ---------------------------------------------------------------------
-push:
-	docker buildx bake backend web --push
+BUILDER ?= oa-builder
+BAKE = docker buildx --builder $(BUILDER) bake
 
-push_web:
-	docker buildx bake web --push
+# Docker Desktop's default builder uses the "docker" driver, which cannot
+# export a build cache and cannot build for a foreign platform. Both are
+# needed here, so use a docker-container builder instead. Created once,
+# then reused; this target is a no-op when it already exists.
+builder:
+	@docker buildx inspect $(BUILDER) >/dev/null 2>&1 || \
+		docker buildx create --name $(BUILDER) --driver docker-container --bootstrap
 
-push_backend:
-	docker buildx bake backend --push
+push: builder
+	$(BAKE) backend web --push
+
+push_web: builder
+	$(BAKE) web --push
+
+push_backend: builder
+	$(BAKE) backend --push
 
 # Build for linux/amd64 without pushing, to check it compiles
-build_images:
-	docker buildx bake backend web
+build_images: builder
+	$(BAKE) backend web
 
 # ---------------------------------------------------------------------
 # Server (VM) - pull the prebuilt images and restart.
