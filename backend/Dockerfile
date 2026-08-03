@@ -23,6 +23,13 @@ FROM debian:bookworm-slim
 # GITHUB_TOKEN publish it under the repo owner's namespace.
 LABEL org.opencontainers.image.source=https://github.com/enctech/api-oa-integrator
 
+# debian:bookworm-slim ships no CA bundle, so Go's system cert pool is empty
+# and every outbound HTTPS call fails with "certificate signed by unknown
+# authority". The previous golang:latest runtime included these implicitly.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 COPY --from=builder /go/src/app/database/migrations /app/database/migrations
