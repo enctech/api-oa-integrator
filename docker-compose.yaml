@@ -7,7 +7,7 @@
 services:
   backend:
     restart: always
-    image: ghcr.io/enctech/backend-dwservice:${TAG:-latest-internal}
+    image: ghcr.io/enctech/backend-dwservice:${TAG:?TAG is required - set it in .env or run make deploy VERSION=x.y}
     container_name: backend
     ports:
       - "1323:1323"
@@ -20,7 +20,7 @@ services:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
   web:
-    image: ghcr.io/enctech/web-dwservice:${TAG:-latest-internal}
+    image: ghcr.io/enctech/web-dwservice:${TAG:?TAG is required - set it in .env or run make deploy VERSION=x.y}
     container_name: web
     ports:
       - "3000:3000"
