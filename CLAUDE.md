@@ -22,11 +22,22 @@ builds arm64 by default, which fails on the VM with `exec format error`.
 ## Version Tags
 
 Update versions in `docker-compose.yaml` before building:
-- `backend-dwservice:X.XX-internal`
-- `web-dwservice:X.XX-internal`
+- `ghcr.io/yuzurihaaa/backend-dwservice:X.XX-internal`
+- `ghcr.io/yuzurihaaa/web-dwservice:X.XX-internal`
 
 The `-internal` suffix keeps these distinct from the images master's CI
-publishes as `api-oa-integrator-{backend,web}`.
+publishes as `ghcr.io/enctech/api-oa-integrator-{backend,web}`.
+
+These live under a personal namespace rather than `enctech` because
+creating a new package in an org namespace is a separate permission from
+`write:packages`, and a personal PAT does not have it. Master's images
+exist under `enctech` only because Actions created them with
+`GITHUB_TOKEN`. To move these back to `enctech` later, an org owner needs
+to allow package creation (and authorise the PAT for SSO if enforced).
+
+The packages are private on first push. The VM therefore needs its own
+`docker login ghcr.io` with a PAT carrying `read:packages`, or the
+packages can be made public from their GitHub page.
 
 ## Deployment notes
 
