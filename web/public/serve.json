@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/logs", "destination": "/index.html" },
+    { "source": "/users", "destination": "/index.html" },
+    { "source": "/oa-configs", "destination": "/index.html" },
+    { "source": "/oa-configs/:id", "destination": "/index.html" },
+    { "source": "/oa-transactions", "destination": "/index.html" },
+    { "source": "/3rd-party-config", "destination": "/index.html" },
+    { "source": "/3rd-party-config/:id", "destination": "/index.html" },
+    { "source": "/3rd-party-transactions", "destination": "/index.html" }
+  ]
+}

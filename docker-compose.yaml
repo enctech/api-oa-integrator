@@ -34,7 +34,7 @@ services:
           - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache
         cache-to:
           - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache,mode=max
-    image: ghcr.io/enctech/web-dwservice:0.15-internal
+    image: ghcr.io/enctech/web-dwservice:0.16-internal
     container_name: web
     ports:
       - "127.0.0.1:3000:3000"

@@ -30,4 +30,11 @@ EXPOSE 3000
 RUN chmod +x ./run.sh
 
 # Define the command to run the app
-CMD ["npx", "serve", "-s", "build"]
+# No -s: --single rewrites every unknown path to index.html with a 200,
+# which makes a misrouted request look successful. build/serve.json lists
+# the real client-side routes instead, so deep links still work and
+# anything else gets a real 404.
+#
+# NOTE serve validates serve.json strictly - any key outside its schema
+# (a "$comment", for instance) makes the container exit on startup.
+CMD ["npx", "serve", "build"]
