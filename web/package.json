@@ -1,6 +1,6 @@
 {
   "name": "oa-dashboard",
-  "version": "0.12",
+  "version": "0.13",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.1",

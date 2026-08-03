@@ -10,7 +10,7 @@ services:
           - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache
         cache-to:
           - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache,mode=max
-    image: ghcr.io/enctech/backend-dwservice:0.38-internal
+    image: ghcr.io/enctech/backend-dwservice:0.39-internal
     container_name: backend
     ports:
       - "1323:1323"
@@ -34,7 +34,7 @@ services:
           - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache
         cache-to:
           - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache,mode=max
-    image: ghcr.io/enctech/web-dwservice:0.12-internal
+    image: ghcr.io/enctech/web-dwservice:0.13-internal
     container_name: web
     ports:
       - "127.0.0.1:3000:3000"
