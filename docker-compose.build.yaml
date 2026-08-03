@@ -1,0 +1,23 @@
+# Build overlay - used on the build machine only, never on the server.
+#
+# The server runs amd64 while a MacBook is usually arm64, so the platform
+# is pinned explicitly. Without this you get an arm64 image that fails on
+# the VM with "exec format error".
+#
+#   make push            build both images for amd64 and push to ghcr.io
+#   make push TAG=0.13   same, tagged 0.13 instead of latest
+#
+# Used together with the deploy file:
+#   docker buildx bake -f docker-compose.yaml -f docker-compose.build.yaml --push
+services:
+  backend:
+    build:
+      context: ./backend
+      platforms:
+        - linux/amd64
+
+  web:
+    build:
+      context: ./web
+      platforms:
+        - linux/amd64

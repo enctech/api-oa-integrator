@@ -1,7 +1,13 @@
+# Deploy file. Images are built elsewhere (see docker-compose.build.yaml)
+# and pulled here, so there is deliberately no build: key - "up" on the
+# server can never silently fall back to compiling locally.
+#
+#   server:  docker compose pull && docker compose up -d
+#   builder: make push
 services:
   backend:
     restart: always
-    build: ./backend
+    image: ghcr.io/enctech/backend-dwservice:${TAG:-latest}
     container_name: backend
     ports:
       - "1323:1323"
@@ -14,8 +20,7 @@ services:
       - "/etc/timezone:/etc/timezone:ro"
       - "/etc/localtime:/etc/localtime:ro"
   web:
-    build:
-      context: ./web
+    image: ghcr.io/enctech/web-dwservice:${TAG:-latest}
     container_name: web
     ports:
       - "3000:3000"
