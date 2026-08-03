@@ -5,10 +5,14 @@
 Images are built on the Mac and pulled by the VM, which is too slow to
 build `react-scripts` itself. Services are `backend`, `web`, `db`, `nginx`.
 
-On the Mac — bump the tags in `docker-compose.yaml`, then:
+Publishing runs in GitHub Actions, not locally. Bump the tags in
+`docker-compose.yaml`, commit, and push the branch — the workflow at
+`.github/workflows/build-dwservice.yaml` builds and pushes both images.
+It can also be run manually from the Actions tab (`workflow_dispatch`).
+
+To compile locally without publishing:
 ```bash
-docker login ghcr.io -u <github-user>   # PAT with write:packages, once
-make push                               # docker buildx bake backend web --push
+make build_images                       # bake for linux/amd64, no push
 ```
 
 On the VM:
@@ -28,12 +32,16 @@ Update versions in `docker-compose.yaml` before building:
 The `-internal` suffix keeps these distinct from the images master's CI
 publishes as `ghcr.io/enctech/api-oa-integrator-{backend,web}`.
 
-These live under a personal namespace rather than `enctech` because
-creating a new package in an org namespace is a separate permission from
-`write:packages`, and a personal PAT does not have it. Master's images
-exist under `enctech` only because Actions created them with
-`GITHUB_TOKEN`. To move these back to `enctech` later, an org owner needs
-to allow package creation (and authorise the PAT for SSO if enforced).
+`enctech` is a user account, not an organisation. Only that account — or
+`GITHUB_TOKEN` acting as this repository — can create packages in its
+namespace; repository push access does not extend to it. That is why
+publishing runs in Actions rather than from a laptop, and why a personal
+PAT fails with `denied: permission_denied: create_package` even with
+`write:packages`.
+
+Both Dockerfiles carry `org.opencontainers.image.source`, which links the
+published package to this repository so `GITHUB_TOKEN` is authorised for
+it.
 
 The packages are private on first push. The VM therefore needs its own
 `docker login ghcr.io` with a PAT carrying `read:packages`, or the

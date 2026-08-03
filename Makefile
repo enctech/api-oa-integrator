@@ -1,7 +1,15 @@
 # ---------------------------------------------------------------------
-# Build machine (Mac). Bump the image tags in docker-compose.yaml first,
-# then push. Requires: docker login ghcr.io -u <github-user>
-# (PAT with write:packages)
+# Publishing happens in GitHub Actions (.github/workflows/build-dwservice.yaml),
+# not from here. Packages under ghcr.io/enctech can only be created by
+# enctech or by GITHUB_TOKEN acting as this repo; a personal PAT is
+# rejected with "denied: permission_denied: create_package".
+#
+# To publish: bump the tags in docker-compose.yaml, commit, push the
+# branch. The workflow builds and pushes both images.
+#
+# The push targets below are kept for the case where you are authenticated
+# as the namespace owner. build_images is the useful one locally - it
+# compiles for linux/amd64 without pushing.
 # ---------------------------------------------------------------------
 BUILDER ?= oa-builder
 BAKE = docker buildx --builder $(BUILDER) bake

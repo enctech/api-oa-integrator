@@ -19,6 +19,10 @@ RUN --mount=type=cache,target=/root/.cache/go-build go build -mod=readonly -o /g
 # Stage 2: Create a smaller image for running the application
 FROM debian:bookworm-slim
 
+# Links the published package to this repository, which is what lets
+# GITHUB_TOKEN publish it under the repo owner's namespace.
+LABEL org.opencontainers.image.source=https://github.com/enctech/api-oa-integrator
+
 # Copy the built binary from the builder stage
 COPY --from=builder /go/bin/api-oa-integrator /usr/local/bin
 COPY --from=builder /go/src/app/database/migrations /app/database/migrations

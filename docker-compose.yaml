@@ -7,10 +7,10 @@ services:
         - linux/amd64
       x-bake:
         cache-from:
-          - type=registry,ref=ghcr.io/yuzurihaaa/backend-dwservice:buildcache
+          - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache
         cache-to:
-          - type=registry,ref=ghcr.io/yuzurihaaa/backend-dwservice:buildcache,mode=max
-    image: ghcr.io/yuzurihaaa/backend-dwservice:0.38-internal
+          - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache,mode=max
+    image: ghcr.io/enctech/backend-dwservice:0.38-internal
     container_name: backend
     ports:
       - "1323:1323"
@@ -31,10 +31,10 @@ services:
         - linux/amd64
       x-bake:
         cache-from:
-          - type=registry,ref=ghcr.io/yuzurihaaa/web-dwservice:buildcache
+          - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache
         cache-to:
-          - type=registry,ref=ghcr.io/yuzurihaaa/web-dwservice:buildcache,mode=max
-    image: ghcr.io/yuzurihaaa/web-dwservice:0.12-internal
+          - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache,mode=max
+    image: ghcr.io/enctech/web-dwservice:0.12-internal
     container_name: web
     ports:
       - "127.0.0.1:3000:3000"

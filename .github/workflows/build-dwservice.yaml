@@ -1,0 +1,44 @@
+name: Build dwservice Images
+
+# Mirrors master's build-docker.yaml, for this branch's -internal images.
+#
+# The push must happen here rather than from a laptop: ghcr.io packages
+# under the enctech namespace can only be created by enctech itself, or by
+# GITHUB_TOKEN acting as this repository. A collaborator's personal PAT
+# gets "denied: permission_denied: create_package".
+
+on:
+  push:
+    branches:
+      - chore/TNGdwservice
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags and platforms come from docker-compose.yaml, so bumping a
+      # version there is all that is needed to publish a new image.
+      - name: Build and push Docker image using Docker Bake
+        uses: docker/bake-action@v6
+        with:
+          push: true
+          targets: backend, web

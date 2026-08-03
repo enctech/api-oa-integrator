@@ -1,6 +1,10 @@
 # Use an official Node runtime as a parent image
 FROM node:20
 
+# Links the published package to this repository, which is what lets
+# GITHUB_TOKEN publish it under the repo owner's namespace.
+LABEL org.opencontainers.image.source=https://github.com/enctech/api-oa-integrator
+
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
