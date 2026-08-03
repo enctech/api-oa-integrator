@@ -4,10 +4,15 @@
 # is pinned explicitly. Without this you get an arm64 image that fails on
 # the VM with "exec format error".
 #
-#   make push            build both images for amd64 and push to ghcr.io
-#   make push TAG=0.13   same, tagged 0.13 instead of latest
+# x-bake mirrors master's setup, but uses a registry cache rather than
+# type=gha: the gha cache backend only exists inside GitHub Actions. The
+# cache lives in a :buildcache tag next to each image, so a rebuild on a
+# different machine still reuses layers.
 #
-# Used together with the deploy file:
+#   make push                  -> :latest-internal
+#   make push VERSION=0.13     -> :0.13-internal
+#
+# Equivalent to:
 #   docker buildx bake -f docker-compose.yaml -f docker-compose.build.yaml --push
 services:
   backend:
@@ -15,9 +20,19 @@ services:
       context: ./backend
       platforms:
         - linux/amd64
+      x-bake:
+        cache-from:
+          - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache
+        cache-to:
+          - type=registry,ref=ghcr.io/enctech/backend-dwservice:buildcache,mode=max
 
   web:
     build:
       context: ./web
       platforms:
         - linux/amd64
+      x-bake:
+        cache-from:
+          - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache
+        cache-to:
+          - type=registry,ref=ghcr.io/enctech/web-dwservice:buildcache,mode=max

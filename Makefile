@@ -1,4 +1,9 @@
-TAG ?= latest
+# Images for this branch are always published with an -internal suffix, to
+# keep them distinct from the ones master's CI publishes.
+#   make push               -> :latest-internal
+#   make push VERSION=0.13  -> :0.13-internal
+VERSION ?= latest
+TAG = $(VERSION)-internal
 COMPOSE_BUILD = -f docker-compose.yaml -f docker-compose.build.yaml
 
 # ---------------------------------------------------------------------
