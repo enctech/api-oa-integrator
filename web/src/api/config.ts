@@ -75,6 +75,7 @@ export type SurchargeType = "percentage" | "exact";
 export interface PlazaMapping {
   vendorLocationId: string;
   clientId?: string;
+  providerId?: number;
 }
 
 export interface IntegratorConfigs {

@@ -491,6 +491,21 @@ type FMCReq struct {
 	Identifier          Identifier
 }
 
+// providerIdFor returns the per-facility providerId from plaza_id_map, falling
+// back to the config-level provider_id. The old plaza_id_map format is
+// map[string]string, which fails to unmarshal here and takes the fallback.
+func providerIdFor(cfg database.IntegratorConfig, facility string) int32 {
+	var m map[string]struct {
+		ProviderId int32 `json:"providerId"`
+	}
+	if err := json.Unmarshal(cfg.PlazaIDMap.RawMessage, &m); err == nil {
+		if v, ok := m[facility]; ok && v.ProviderId != 0 {
+			return v.ProviderId
+		}
+	}
+	return cfg.ProviderID.Int32
+}
+
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName string) {
 	config, err := database.New(database.D()).GetSnbConfigByFacilityAndDevice(context.Background(), database.GetSnbConfigByFacilityAndDeviceParams{
 		Device:   metadata.device,
@@ -513,7 +528,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 		PaymentInformation: in.PaymentInformation,
 		ProviderInformation: &ProviderInformation{
 			Provider: Provider{
-				ProviderId:   fmt.Sprintf("%v", vendor.ProviderID.Int32),
+				ProviderId:   fmt.Sprintf("%v", providerIdFor(vendor, metadata.facility)),
 				ProviderName: vendor.Name.String,
 			},
 		},

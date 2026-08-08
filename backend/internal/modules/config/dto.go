@@ -15,6 +15,11 @@ type SnbConfig struct {
 type PlazaMapping struct {
 	VendorLocationId string `json:"vendorLocationId"`
 	ClientId         string `json:"clientId,omitempty"`
+	// ProviderId overrides the config-level provider_id for this facility.
+	// Zero means "use the config-level one". S&B accepts a single providerId
+	// per server, so two client ids on one server need one config with a
+	// per-facility override rather than two configs.
+	ProviderId int32 `json:"providerId,omitempty"`
 }
 
 type IntegratorConfig struct {

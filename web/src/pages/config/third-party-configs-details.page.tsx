@@ -24,6 +24,7 @@ import {
   getIntegratorConfig,
   getIntegrators,
   IntegratorConfigs,
+  PlazaMapping,
   SurchargeType,
   updateIntegratorConfig,
 } from "../../api/config";
@@ -44,7 +45,12 @@ interface FormData {
   surcharge: number;
   surchargeType: SurchargeType;
   isInsecure: boolean;
-  plazaIdMappers: { field1: string; field2: string; field3: string }[];
+  plazaIdMappers: {
+    field1: string;
+    field2: string;
+    field3: string;
+    field4: string;
+  }[];
   extra: any[];
 }
 
@@ -101,6 +107,7 @@ const ThirdPartyConfigsDetailsPage = () => {
 
   const [isEditing, setIsEditing] = useState(id === "new");
   const [name, setName] = useState("");
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   const { mutate } = useMutation(
     "updateIntegratorConfig",
@@ -139,6 +146,7 @@ const ThirdPartyConfigsDetailsPage = () => {
     setValue("surchargeType", data.surchargeType || "exact");
     if (data.plazaIdMap) {
       const keys = Object.keys(data.plazaIdMap);
+      const expanded: Record<number, boolean> = {};
       keys.forEach((key, index) => {
         const mapping = (data.plazaIdMap as any)[key];
         // Handle both old format (string) and new format (object)
@@ -148,18 +156,24 @@ const ThirdPartyConfigsDetailsPage = () => {
             field1: key,
             field2: mapping,
             field3: "",
+            field4: "",
           });
         } else {
-          // New format: value is an object with vendorLocationId and clientId
+          // New format: value is an object with vendorLocationId and overrides
           update(index, {
             field1: key,
             field2: mapping?.vendorLocationId || "",
             field3: mapping?.clientId || "",
+            field4: mapping?.providerId ? String(mapping.providerId) : "",
           });
+          // Rows that already carry an override open by default, otherwise the
+          // override is invisible until every row is clicked open.
+          if (mapping?.clientId || mapping?.providerId) expanded[index] = true;
         }
       });
+      setExpandedRows(expanded);
     } else {
-      update(0, { field1: "", field2: "", field3: "" });
+      update(0, { field1: "", field2: "", field3: "", field4: "" });
     }
 
     if (data.extra) {
@@ -178,11 +192,12 @@ const ThirdPartyConfigsDetailsPage = () => {
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     console.log(data);
-    const plazaIdMap: Map<string, { vendorLocationId: string; clientId: string }> = new Map();
+    const plazaIdMap: Map<string, PlazaMapping> = new Map();
     data.plazaIdMappers.forEach((item) => {
       plazaIdMap.set(item.field1, {
         vendorLocationId: item.field2,
         clientId: item.field3 || "",
+        providerId: +item.field4 || undefined,
       });
     });
 
@@ -579,68 +594,109 @@ const ThirdPartyConfigsDetailsPage = () => {
           {data &&
             fields.map((field, index) => (
               <div
-                key={`${field.id}-${field.field1}-${field.field2}-${field.field3}`}
-                className="flex"
+                key={`${field.id}-${field.field1}-${field.field2}-${field.field3}-${field.field4}`}
+                className="mb-4"
               >
-                <div>
-                  <div>OA Facility ID</div>
-                  <TextField
-                    disabled={!isEditing}
-                    sx={{
-                      "& .MuiInputBase-input.Mui-disabled": {
-                        WebkitTextFillColor: "#000000",
-                      },
-                    }}
-                    {...register(`plazaIdMappers.${index}.field1` as const)}
-                  />
-                </div>
-                <div className="w-8" />
-                <div>
-                  <div>Vendor Location ID</div>
-                  <TextField
-                    disabled={!isEditing}
-                    sx={{
-                      "& .MuiInputBase-input.Mui-disabled": {
-                        WebkitTextFillColor: "#000000",
-                      },
-                    }}
-                    {...register(`plazaIdMappers.${index}.field2` as const)}
-                  />
-                </div>
-                <div className="w-8" />
-                <div>
+                <div className="flex items-end">
                   <div>
-                    Client ID
-                    <Tooltip
-                      className="ml-2"
-                      title="Optional. If empty, uses the global Client ID above."
-                    >
-                      <InfoIcon fontSize="small" />
-                    </Tooltip>
+                    <div>OA Facility ID</div>
+                    <TextField
+                      disabled={!isEditing}
+                      sx={{
+                        "& .MuiInputBase-input.Mui-disabled": {
+                          WebkitTextFillColor: "#000000",
+                        },
+                      }}
+                      {...register(`plazaIdMappers.${index}.field1` as const)}
+                    />
                   </div>
-                  <TextField
-                    disabled={!isEditing}
-                    placeholder="(uses global)"
-                    sx={{
-                      "& .MuiInputBase-input.Mui-disabled": {
-                        WebkitTextFillColor: "#000000",
-                      },
-                    }}
-                    {...register(`plazaIdMappers.${index}.field3` as const)}
-                  />
-                </div>
-                <div className="w-8" />
-                {isEditing && (
-                  <Button type="button" onClick={() => remove(index)}>
-                    Remove
+                  <div className="w-8" />
+                  <div>
+                    <div>Vendor Location ID</div>
+                    <TextField
+                      disabled={!isEditing}
+                      sx={{
+                        "& .MuiInputBase-input.Mui-disabled": {
+                          WebkitTextFillColor: "#000000",
+                        },
+                      }}
+                      {...register(`plazaIdMappers.${index}.field2` as const)}
+                    />
+                  </div>
+                  <div className="w-8" />
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      setExpandedRows((prev) => ({
+                        ...prev,
+                        [index]: !prev[index],
+                      }))
+                    }
+                  >
+                    {expandedRows[index] ? "Hide" : "Show"} overrides
                   </Button>
+                  {isEditing && (
+                    <Button type="button" onClick={() => remove(index)}>
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                {expandedRows[index] && (
+                  <div className="flex pl-8 mt-2">
+                    <div>
+                      <div>
+                        Provider ID
+                        <Tooltip
+                          className="ml-2"
+                          title="Optional. If empty, uses the global Provider ID above."
+                        >
+                          <InfoIcon fontSize="small" />
+                        </Tooltip>
+                      </div>
+                      <TextField
+                        disabled={!isEditing}
+                        type="number"
+                        placeholder="(uses global)"
+                        sx={{
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000000",
+                          },
+                        }}
+                        {...register(`plazaIdMappers.${index}.field4` as const)}
+                      />
+                    </div>
+                    <div className="w-8" />
+                    <div>
+                      <div>
+                        Client ID
+                        <Tooltip
+                          className="ml-2"
+                          title="Optional. If empty, uses the global Client ID above."
+                        >
+                          <InfoIcon fontSize="small" />
+                        </Tooltip>
+                      </div>
+                      <TextField
+                        disabled={!isEditing}
+                        placeholder="(uses global)"
+                        sx={{
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000000",
+                          },
+                        }}
+                        {...register(`plazaIdMappers.${index}.field3` as const)}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
           {isEditing && (
             <Button
               type="button"
-              onClick={() => append({ field1: "", field2: "", field3: "" })}
+              onClick={() =>
+                append({ field1: "", field2: "", field3: "", field4: "" })
+              }
             >
               Add Field
             </Button>
