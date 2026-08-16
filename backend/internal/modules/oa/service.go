@@ -72,7 +72,11 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 		wg.Add(1)
 		go func(vendorName string) {
 			defer wg.Done()
-			err = integrator.VerifyVehicle(vendorName, metadata.facility, lpn, lane)
+			// Declared here, not assigned to the outer err: every goroutine
+			// shared that variable, so a vendor that failed could read another
+			// vendor's nil and publish itself as the winner, sending S&B the
+			// wrong provider and client id.
+			err := integrator.VerifyVehicle(vendorName, metadata.facility, lpn, lane)
 
 			if err != nil {
 				logger.LogData("error", fmt.Sprintf("Error integrator.VerifyVehicle %v", err), map[string]interface{}{
