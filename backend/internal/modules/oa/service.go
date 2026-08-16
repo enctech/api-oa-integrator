@@ -3,7 +3,6 @@ package oa
 import (
 	"api-oa-integrator/database"
 	"api-oa-integrator/internal/modules/integrator"
-	"api-oa-integrator/internal/plaza"
 	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
@@ -496,15 +495,19 @@ type FMCReq struct {
 	Identifier          Identifier
 }
 
-// providerIdFor returns the providerId of the site group owning facility.
-// S&B accepts a single providerId per server, so this is the value that must
-// come back on the final message for that facility.
+// providerIdFor returns the providerId of the site owning facility. S&B
+// accepts a single providerId per server, so this is the value that must come
+// back on the final message for that facility.
 func providerIdFor(cfg database.IntegratorConfig, facility string) int32 {
-	group, ok := plaza.Parse(cfg.PlazaIDMap.RawMessage).Find(facility)
-	if !ok {
+	site, err := database.New(database.D()).GetSiteByConfigAndFacility(context.Background(), database.GetSiteByConfigAndFacilityParams{
+		IntegratorConfigID: cfg.ID,
+		Facility:           facility,
+	})
+	if err != nil {
+		logger.LogData("error", fmt.Sprintf("no site for facility %v: %v", facility, err), nil)
 		return 0
 	}
-	return group.ProviderId
+	return site.ProviderID.Int32
 }
 
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName string) {

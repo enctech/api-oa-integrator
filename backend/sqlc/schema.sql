@@ -83,3 +83,20 @@ create table integrator_transactions
 
     FOREIGN KEY (integrator_id) REFERENCES integrator_config (id)
 );
+create table integrator_site
+(
+    id                   uuid primary key,
+    integrator_config_id uuid      not null,
+    provider_id          int,
+    client_id            varchar,
+    vendor_location_id   varchar,
+    created_at           timestamp not null default NOW(),
+    updated_at           timestamp not null default NOW()
+);
+
+create table integrator_site_facility
+(
+    site_id              uuid    not null,
+    integrator_config_id uuid    not null,
+    facility             varchar not null
+);

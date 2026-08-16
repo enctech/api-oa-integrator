@@ -2,7 +2,6 @@ package integrator
 
 import (
 	"api-oa-integrator/database"
-	"api-oa-integrator/internal/plaza"
 	"api-oa-integrator/logger"
 	"api-oa-integrator/tng"
 	"context"
@@ -30,16 +29,20 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	if err != nil {
 		return nil, database.IntegratorConfig{}, err
 	}
-	// The facility decides which site's group applies, and the group carries
-	// the clientId the vendor issued for it.
-	group, ok := plaza.Parse(cfg.PlazaIDMap.RawMessage).Find(locationId)
-	if !ok {
-		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("plazaId not found for locationId %v", locationId))
+	// The facility decides which of the config's sites applies, and the site
+	// carries the clientId the vendor issued and the location it maps to.
+	// Facilities are unique per config, so at most one site can match.
+	site, err := database.New(database.D()).GetSiteByConfigAndFacility(context.Background(), database.GetSiteByConfigAndFacilityParams{
+		IntegratorConfigID: cfg.ID,
+		Facility:           locationId,
+	})
+	if err != nil {
+		return nil, database.IntegratorConfig{}, fmt.Errorf("no site for locationId %v: %w", locationId, err)
 	}
 
 	switch cfg.IntegratorName.String {
 	case "tng":
-		return tng.Config{IntegratorConfig: cfg, PlazaId: group.VendorLocationId, ClientId: group.ClientId}, cfg, nil
+		return tng.Config{IntegratorConfig: cfg, PlazaId: site.VendorLocationID.String, ClientId: site.ClientID.String}, cfg, nil
 	default:
 		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("integrator %v not found", cfg.IntegratorName.String))
 	}

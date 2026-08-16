@@ -73,6 +73,23 @@ type IntegratorConfig struct {
 	InsecureSkipVerify sql.NullBool
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+	DeletedAt          sql.NullTime
+}
+
+type IntegratorSite struct {
+	ID                 uuid.UUID
+	IntegratorConfigID uuid.UUID
+	ProviderID         sql.NullInt32
+	ClientID           sql.NullString
+	VendorLocationID   sql.NullString
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
+type IntegratorSiteFacility struct {
+	SiteID             uuid.UUID
+	IntegratorConfigID uuid.UUID
+	Facility           string
 }
 
 type IntegratorTransaction struct {

@@ -17,7 +17,7 @@ const createIntegratorConfig = `-- name: CreateIntegratorConfig :one
 insert into integrator_config (client_id, provider_id, name, sp_id, plaza_id_map, url, insecure_skip_verify,
                                integrator_name, extra, tax_rate, surcharge, surchange_type, display_name)
 values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-returning id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+returning id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 `
 
 type CreateIntegratorConfigParams struct {
@@ -70,6 +70,7 @@ func (q *Queries) CreateIntegratorConfig(ctx context.Context, arg CreateIntegrat
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -81,12 +82,13 @@ where id = $1
   and deleted_at is null
 `
 
+// Soft delete: transactions reference this row and hold financial data.
 func (q *Queries) DeleteIntegratorConfig(ctx context.Context, id uuid.UUID) (sql.Result, error) {
 	return q.exec(ctx, q.deleteIntegratorConfigStmt, deleteIntegratorConfig, id)
 }
 
 const getIntegratorConfig = `-- name: GetIntegratorConfig :one
-select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 from integrator_config
 where id = $1
   and deleted_at is null
@@ -112,12 +114,13 @@ func (q *Queries) GetIntegratorConfig(ctx context.Context, id uuid.UUID) (Integr
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getIntegratorConfigByClient = `-- name: GetIntegratorConfigByClient :one
-select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 from integrator_config
 where client_id = $1
   and deleted_at is null
@@ -143,12 +146,13 @@ func (q *Queries) GetIntegratorConfigByClient(ctx context.Context, clientID sql.
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getIntegratorConfigByName = `-- name: GetIntegratorConfigByName :one
-select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 from integrator_config
 where name = $1
   and deleted_at is null
@@ -174,12 +178,13 @@ func (q *Queries) GetIntegratorConfigByName(ctx context.Context, name sql.NullSt
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getIntegratorConfigs = `-- name: GetIntegratorConfigs :many
-select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+select id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 from integrator_config
 where deleted_at is null
 `
@@ -210,6 +215,7 @@ func (q *Queries) GetIntegratorConfigs(ctx context.Context) ([]IntegratorConfig,
 			&i.InsecureSkipVerify,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -241,7 +247,7 @@ set provider_id          = coalesce($2, provider_id),
     display_name         = coalesce($14, display_name)
 where id = $1
   and deleted_at is null
-returning id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at
+returning id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, created_at, updated_at, deleted_at
 `
 
 type UpdateIntegratorConfigParams struct {
@@ -296,6 +302,7 @@ func (q *Queries) UpdateIntegratorConfig(ctx context.Context, arg UpdateIntegrat
 		&i.InsecureSkipVerify,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

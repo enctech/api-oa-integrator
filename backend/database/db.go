@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.addSiteFacilityStmt, err = db.PrepareContext(ctx, addSiteFacility); err != nil {
+		return nil, fmt.Errorf("error preparing query AddSiteFacility: %w", err)
+	}
 	if q.countLogsStmt, err = db.PrepareContext(ctx, countLogs); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLogs: %w", err)
 	}
@@ -39,6 +42,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createOATransactionStmt, err = db.PrepareContext(ctx, createOATransaction); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateOATransaction: %w", err)
 	}
+	if q.createSiteStmt, err = db.PrepareContext(ctx, createSite); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateSite: %w", err)
+	}
 	if q.createSnbConfigStmt, err = db.PrepareContext(ctx, createSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateSnbConfig: %w", err)
 	}
@@ -47,6 +53,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteIntegratorConfigStmt, err = db.PrepareContext(ctx, deleteIntegratorConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteIntegratorConfig: %w", err)
+	}
+	if q.deleteSitesByConfigStmt, err = db.PrepareContext(ctx, deleteSitesByConfig); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteSitesByConfig: %w", err)
 	}
 	if q.deleteSnbConfigStmt, err = db.PrepareContext(ctx, deleteSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteSnbConfig: %w", err)
@@ -99,6 +108,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getOATransactionsCountStmt, err = db.PrepareContext(ctx, getOATransactionsCount); err != nil {
 		return nil, fmt.Errorf("error preparing query GetOATransactionsCount: %w", err)
 	}
+	if q.getSiteByConfigAndFacilityStmt, err = db.PrepareContext(ctx, getSiteByConfigAndFacility); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSiteByConfigAndFacility: %w", err)
+	}
+	if q.getSitesByConfigStmt, err = db.PrepareContext(ctx, getSitesByConfig); err != nil {
+		return nil, fmt.Errorf("error preparing query GetSitesByConfig: %w", err)
+	}
 	if q.getSnbConfigStmt, err = db.PrepareContext(ctx, getSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetSnbConfig: %w", err)
 	}
@@ -128,6 +143,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.addSiteFacilityStmt != nil {
+		if cerr := q.addSiteFacilityStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing addSiteFacilityStmt: %w", cerr)
+		}
+	}
 	if q.countLogsStmt != nil {
 		if cerr := q.countLogsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countLogsStmt: %w", cerr)
@@ -153,6 +173,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createOATransactionStmt: %w", cerr)
 		}
 	}
+	if q.createSiteStmt != nil {
+		if cerr := q.createSiteStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createSiteStmt: %w", cerr)
+		}
+	}
 	if q.createSnbConfigStmt != nil {
 		if cerr := q.createSnbConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createSnbConfigStmt: %w", cerr)
@@ -166,6 +191,11 @@ func (q *Queries) Close() error {
 	if q.deleteIntegratorConfigStmt != nil {
 		if cerr := q.deleteIntegratorConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteIntegratorConfigStmt: %w", cerr)
+		}
+	}
+	if q.deleteSitesByConfigStmt != nil {
+		if cerr := q.deleteSitesByConfigStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteSitesByConfigStmt: %w", cerr)
 		}
 	}
 	if q.deleteSnbConfigStmt != nil {
@@ -253,6 +283,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getOATransactionsCountStmt: %w", cerr)
 		}
 	}
+	if q.getSiteByConfigAndFacilityStmt != nil {
+		if cerr := q.getSiteByConfigAndFacilityStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSiteByConfigAndFacilityStmt: %w", cerr)
+		}
+	}
+	if q.getSitesByConfigStmt != nil {
+		if cerr := q.getSitesByConfigStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getSitesByConfigStmt: %w", cerr)
+		}
+	}
 	if q.getSnbConfigStmt != nil {
 		if cerr := q.getSnbConfigStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getSnbConfigStmt: %w", cerr)
@@ -332,14 +372,17 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                                  DBTX
 	tx                                  *sql.Tx
+	addSiteFacilityStmt                 *sql.Stmt
 	countLogsStmt                       *sql.Stmt
 	createIntegratorConfigStmt          *sql.Stmt
 	createIntegratorTransactionStmt     *sql.Stmt
 	createLogStmt                       *sql.Stmt
 	createOATransactionStmt             *sql.Stmt
+	createSiteStmt                      *sql.Stmt
 	createSnbConfigStmt                 *sql.Stmt
 	createUserStmt                      *sql.Stmt
 	deleteIntegratorConfigStmt          *sql.Stmt
+	deleteSitesByConfigStmt             *sql.Stmt
 	deleteSnbConfigStmt                 *sql.Stmt
 	deleteUserStmt                      *sql.Stmt
 	getAllSnbConfigStmt                 *sql.Stmt
@@ -357,6 +400,8 @@ type Queries struct {
 	getOATransactionStmt                *sql.Stmt
 	getOATransactionsStmt               *sql.Stmt
 	getOATransactionsCountStmt          *sql.Stmt
+	getSiteByConfigAndFacilityStmt      *sql.Stmt
+	getSitesByConfigStmt                *sql.Stmt
 	getSnbConfigStmt                    *sql.Stmt
 	getSnbConfigByFacilityAndDeviceStmt *sql.Stmt
 	getTotalTransactionAmountStmt       *sql.Stmt
@@ -371,14 +416,17 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                                  tx,
 		tx:                                  tx,
+		addSiteFacilityStmt:                 q.addSiteFacilityStmt,
 		countLogsStmt:                       q.countLogsStmt,
 		createIntegratorConfigStmt:          q.createIntegratorConfigStmt,
 		createIntegratorTransactionStmt:     q.createIntegratorTransactionStmt,
 		createLogStmt:                       q.createLogStmt,
 		createOATransactionStmt:             q.createOATransactionStmt,
+		createSiteStmt:                      q.createSiteStmt,
 		createSnbConfigStmt:                 q.createSnbConfigStmt,
 		createUserStmt:                      q.createUserStmt,
 		deleteIntegratorConfigStmt:          q.deleteIntegratorConfigStmt,
+		deleteSitesByConfigStmt:             q.deleteSitesByConfigStmt,
 		deleteSnbConfigStmt:                 q.deleteSnbConfigStmt,
 		deleteUserStmt:                      q.deleteUserStmt,
 		getAllSnbConfigStmt:                 q.getAllSnbConfigStmt,
@@ -396,6 +444,8 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getOATransactionStmt:                q.getOATransactionStmt,
 		getOATransactionsStmt:               q.getOATransactionsStmt,
 		getOATransactionsCountStmt:          q.getOATransactionsCountStmt,
+		getSiteByConfigAndFacilityStmt:      q.getSiteByConfigAndFacilityStmt,
+		getSitesByConfigStmt:                q.getSitesByConfigStmt,
 		getSnbConfigStmt:                    q.getSnbConfigStmt,
 		getSnbConfigByFacilityAndDeviceStmt: q.getSnbConfigByFacilityAndDeviceStmt,
 		getTotalTransactionAmountStmt:       q.getTotalTransactionAmountStmt,

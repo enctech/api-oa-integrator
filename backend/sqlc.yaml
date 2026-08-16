@@ -4,6 +4,7 @@ sql:
     queries:
       - "sqlc/authentication.sql"
       - "sqlc/integrator_config.sql"
+      - "sqlc/integrator_site.sql"
       - "sqlc/logs.sql"
       - "sqlc/snb_config.sql"
       - "sqlc/transactions.sql"

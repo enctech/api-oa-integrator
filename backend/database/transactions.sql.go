@@ -20,7 +20,7 @@ with inserted_transaction as (
                                          extra)
         values ($1, $2, $3, $4, $5, $6, $7, $8)
         returning id, business_transaction_id, lpn, integrator_id, status, amount, error, extra, tax_data, created_at, updated_at)
-select inserted_transaction.id, business_transaction_id, lpn, integrator_id, status, amount, error, inserted_transaction.extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, integrator_config.id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, integrator_config.extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at
+select inserted_transaction.id, business_transaction_id, lpn, integrator_id, status, amount, error, inserted_transaction.extra, tax_data, inserted_transaction.created_at, inserted_transaction.updated_at, integrator_config.id, client_id, provider_id, name, display_name, integrator_name, sp_id, plaza_id_map, integrator_config.extra, url, tax_rate, surcharge, surchange_type, insecure_skip_verify, integrator_config.created_at, integrator_config.updated_at, deleted_at
 from inserted_transaction
          inner join integrator_config on integrator_config.id = $3
 `
@@ -64,6 +64,7 @@ type CreateIntegratorTransactionRow struct {
 	InsecureSkipVerify    sql.NullBool
 	CreatedAt_2           time.Time
 	UpdatedAt_2           time.Time
+	DeletedAt             sql.NullTime
 }
 
 func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateIntegratorTransactionParams) (CreateIntegratorTransactionRow, error) {
@@ -106,6 +107,7 @@ func (q *Queries) CreateIntegratorTransaction(ctx context.Context, arg CreateInt
 		&i.InsecureSkipVerify,
 		&i.CreatedAt_2,
 		&i.UpdatedAt_2,
+		&i.DeletedAt,
 	)
 	return i, err
 }
