@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from "react";
 import {
+  Control,
   Controller,
   SubmitHandler,
   useFieldArray,
   useForm,
+  UseFormRegister,
+  useWatch,
 } from "react-hook-form";
 import {
   Button,
   Checkbox,
   Container,
   FormControlLabel,
+  ListSubheader,
+  MenuItem,
   Radio,
   RadioGroup,
   TextField,
@@ -23,8 +28,10 @@ import {
   createIntegratorConfig,
   getIntegratorConfig,
   getIntegrators,
+  getOAConfigs,
   IntegratorConfigs,
-  PlazaMapping,
+  OAConfigResponse,
+  PlazaGroup,
   SurchargeType,
   updateIntegratorConfig,
 } from "../../api/config";
@@ -37,22 +44,105 @@ interface FormData {
   url: string;
   name: string;
   displayName: string;
-  clientId: string;
   integratorName?: string;
   serviceProviderId: string;
-  providerId: number;
   taxRate: number;
   surcharge: number;
   surchargeType: SurchargeType;
   isInsecure: boolean;
-  plazaIdMappers: {
-    field1: string;
-    field2: string;
-    field3: string;
-    field4: string;
+  groups: {
+    providerId: string;
+    clientId: string;
+    vendorLocationId: string;
+    // Objects rather than plain strings: useFieldArray cannot manage an array
+    // of primitives. Flattened back to string[] on submit.
+    facilities: { facility: string }[];
   }[];
   extra: any[];
 }
+
+// "1225: TEST" - the OA facility ID, then the OA config that lists it. A
+// facility belonging to no OA config shows its ID alone.
+const facilityLabel = (
+  facility: string | undefined,
+  oaConfigs: OAConfigResponse[],
+) => {
+  if (!facility) return "(unset)";
+  const name = oaConfigs.find((c) =>
+    (c.facilities || []).includes(facility),
+  )?.name;
+  return name ? `${facility}: ${name}` : facility;
+};
+
+// Its own component because useFieldArray is a hook and the facility list is
+// nested one per site, so it cannot be called in the render loop above.
+const GroupFacilities = ({
+  control,
+  groupIndex,
+  isEditing,
+  oaConfigs,
+}: {
+  control: Control<FormData>;
+  groupIndex: number;
+  isEditing: boolean;
+  oaConfigs: OAConfigResponse[];
+}) => {
+  const { append } = useFieldArray({
+    control,
+    name: `groups.${groupIndex}.facilities` as const,
+  });
+
+  // Watched so already-added facilities can be disabled in the picker; the
+  // facilities themselves are shown in the site title, not here.
+  const current = useWatch({
+    control,
+    name: `groups.${groupIndex}.facilities` as const,
+  });
+  const taken = new Set((current || []).map((f) => f?.facility).filter(Boolean));
+
+  return (
+    <div className="mt-4">
+      {isEditing && (
+        <TextField
+          select
+          size="small"
+          label="Add from OA config"
+          value=""
+          sx={{ minWidth: 220 }}
+          onChange={(e) => append({ facility: e.target.value })}
+        >
+          {oaConfigs.length === 0 && (
+            <MenuItem disabled value="">
+              No OA configs
+            </MenuItem>
+          )}
+          {oaConfigs.flatMap((cfg) => [
+            <ListSubheader key={cfg.id}>{cfg.name}</ListSubheader>,
+            ...(cfg.facilities || []).map((f) => (
+              <MenuItem key={`${cfg.id}-${f}`} value={f} disabled={taken.has(f)}>
+                {f}
+              </MenuItem>
+            )),
+          ])}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+// A site's name is not stored. Each facility shows as "1225: TEST" - its OA
+// facility ID, then the OA config that lists it - and a facility belonging to
+// no OA config shows its ID alone.
+const siteLabel = (
+  group: FormData["groups"][number] | undefined,
+  oaConfigs: OAConfigResponse[],
+) => {
+  const labels = (group?.facilities || [])
+    .map((f) => f?.facility)
+    .filter(Boolean)
+    .map((facility) => facilityLabel(facility, oaConfigs));
+  return labels.join(", ") || "New site";
+};
 
 const ThirdPartyConfigsDetailsPage = () => {
   const navigate = useNavigate();
@@ -60,11 +150,9 @@ const ThirdPartyConfigsDetailsPage = () => {
     defaultValues: {
       url: "",
       name: "",
-      clientId: "",
       serviceProviderId: "",
-      providerId: 0,
       isInsecure: false,
-      plazaIdMappers: [],
+      groups: [],
       extra: [],
       taxRate: 5,
       surcharge: 0,
@@ -72,9 +160,13 @@ const ThirdPartyConfigsDetailsPage = () => {
     },
   });
   let { id } = useParams();
-  const { fields, remove, append, update } = useFieldArray({
+  const {
+    fields: groupFields,
+    append: appendGroup,
+    replace: replaceGroups,
+  } = useFieldArray({
     control,
-    name: "plazaIdMappers",
+    name: "groups",
   });
 
   const { data } = useQuery(
@@ -91,6 +183,7 @@ const ThirdPartyConfigsDetailsPage = () => {
   const [integrator, setIntegrator] = useState<string>(
     data?.integratorName || "",
   );
+  const { data: oaConfigs } = useQuery(["getOAConfigs"], () => getOAConfigs());
   const { data: integrators } = useQuery(
     ["getIntegrators"],
     () => getIntegrators(),
@@ -108,6 +201,7 @@ const ThirdPartyConfigsDetailsPage = () => {
   const [isEditing, setIsEditing] = useState(id === "new");
   const [name, setName] = useState("");
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const watchedGroups = useWatch({ control, name: "groups" });
 
   const { mutate } = useMutation(
     "updateIntegratorConfig",
@@ -136,45 +230,23 @@ const ThirdPartyConfigsDetailsPage = () => {
     setValue("name", data.name);
     setValue("displayName", data.displayName);
     setName(data.name);
-    setValue("clientId", data.clientId);
-    setValue("providerId", data.providerId);
     setValue("isInsecure", data.insecureSkipVerify);
     setValue("serviceProviderId", data.serviceProviderId);
     setValue("integratorName", data.integratorName);
     setValue("taxRate", data.taxRate);
     setValue("surcharge", data.surcharge);
     setValue("surchargeType", data.surchargeType || "exact");
-    if (data.plazaIdMap) {
-      const keys = Object.keys(data.plazaIdMap);
-      const expanded: Record<number, boolean> = {};
-      keys.forEach((key, index) => {
-        const mapping = (data.plazaIdMap as any)[key];
-        // Handle both old format (string) and new format (object)
-        if (typeof mapping === "string") {
-          // Old format: value is just the vendorLocationId
-          update(index, {
-            field1: key,
-            field2: mapping,
-            field3: "",
-            field4: "",
-          });
-        } else {
-          // New format: value is an object with vendorLocationId and overrides
-          update(index, {
-            field1: key,
-            field2: mapping?.vendorLocationId || "",
-            field3: mapping?.clientId || "",
-            field4: mapping?.providerId ? String(mapping.providerId) : "",
-          });
-          // Rows that already carry an override open by default, otherwise the
-          // override is invisible until every row is clicked open.
-          if (mapping?.clientId || mapping?.providerId) expanded[index] = true;
-        }
-      });
-      setExpandedRows(expanded);
-    } else {
-      update(0, { field1: "", field2: "", field3: "", field4: "" });
-    }
+    replaceGroups(
+      (data.groups || []).map((g) => ({
+        providerId: g.providerId ? String(g.providerId) : "",
+        clientId: g.clientId || "",
+        vendorLocationId: g.vendorLocationId || "",
+        facilities: (g.facilities || []).map((facility) => ({ facility })),
+      })),
+    );
+    // Every site starts collapsed, so the section opens as a plain list of
+    // site names.
+    setExpandedRows({});
 
     if (data.extra) {
       const extraDataForm = buildExtraDataForForm(
@@ -192,14 +264,12 @@ const ThirdPartyConfigsDetailsPage = () => {
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     console.log(data);
-    const plazaIdMap: Map<string, PlazaMapping> = new Map();
-    data.plazaIdMappers.forEach((item) => {
-      plazaIdMap.set(item.field1, {
-        vendorLocationId: item.field2,
-        clientId: item.field3 || "",
-        providerId: +item.field4 || undefined,
-      });
-    });
+    const groups: PlazaGroup[] = data.groups.map((g) => ({
+      providerId: +g.providerId || 0,
+      clientId: g.clientId,
+      vendorLocationId: g.vendorLocationId,
+      facilities: (g.facilities || []).map((f) => f.facility).filter(Boolean),
+    }));
 
     if (id == "new") {
       create({
@@ -207,11 +277,9 @@ const ThirdPartyConfigsDetailsPage = () => {
         url: data.url,
         displayName: data.displayName,
         name: data.name,
-        clientId: data.clientId,
         serviceProviderId: data.serviceProviderId,
-        providerId: data.providerId,
         insecureSkipVerify: data.isInsecure,
-        plazaIdMap: plazaIdMap,
+        groups: groups,
         integratorName: data.integratorName,
         extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
         surcharge: data.surcharge,
@@ -226,11 +294,9 @@ const ThirdPartyConfigsDetailsPage = () => {
       url: data.url,
       name: data.name,
       displayName: data.displayName,
-      clientId: data.clientId,
       serviceProviderId: data.serviceProviderId,
-      providerId: data.providerId,
       insecureSkipVerify: data.isInsecure,
-      plazaIdMap: plazaIdMap,
+      groups: groups,
       integratorName: data.integratorName,
       extra: buildExtraDataForVendor(data.integratorName || "", data.extra),
       surcharge: data.surcharge,
@@ -342,39 +408,6 @@ const ThirdPartyConfigsDetailsPage = () => {
                   label="Insecure endpoint"
                 />
               )}
-            />
-          </div>
-        </div>
-        <div>
-          <div className="mb-8">
-            <div>Provider ID (For OA)</div>
-            <TextField
-              fullWidth={true}
-              variant="outlined"
-              disabled={!isEditing}
-              type={"number"}
-              sx={{
-                "& .MuiInputBase-input.Mui-disabled": {
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-              {...register("providerId")}
-            />
-          </div>
-        </div>
-        <div>
-          <div className="mb-8">
-            <div>Client ID (Defined by 3rd party)</div>
-            <TextField
-              fullWidth={true}
-              variant="outlined"
-              disabled={!isEditing}
-              sx={{
-                "& .MuiInputBase-input.Mui-disabled": {
-                  WebkitTextFillColor: "#000000",
-                },
-              }}
-              {...register("clientId")}
             />
           </div>
         </div>
@@ -590,115 +623,105 @@ const ThirdPartyConfigsDetailsPage = () => {
         )}
 
         <div>
-          <h2> Plaza ID Mapper</h2>
-          {data &&
-            fields.map((field, index) => (
-              <div
-                key={`${field.id}-${field.field1}-${field.field2}-${field.field3}-${field.field4}`}
-                className="mb-4"
-              >
-                <div className="flex items-end">
-                  <div>
-                    <div>OA Facility ID</div>
-                    <TextField
-                      disabled={!isEditing}
-                      sx={{
-                        "& .MuiInputBase-input.Mui-disabled": {
-                          WebkitTextFillColor: "#000000",
-                        },
-                      }}
-                      {...register(`plazaIdMappers.${index}.field1` as const)}
-                    />
-                  </div>
-                  <div className="w-8" />
-                  <div>
-                    <div>Vendor Location ID</div>
-                    <TextField
-                      disabled={!isEditing}
-                      sx={{
-                        "& .MuiInputBase-input.Mui-disabled": {
-                          WebkitTextFillColor: "#000000",
-                        },
-                      }}
-                      {...register(`plazaIdMappers.${index}.field2` as const)}
-                    />
-                  </div>
-                  <div className="w-8" />
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      setExpandedRows((prev) => ({
-                        ...prev,
-                        [index]: !prev[index],
-                      }))
-                    }
-                  >
-                    {expandedRows[index] ? "Hide" : "Show"} overrides
-                  </Button>
-                  {isEditing && (
-                    <Button type="button" onClick={() => remove(index)}>
-                      Remove
-                    </Button>
-                  )}
-                </div>
-                {expandedRows[index] && (
-                  <div className="flex pl-8 mt-2">
+          <h2>Sites</h2>
+          <Typography variant="body2" className="mb-4">
+            One config covers every site on this server. Each site has its own
+            Provider ID and Client ID, and lists the OA facilities that belong
+            to it.
+          </Typography>
+          {groupFields.map((group, groupIndex) => (
+            <div key={group.id} className="mb-6 border rounded p-4">
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setExpandedRows((prev) => ({
+                      ...prev,
+                      [groupIndex]: !prev[groupIndex],
+                    }))
+                  }
+                >
+                  {expandedRows[groupIndex] ? "\u25bc" : "\u25b6"}
+                </Button>
+                <Typography variant="subtitle1">
+                  {siteLabel(watchedGroups?.[groupIndex], oaConfigs || [])}
+                </Typography>
+                <div className="flex-1" />
+              </div>
+              {expandedRows[groupIndex] && (
+                <>
+                  <div className="flex items-end pl-12 mt-4">
                     <div>
-                      <div>
-                        Provider ID
-                        <Tooltip
-                          className="ml-2"
-                          title="Optional. If empty, uses the global Provider ID above."
-                        >
-                          <InfoIcon fontSize="small" />
-                        </Tooltip>
-                      </div>
+                      <div>Provider ID (For OA)</div>
                       <TextField
                         disabled={!isEditing}
                         type="number"
-                        placeholder="(uses global)"
                         sx={{
                           "& .MuiInputBase-input.Mui-disabled": {
                             WebkitTextFillColor: "#000000",
                           },
                         }}
-                        {...register(`plazaIdMappers.${index}.field4` as const)}
+                        {...register(`groups.${groupIndex}.providerId` as const)}
                       />
                     </div>
                     <div className="w-8" />
                     <div>
-                      <div>
-                        Client ID
-                        <Tooltip
-                          className="ml-2"
-                          title="Optional. If empty, uses the global Client ID above."
-                        >
-                          <InfoIcon fontSize="small" />
-                        </Tooltip>
-                      </div>
+                      <div>Client ID (Defined by 3rd party)</div>
                       <TextField
                         disabled={!isEditing}
-                        placeholder="(uses global)"
                         sx={{
                           "& .MuiInputBase-input.Mui-disabled": {
                             WebkitTextFillColor: "#000000",
                           },
                         }}
-                        {...register(`plazaIdMappers.${index}.field3` as const)}
+                        {...register(`groups.${groupIndex}.clientId` as const)}
+                      />
+                    </div>
+                    <div className="w-8" />
+                    <div>
+                      <div>Vendor Location ID</div>
+                      <TextField
+                        disabled={!isEditing}
+                        sx={{
+                          "& .MuiInputBase-input.Mui-disabled": {
+                            WebkitTextFillColor: "#000000",
+                          },
+                        }}
+                        {...register(
+                          `groups.${groupIndex}.vendorLocationId` as const,
+                        )}
                       />
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+                  <div className="pl-12">
+                    <GroupFacilities
+                      control={control}
+                      groupIndex={groupIndex}
+                      isEditing={isEditing}
+                      oaConfigs={oaConfigs || []}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
           {isEditing && (
             <Button
               type="button"
-              onClick={() =>
-                append({ field1: "", field2: "", field3: "", field4: "" })
-              }
+              onClick={() => {
+                appendGroup({
+                  providerId: "",
+                  clientId: "",
+                  vendorLocationId: "",
+                  facilities: [],
+                });
+                setExpandedRows((prev) => ({
+                  ...prev,
+                  [groupFields.length]: true,
+                }));
+              }}
             >
-              Add Field
+              Add Site
             </Button>
           )}
         </div>

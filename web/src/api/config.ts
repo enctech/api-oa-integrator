@@ -72,23 +72,28 @@ export const deleteOAConfig = async (id: string) => {
 
 export type SurchargeType = "percentage" | "exact";
 
-export interface PlazaMapping {
+// One config covers several sites: `name` is the config identity and is
+// uniquely indexed, so four sites all named TNG cannot be four rows. Each
+// site is a group owning the providerId S&B expects and the vendor's clientId.
+export interface PlazaGroup {
+  providerId: number;
+  clientId: string;
+  // Per site, not per facility: every facility on a site reports to the same
+  // vendor location.
   vendorLocationId: string;
-  clientId?: string;
-  providerId?: number;
+  // OA facility IDs belonging to this site.
+  facilities: string[];
 }
 
 export interface IntegratorConfigs {
   id?: string;
-  clientId: string;
-  providerId: number;
   serviceProviderId: string;
   name: string;
   displayName: string;
   integratorName?: string;
   url: string;
   insecureSkipVerify: boolean;
-  plazaIdMap: Map<string, PlazaMapping>;
+  groups: PlazaGroup[];
   extra: Map<string, string>;
   taxRate: number;
   surcharge: number;
@@ -120,17 +125,13 @@ export const updateIntegratorConfig = async (arg: IntegratorConfigs) => {
   delete data["id"];
   return axios
     .put(`/config/integrator-config/${arg.id}`, {
-      clientId: data.clientId,
-      providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
       displayName: data.displayName,
       integratorName: data.integratorName,
       url: data.url,
       insecureSkipVerify: data.insecureSkipVerify,
-      plazaIdMap: JSON.parse(
-        JSON.stringify(Object.fromEntries(data.plazaIdMap)),
-      ),
+      groups: data.groups,
       extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
       taxRate: +arg.taxRate,
       surcharge: +arg.surcharge,
@@ -144,17 +145,13 @@ export const createIntegratorConfig = async (arg: IntegratorConfigs) => {
   delete data["id"];
   return axios
     .post(`/config/integrator-config`, {
-      clientId: data.clientId,
-      providerId: +data.providerId,
       serviceProviderId: data.serviceProviderId,
       name: data.name,
       displayName: data.displayName,
       integratorName: data.integratorName,
       url: data.url,
       insecureSkipVerify: data.insecureSkipVerify,
-      plazaIdMap: JSON.parse(
-        JSON.stringify(Object.fromEntries(data.plazaIdMap)),
-      ),
+      groups: data.groups,
       extra: JSON.parse(JSON.stringify(Object.fromEntries(data.extra))),
       taxRate: +arg.taxRate,
       surcharge: +arg.surcharge,

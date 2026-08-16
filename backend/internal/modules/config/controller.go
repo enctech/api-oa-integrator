@@ -200,10 +200,6 @@ func (con controller) createIntegratorConfig(c echo.Context) error {
 	}
 	configs, err := createIntegratorConfig(c.Request().Context(), *req)
 	if err != nil {
-		if strings.Contains(err.Error(), "violates unique constraint \"integrator_config_provider_id_key\"") {
-			return c.String(http.StatusBadRequest, "Provider ID already exist")
-		}
-
 		if strings.Contains(err.Error(), "violates unique constraint \"integrator_config_name_key\"") {
 			return c.String(http.StatusBadRequest, "Name already exist")
 		}

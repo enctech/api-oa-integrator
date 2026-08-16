@@ -78,8 +78,7 @@ const ThirdPartyConfigsPage = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Provider ID</TableCell>
-              <TableCell>Client ID</TableCell>
+              <TableCell>Client IDs</TableCell>
               <TableCell>Service Provider ID</TableCell>
               <TableCell className="w-5 pl-1" />
             </TableRow>
@@ -137,8 +136,9 @@ const IntegratorConfig = ({
         onClick={() => handleRowClick(row.id!)}
       >
         <TableCell>{row.displayName}</TableCell>
-        <TableCell>{row.providerId}</TableCell>
-        <TableCell>{row.clientId}</TableCell>
+        <TableCell>
+          {(row.groups || []).map((g) => g.clientId).join(", ")}
+        </TableCell>
         <TableCell>{row.serviceProviderId}</TableCell>
         <TableCell>
           <AdminOnly>

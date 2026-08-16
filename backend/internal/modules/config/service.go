@@ -2,6 +2,7 @@ package config
 
 import (
 	"api-oa-integrator/database"
+	"api-oa-integrator/internal/plaza"
 	"api-oa-integrator/logger"
 	"context"
 	"database/sql"
@@ -106,11 +107,9 @@ func deleteSnbConfig(ctx context.Context, in uuid.UUID) error {
 }
 
 func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (IntegratorConfig, error) {
-	jsonString, err := json.Marshal(in.PlazaIdMap)
+	jsonString, err := json.Marshal(plaza.Map{Groups: in.Groups})
 	extraData, err := json.Marshal(in.Extra)
 	config, err := database.New(database.D()).CreateIntegratorConfig(ctx, database.CreateIntegratorConfigParams{
-		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
-		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
 		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
 		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
 		DisplayName:        sql.NullString{String: in.DisplayName, Valid: in.DisplayName != ""},
@@ -128,7 +127,7 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 		return IntegratorConfig{}, err
 	}
 
-	plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
+	groups := plaza.Parse(config.PlazaIDMap.RawMessage).Groups
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
 	surchRes, err := strconv.ParseFloat(strings.TrimSpace(config.Surcharge.String), 64)
@@ -143,12 +142,10 @@ func createIntegratorConfig(ctx context.Context, in IntegratorConfig) (Integrato
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
-		ClientId:           config.ClientID.String,
-		ProviderId:         config.ProviderID.Int32,
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
 		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         plazaId,
+		Groups:             groups,
 		Url:                config.Url.String,
 		Extra:              extra,
 		SurchargeType:      config.SurchangeType.SurchargeType,
@@ -166,7 +163,7 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 		return out, err
 	}
 	for _, config := range configs {
-		plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
+		groups := plaza.Parse(config.PlazaIDMap.RawMessage).Groups
 
 		var extra map[string]string
 		_ = json.Unmarshal(config.Extra.RawMessage, &extra)
@@ -174,12 +171,10 @@ func getIntegratorConfigs(ctx context.Context) ([]IntegratorConfig, error) {
 			DisplayName:        config.DisplayName.String,
 			IntegratorName:     config.IntegratorName.String,
 			Id:                 config.ID.String(),
-			ClientId:           config.ClientID.String,
-			ProviderId:         config.ProviderID.Int32,
 			ServiceProviderId:  config.SpID.String,
 			Name:               config.Name.String,
 			InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-			PlazaIdMap:         plazaId,
+			Groups:             groups,
 			Url:                config.Url.String,
 			Extra:              extra,
 		})
@@ -195,7 +190,7 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 		logger.LogData("error", fmt.Sprintf("error get integrator config %v", err), nil)
 		return IntegratorConfig{}, err
 	}
-	plazaId := parsePlazaIdMap(config.PlazaIDMap.RawMessage)
+	groups := plaza.Parse(config.PlazaIDMap.RawMessage).Groups
 
 	var extra map[string]string
 	_ = json.Unmarshal(config.Extra.RawMessage, &extra)
@@ -213,12 +208,10 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 		DisplayName:        config.DisplayName.String,
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
-		ClientId:           config.ClientID.String,
-		ProviderId:         config.ProviderID.Int32,
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
 		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         plazaId,
+		Groups:             groups,
 		Url:                config.Url.String,
 		Extra:              extra,
 		SurchargeType:      config.SurchangeType.SurchargeType,
@@ -228,12 +221,10 @@ func getIntegratorConfig(ctx context.Context, id uuid.UUID) (IntegratorConfig, e
 }
 
 func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConfig) (IntegratorConfig, error) {
-	jsonString, err := json.Marshal(in.PlazaIdMap)
+	jsonString, err := json.Marshal(plaza.Map{Groups: in.Groups})
 	extraData, err := json.Marshal(in.Extra)
 	config, err := database.New(database.D()).UpdateIntegratorConfig(ctx, database.UpdateIntegratorConfigParams{
 		ID:                 id,
-		ClientID:           sql.NullString{String: in.ClientId, Valid: in.ClientId != ""},
-		ProviderID:         sql.NullInt32{Int32: in.ProviderId, Valid: true},
 		SpID:               sql.NullString{String: in.ServiceProviderId, Valid: in.ServiceProviderId != ""},
 		Name:               sql.NullString{String: in.Name, Valid: in.Name != ""},
 		DisplayName:        sql.NullString{String: in.DisplayName, Valid: in.DisplayName != ""},
@@ -265,12 +256,10 @@ func updateIntegratorConfig(ctx context.Context, id uuid.UUID, in IntegratorConf
 	return IntegratorConfig{
 		IntegratorName:     config.IntegratorName.String,
 		Id:                 config.ID.String(),
-		ClientId:           config.ClientID.String,
-		ProviderId:         config.ProviderID.Int32,
 		ServiceProviderId:  config.SpID.String,
 		Name:               config.Name.String,
 		InsecureSkipVerify: config.InsecureSkipVerify.Bool,
-		PlazaIdMap:         in.PlazaIdMap,
+		Groups:             in.Groups,
 		Url:                config.Url.String,
 		Extra:              extra,
 		SurchargeType:      config.SurchangeType.SurchargeType,
@@ -302,32 +291,5 @@ func deleteIntegratorConfig(ctx context.Context, id uuid.UUID) error {
 	if rows == 0 {
 		return ErrIntegratorConfigNotFound
 	}
-	return nil
-}
-
-// parsePlazaIdMap handles both old format (map[string]string) and new format (map[string]PlazaMapping)
-func parsePlazaIdMap(raw []byte) map[string]PlazaMapping {
-	// Try new format first
-	var newFormat map[string]PlazaMapping
-	if err := json.Unmarshal(raw, &newFormat); err == nil && len(newFormat) > 0 {
-		// Check if it actually parsed correctly (not empty VendorLocationId)
-		for _, v := range newFormat {
-			if v.VendorLocationId != "" {
-				return newFormat
-			}
-			break
-		}
-	}
-
-	// Fall back to old format (map[string]string)
-	var oldFormat map[string]string
-	if err := json.Unmarshal(raw, &oldFormat); err == nil {
-		result := make(map[string]PlazaMapping)
-		for k, v := range oldFormat {
-			result[k] = PlazaMapping{VendorLocationId: v}
-		}
-		return result
-	}
-
 	return nil
 }

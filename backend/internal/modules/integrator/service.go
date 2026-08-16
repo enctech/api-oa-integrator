@@ -2,6 +2,7 @@ package integrator
 
 import (
 	"api-oa-integrator/database"
+	"api-oa-integrator/internal/plaza"
 	"api-oa-integrator/logger"
 	"api-oa-integrator/tng"
 	"context"
@@ -29,39 +30,16 @@ func getConfigFromIntegratorBasedOnIntegrator(client, locationId string) (Proces
 	if err != nil {
 		return nil, database.IntegratorConfig{}, err
 	}
-	var plazaIdMap map[string]any
-	err = json.Unmarshal(cfg.PlazaIDMap.RawMessage, &plazaIdMap)
-	if err != nil {
-		return nil, database.IntegratorConfig{}, err
-	}
-	if plazaIdMap[locationId] == nil || plazaIdMap[locationId] == "" {
+	// The facility decides which site's group applies, and the group carries
+	// the clientId the vendor issued for it.
+	group, ok := plaza.Parse(cfg.PlazaIDMap.RawMessage).Find(locationId)
+	if !ok {
 		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("plazaId not found for locationId %v", locationId))
-	}
-
-	// Extract vendorLocationId and clientId from the mapping
-	// Supports both old format (string) and new format (object with vendorLocationId and clientId)
-	var vendorLocationId string
-	clientId := cfg.ClientID.String // default to global clientId
-
-	switch v := plazaIdMap[locationId].(type) {
-	case string:
-		// Old format: value is just the vendorLocationId string
-		vendorLocationId = v
-	case map[string]any:
-		// New format: value is an object with vendorLocationId and optional clientId
-		if vid, ok := v["vendorLocationId"].(string); ok {
-			vendorLocationId = vid
-		}
-		if cid, ok := v["clientId"].(string); ok && cid != "" {
-			clientId = cid
-		}
-	default:
-		vendorLocationId = fmt.Sprintf("%v", v)
 	}
 
 	switch cfg.IntegratorName.String {
 	case "tng":
-		return tng.Config{IntegratorConfig: cfg, PlazaId: vendorLocationId, ClientId: clientId}, cfg, nil
+		return tng.Config{IntegratorConfig: cfg, PlazaId: group.VendorLocationId, ClientId: group.ClientId}, cfg, nil
 	default:
 		return nil, database.IntegratorConfig{}, errors.New(fmt.Sprintf("integrator %v not found", cfg.IntegratorName.String))
 	}

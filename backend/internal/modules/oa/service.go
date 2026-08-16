@@ -3,6 +3,7 @@ package oa
 import (
 	"api-oa-integrator/database"
 	"api-oa-integrator/internal/modules/integrator"
+	"api-oa-integrator/internal/plaza"
 	"api-oa-integrator/logger"
 	"api-oa-integrator/utils"
 	"bytes"
@@ -491,19 +492,15 @@ type FMCReq struct {
 	Identifier          Identifier
 }
 
-// providerIdFor returns the per-facility providerId from plaza_id_map, falling
-// back to the config-level provider_id. The old plaza_id_map format is
-// map[string]string, which fails to unmarshal here and takes the fallback.
+// providerIdFor returns the providerId of the site group owning facility.
+// S&B accepts a single providerId per server, so this is the value that must
+// come back on the final message for that facility.
 func providerIdFor(cfg database.IntegratorConfig, facility string) int32 {
-	var m map[string]struct {
-		ProviderId int32 `json:"providerId"`
+	group, ok := plaza.Parse(cfg.PlazaIDMap.RawMessage).Find(facility)
+	if !ok {
+		return 0
 	}
-	if err := json.Unmarshal(cfg.PlazaIDMap.RawMessage, &m); err == nil {
-		if v, ok := m[facility]; ok && v.ProviderId != 0 {
-			return v.ProviderId
-		}
-	}
-	return cfg.ProviderID.Int32
+	return group.ProviderId
 }
 
 func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName string) {
