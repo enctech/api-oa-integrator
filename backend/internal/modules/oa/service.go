@@ -517,7 +517,8 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 	})
 
 	if err != nil {
-		fmt.Println("Error get config", err)
+		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: no snb_config for facility %v device %v: %v", metadata.facility, metadata.device, err), nil)
+		sendEmptyFinalMessage(metadata)
 		return
 	}
 
@@ -547,13 +548,15 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 		BusinessTransaction: in.BusinessTransaction,
 	})
 	if err != nil {
-		fmt.Println("Error marshaling XML data:", err)
+		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: marshal XML: %v", err), nil)
+		sendEmptyFinalMessage(metadata)
 		return
 	}
 
 	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: create request: %v", err), nil)
+		sendEmptyFinalMessage(metadata)
 		return
 	}
 
@@ -562,7 +565,8 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: send request: %v", err), nil)
+		sendEmptyFinalMessage(metadata)
 		return
 	}
 	defer resp.Body.Close()
@@ -576,13 +580,13 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	})
 
 	if err != nil {
-		fmt.Println("Error get config", err)
+		logger.LogData("error", fmt.Sprintf("sendEmptyFinalMessage: no snb_config for facility %v device %v: %v", metadata.facility, metadata.device, err), nil)
 		return
 	}
 
 	xmlData, err := xml.Marshal(&FinalMessageCustomer{})
 	if err != nil {
-		fmt.Println("Error marshaling XML data:", err)
+		logger.LogData("error", fmt.Sprintf("sendEmptyFinalMessage: marshal XML: %v", err), nil)
 		return
 	}
 
@@ -590,7 +594,7 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		logger.LogData("error", fmt.Sprintf("sendEmptyFinalMessage: create request: %v", err), nil)
 		return
 	}
 	req.Header.Set("Content-Type", "application/xml")
@@ -598,7 +602,7 @@ func sendEmptyFinalMessage(metadata *RequestMetadata) {
 
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		logger.LogData("error", fmt.Sprintf("sendEmptyFinalMessage: send request: %v", err), nil)
 		return
 	}
 	defer resp.Body.Close()
