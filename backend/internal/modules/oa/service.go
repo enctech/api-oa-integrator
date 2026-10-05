@@ -27,6 +27,15 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	if job.JobType != "IDENTIFICATION" || job.TimeAndPlace.Device.DeviceType != "ENTRY" {
 		return
 	}
+	// A facility no vendor site lists can never be verified, so answer S&B
+	// before opening a transaction or calling any vendor.
+	hasSite, err := database.New(database.D()).FacilityHasSite(context.Background(), metadata.facility)
+	if err != nil || !hasSite {
+		logger.LogData("info", fmt.Sprintf("facility %v not configured on any site, sending empty final message", metadata.facility), nil)
+		go sendEmptyFinalMessage(metadata)
+		return
+	}
+
 	lpn := job.MediaDataList.Identifier.Name
 	lane := job.TimeAndPlace.Device.DeviceNumber
 	btid := uuid.New().String()

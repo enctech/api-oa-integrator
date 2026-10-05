@@ -34,3 +34,6 @@ values ($1, $2, $3);
 delete
 from integrator_site
 where integrator_config_id = $1;
+
+-- name: FacilityHasSite :one
+select exists (select 1 from integrator_site_facility where facility = $1);

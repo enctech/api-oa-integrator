@@ -63,6 +63,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteUserStmt, err = db.PrepareContext(ctx, deleteUser); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUser: %w", err)
 	}
+	if q.facilityHasSiteStmt, err = db.PrepareContext(ctx, facilityHasSite); err != nil {
+		return nil, fmt.Errorf("error preparing query FacilityHasSite: %w", err)
+	}
 	if q.getAllSnbConfigStmt, err = db.PrepareContext(ctx, getAllSnbConfig); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllSnbConfig: %w", err)
 	}
@@ -206,6 +209,11 @@ func (q *Queries) Close() error {
 	if q.deleteUserStmt != nil {
 		if cerr := q.deleteUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteUserStmt: %w", cerr)
+		}
+	}
+	if q.facilityHasSiteStmt != nil {
+		if cerr := q.facilityHasSiteStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing facilityHasSiteStmt: %w", cerr)
 		}
 	}
 	if q.getAllSnbConfigStmt != nil {
@@ -385,6 +393,7 @@ type Queries struct {
 	deleteSitesByConfigStmt             *sql.Stmt
 	deleteSnbConfigStmt                 *sql.Stmt
 	deleteUserStmt                      *sql.Stmt
+	facilityHasSiteStmt                 *sql.Stmt
 	getAllSnbConfigStmt                 *sql.Stmt
 	getIntegratorConfigStmt             *sql.Stmt
 	getIntegratorConfigByClientStmt     *sql.Stmt
@@ -429,6 +438,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteSitesByConfigStmt:             q.deleteSitesByConfigStmt,
 		deleteSnbConfigStmt:                 q.deleteSnbConfigStmt,
 		deleteUserStmt:                      q.deleteUserStmt,
+		facilityHasSiteStmt:                 q.facilityHasSiteStmt,
 		getAllSnbConfigStmt:                 q.getAllSnbConfigStmt,
 		getIntegratorConfigStmt:             q.getIntegratorConfigStmt,
 		getIntegratorConfigByClientStmt:     q.getIntegratorConfigByClientStmt,

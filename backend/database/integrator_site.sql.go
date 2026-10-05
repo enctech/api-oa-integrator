@@ -75,6 +75,17 @@ func (q *Queries) DeleteSitesByConfig(ctx context.Context, integratorConfigID uu
 	return err
 }
 
+const facilityHasSite = `-- name: FacilityHasSite :one
+select exists (select 1 from integrator_site_facility where facility = $1)
+`
+
+func (q *Queries) FacilityHasSite(ctx context.Context, facility string) (bool, error) {
+	row := q.queryRow(ctx, q.facilityHasSiteStmt, facilityHasSite, facility)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const getSiteByConfigAndFacility = `-- name: GetSiteByConfigAndFacility :one
 select s.id, s.integrator_config_id, s.provider_id, s.client_id, s.vendor_location_id, s.created_at, s.updated_at
 from integrator_site s
