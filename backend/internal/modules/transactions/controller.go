@@ -4,6 +4,7 @@ import (
 	"api-oa-integrator/database"
 	"api-oa-integrator/utils"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"math"
 	"net/http"
@@ -33,8 +34,7 @@ type Response struct {
 //	@Description	To check overall system health
 //	@Param			endAt	query	string	true	"Before"	Format(dateTime)
 //	@Param			startAt	query	string	false	"After"		Format(dateTime)
-//	@Param			message	query	string	false	"Message"
-//	@Param			fields	query	string	false	"Fields"
+//	@Param			filters	query	string	false	"JSON array of {target: message|level|field, key, op: contains|not_contains|eq|neq|regex|not_regex, value}, ANDed"
 //	@Param			perPage	query	int		false	"PerPage"
 //	@Param			page	query	int		false	"Page"
 //	@Tags			transactions
@@ -62,26 +62,45 @@ func (con controller) getLogs(c echo.Context) error {
 		}
 	}
 
-	logs, err := database.New(database.D()).GetLogs(c.Request().Context(), database.GetLogsParams{
-		After:   after.Round(time.Microsecond),
-		Before:  before.Round(time.Microsecond),
-		Message: c.QueryParam("message"),
-		Fields:  c.QueryParam("field"),
-		Limit:   int32(perPage),
-		Offset:  int32(page * perPage),
+	var filters []LogFilter
+	if raw := c.QueryParam("filters"); raw != "" {
+		if err := json.Unmarshal([]byte(raw), &filters); err != nil {
+			return c.JSON(http.StatusBadRequest, "invalid filters")
+		}
+	}
+	where, args, err := buildLogWhere(filters, []any{
+		after.UTC().Round(time.Microsecond),
+		before.UTC().Round(time.Microsecond),
 	})
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	totalData, err := database.New(database.D()).CountLogs(c.Request().Context(), database.CountLogsParams{
-		After:  after.UTC().Round(time.Microsecond),
-		Before: before.UTC().Round(time.Microsecond),
-	})
+	ctx := c.Request().Context()
+	var totalData int64
+	if err := database.D().QueryRowContext(ctx, "select count(*) from logs where "+where, args...).Scan(&totalData); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	var logOutput []LogData
+	args = append(args, perPage, page*perPage)
+	rows, err := database.D().QueryContext(ctx, fmt.Sprintf(
+		"select id, level, message, fields, created_at from logs where %s order by created_at desc limit $%d offset $%d",
+		where, len(args)-1, len(args),
+	), args...)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	defer rows.Close()
 
-	for _, log := range logs {
+	logOutput := []LogData{}
+	for rows.Next() {
+		var log database.Log
+		if err := rows.Scan(&log.ID, &log.Level, &log.Message, &log.Fields, &log.CreatedAt); err != nil {
+			return c.JSON(http.StatusInternalServerError, err.Error())
+		}
 		var fields map[string]any
 		if log.Fields.Valid {
-			err = json.Unmarshal(log.Fields.RawMessage, &fields)
+			_ = json.Unmarshal(log.Fields.RawMessage, &fields)
 		}
 		logOutput = append(logOutput, LogData{
 			ID:        log.ID.String(),
@@ -90,6 +109,9 @@ func (con controller) getLogs(c echo.Context) error {
 			Fields:    fields,
 			CreatedAt: log.CreatedAt,
 		})
+	}
+	if err := rows.Err(); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	out := utils.PaginationResponse[LogData]{

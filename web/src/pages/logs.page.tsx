@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Button,
+  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -11,7 +13,7 @@ import {
   TextField,
 } from "@mui/material";
 import { useQuery } from "react-query";
-import { getOALogs } from "../api/transactions";
+import { getOALogs, LogFilter } from "../api/transactions";
 import { JsonViewer } from "@textea/json-viewer";
 import { ClearIcon, DateTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
@@ -24,9 +26,25 @@ import { useDebounce } from "@uidotdev/usehooks";
 interface FormData {
   startAt?: Dayjs | null;
   endAt?: Dayjs | null;
-  message: string;
-  field: string;
 }
+
+const OPS: { value: LogFilter["op"]; label: string }[] = [
+  { value: "contains", label: "contains" },
+  { value: "not_contains", label: "not contains" },
+  { value: "eq", label: "=" },
+  { value: "neq", label: "!=" },
+  { value: "regex", label: "=~ regex" },
+  { value: "not_regex", label: "!~ regex" },
+];
+
+const parseFilters = (raw: string | null): LogFilter[] => {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
 
 const LogsPage = () => {
   const perPagesDefault = useRef([100, 500, 1000]);
@@ -38,8 +56,6 @@ const LogsPage = () => {
   const { control, register, handleSubmit, watch, setValue } =
     useForm<FormData>({
       defaultValues: {
-        message: currentQueryParameters.get("message") || "",
-        field: currentQueryParameters.get("field") || "",
         startAt: dayjs(
           moment(currentQueryParameters.get("startAt")).local().toDate(),
         ),
@@ -49,7 +65,23 @@ const LogsPage = () => {
       },
     });
 
-  watch(["startAt", "endAt", "message", "field"]);
+  watch(["startAt", "endAt"]);
+
+  const [filters, setFilters] = useState<LogFilter[]>(() =>
+    parseFilters(currentQueryParameters.get("filters")),
+  );
+  const debouncedFilters = useDebounce(filters, 300);
+  const updateFilter = (i: number, patch: Partial<LogFilter>) =>
+    setFilters((fs) => fs.map((f, j) => (j === i ? { ...f, ...patch } : f)));
+
+  useEffect(() => {
+    const active = debouncedFilters.filter((f) => f.value);
+    const next = active.length ? JSON.stringify(active) : "";
+    if (next === (newParams.current.get("filters") || "")) return;
+    newParams.current.set("filters", next);
+    newParams.current.set("page", "0");
+    setSearchParams(newParams.current);
+  }, [debouncedFilters]);
 
   const handleFieldChange = () => {
     handleSubmit(onSubmit)();
@@ -63,8 +95,6 @@ const LogsPage = () => {
       newParams.current.set("endAt", formData.endAt.toISOString());
     }
 
-    newParams.current.set("message", formData.message || "");
-    newParams.current.set("field", formData.field || "");
     newParams.current.set("page", "0");
 
     setSearchParams(newParams.current);
@@ -80,8 +110,7 @@ const LogsPage = () => {
         endAt: currentQueryParameters.get("endAt")
           ? moment(currentQueryParameters.get("endAt")).utc().toDate()
           : undefined,
-        message: currentQueryParameters.get("message") || undefined,
-        field: currentQueryParameters.get("field") || undefined,
+        filters: currentQueryParameters.get("filters") || undefined,
         page: +(currentQueryParameters.get("page") || "0"),
         perPage: +(
           currentQueryParameters.get("perPage") ||
@@ -118,10 +147,9 @@ const LogsPage = () => {
       );
     }
     newParams.current.set(
-      "message",
-      currentQueryParameters.get("message") || "",
+      "filters",
+      currentQueryParameters.get("filters") || "",
     );
-    newParams.current.set("field", currentQueryParameters.get("field") || "");
 
     setSearchParams(newParams.current);
   }, []);
@@ -199,21 +227,75 @@ const LogsPage = () => {
             )}
           />
         </div>
-        <div className={"p-4"}>
-          <TextField
-            label="Message"
-            {...register("message", {
-              onChange: (_) => handleFieldChange(),
-            })}
-          />
-        </div>
-        <div className={"p-4"}>
-          <TextField
-            label="Field"
-            {...register("field", {
-              onChange: (_) => handleFieldChange(),
-            })}
-          />
+      </div>
+      <div className="flex flex-col gap-2">
+        {filters.map((f, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <TextField
+              select
+              size="small"
+              label="Target"
+              className="w-32"
+              value={f.target}
+              onChange={(e) =>
+                updateFilter(i, {
+                  target: e.target.value as LogFilter["target"],
+                })
+              }
+            >
+              <MenuItem value="message">Message</MenuItem>
+              <MenuItem value="level">Level</MenuItem>
+              <MenuItem value="field">Field</MenuItem>
+            </TextField>
+            {f.target === "field" && (
+              <TextField
+                size="small"
+                label="Key (a.b.c, empty = any)"
+                value={f.key}
+                onChange={(e) => updateFilter(i, { key: e.target.value })}
+              />
+            )}
+            <TextField
+              select
+              size="small"
+              label="Op"
+              className="w-36"
+              value={f.op}
+              onChange={(e) =>
+                updateFilter(i, { op: e.target.value as LogFilter["op"] })
+              }
+            >
+              {OPS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              size="small"
+              label="Value"
+              className="flex-1"
+              value={f.value}
+              onChange={(e) => updateFilter(i, { value: e.target.value })}
+            />
+            <IconButton
+              onClick={() => setFilters((fs) => fs.filter((_, j) => j !== i))}
+            >
+              <ClearIcon />
+            </IconButton>
+          </div>
+        ))}
+        <div>
+          <Button
+            onClick={() =>
+              setFilters((fs) => [
+                ...fs,
+                { target: "message", key: "", op: "contains", value: "" },
+              ])
+            }
+          >
+            + Add filter
+          </Button>
         </div>
       </div>
       <TableContainer component={Paper} className="mt-4">

@@ -20,11 +20,17 @@ const sample = {
   },
 };
 
+export interface LogFilter {
+  target: "message" | "level" | "field";
+  key: string;
+  op: "contains" | "not_contains" | "eq" | "neq" | "regex" | "not_regex";
+  value: string;
+}
+
 export interface OALogsQuery {
   endAt?: Date;
   startAt?: Date;
-  message?: string;
-  field?: string;
+  filters?: string; // JSON-encoded LogFilter[]
   page?: number;
   perPage?: number;
 }
