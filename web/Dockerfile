@@ -13,7 +13,7 @@ RUN mkdir cert
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10
 
 # Install app dependencies
 RUN pnpm install -d
