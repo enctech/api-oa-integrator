@@ -109,7 +109,7 @@ func handleIdentificationEntry(c echo.Context, job *Job, metadata *RequestMetada
 	case successfulVendor = <-vendorChannel:
 		fmt.Printf("Success from: %s\n", successfulVendor)
 	default:
-		sendEmptyFinalMessage(metadata)
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
@@ -527,7 +527,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: no snb_config for facility %v device %v: %v", metadata.facility, metadata.device, err), nil)
-		sendEmptyFinalMessage(metadata)
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
@@ -558,14 +558,14 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 	})
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: marshal XML: %v", err), nil)
-		sendEmptyFinalMessage(metadata)
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
 	req, err := http.NewRequest("PUT", fmt.Sprintf("%v/AuthorizationServiceSB/%v/%v/%v/finalmessage", config.Endpoint.String, metadata.facility, metadata.device, metadata.jobId), bytes.NewBuffer(xmlData))
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: create request: %v", err), nil)
-		sendEmptyFinalMessage(metadata)
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 
@@ -575,7 +575,7 @@ func sendFinalMessageCustomer(metadata *RequestMetadata, in FMCReq, vendorName s
 	resp, err := utils.GlobalInsecureHttpClient.Do(req)
 	if err != nil {
 		logger.LogData("error", fmt.Sprintf("sendFinalMessageCustomer: send request: %v", err), nil)
-		sendEmptyFinalMessage(metadata)
+		go sendEmptyFinalMessage(metadata)
 		return
 	}
 	defer resp.Body.Close()
